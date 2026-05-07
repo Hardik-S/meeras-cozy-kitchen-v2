@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isAtLeastMinimumNotice } from "./dates";
+import { isAtLeastMinimumNotice, isValidDateInput } from "./dates";
 import { cakeSizes } from "./pricing";
 
 const cakeSizeIds = cakeSizes.map((size) => size.id);
@@ -25,6 +25,15 @@ export function createInquirySchema(today = new Date()) {
     }),
     website: z.string().max(0, "Spam check failed.").optional().default("")
   }).superRefine((value, context) => {
+    if (!isValidDateInput(value.eventDate)) {
+      context.addIssue({
+        code: "custom",
+        path: ["eventDate"],
+        message: "Please choose a valid pickup date."
+      });
+      return;
+    }
+
     if (!isAtLeastMinimumNotice(value.eventDate, today)) {
       context.addIssue({
         code: "custom",
