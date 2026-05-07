@@ -1,0 +1,129 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { CheckCircle2, Copy, Mail, WalletCards } from "lucide-react";
+
+type StoredOrder = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  eventDate?: string;
+  productType?: string;
+  cakeSizeId?: string;
+  flavourId?: string;
+  servings?: number;
+  budget?: string;
+  message?: string;
+  paymentEmail: string;
+  summary: string;
+};
+
+const paymentEmail = "m.ssethi1123@gmail.com";
+
+export default function OrderSummaryPage() {
+  const order = useStoredOrder();
+  const [copied, setCopied] = useState(false);
+
+  const transferNote = useMemo(() => {
+    if (!order) return "";
+
+    return `Meera order ${order.id} - ${order.name}`;
+  }, [order]);
+
+  async function copyPaymentDetails() {
+    await navigator.clipboard.writeText(`E-transfer: ${paymentEmail}\nMemo: ${transferNote}`);
+    setCopied(true);
+  }
+
+  if (!order) {
+    return (
+      <section className="section-wrap grid min-h-[60vh] place-items-center py-16 text-center">
+        <div className="surface max-w-xl p-6">
+          <Image className="mx-auto h-20 w-20 rounded-full object-cover" src="/logo.png" alt="" width={80} height={80} />
+          <h1 className="mt-5 text-4xl font-black">No recent inquiry found.</h1>
+          <p className="lede mt-4">Start a fresh quote and this page will show the payment instructions after submission.</p>
+          <Link className="btn-primary mt-6" href="/order">Start a quote</Link>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="section-wrap py-12 md:py-20">
+      <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <div>
+          <div className="flex items-center gap-3 text-[var(--sage)]">
+            <CheckCircle2 size={28} aria-hidden="true" />
+            <p className="text-sm font-black uppercase tracking-[0.08em]">Inquiry received</p>
+          </div>
+          <h1 className="page-title">Here are your payment instructions.</h1>
+          <p className="lede mt-6">
+            Meera will review the details before confirming the order. Use these details if she asks for a deposit or balance payment.
+          </p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <button className="btn-primary click-pop" type="button" onClick={copyPaymentDetails}>
+              <Copy size={18} aria-hidden="true" />
+              {copied ? "Copied" : "Copy e-transfer details"}
+            </button>
+            <a className="btn-secondary click-pop" href={`mailto:${paymentEmail}?subject=${encodeURIComponent(transferNote)}`}>
+              <Mail size={18} aria-hidden="true" />
+              Email Meera
+            </a>
+          </div>
+        </div>
+
+        <div className="grid gap-5">
+          <article className="surface p-5">
+            <div className="flex items-center gap-3">
+              <WalletCards className="text-[var(--accent-strong)]" size={24} aria-hidden="true" />
+              <h2 className="text-2xl font-black">Payment methods</h2>
+            </div>
+            <div className="mt-5 grid gap-4">
+              <div className="rounded-[8px] bg-[var(--surface-warm)] p-4">
+                <p className="text-sm font-black text-[var(--muted)]">E-transfer</p>
+                <p className="mt-1 text-xl font-black">{paymentEmail}</p>
+                <p className="mt-2 text-sm font-bold text-[var(--muted)]">Suggested memo: {transferNote}</p>
+              </div>
+              <div className="rounded-[8px] bg-white/80 p-4">
+                <p className="text-sm font-black text-[var(--muted)]">Cash</p>
+                <p className="mt-1 font-bold">Cash can be arranged directly with Meera for pickup.</p>
+              </div>
+            </div>
+          </article>
+
+          <article className="surface p-5">
+            <h2 className="text-2xl font-black">Order summary</h2>
+            <dl className="mt-5 grid gap-3 text-sm font-bold text-[var(--muted)] sm:grid-cols-2">
+              <div><dt>Name</dt><dd className="text-[var(--foreground)]">{order.name}</dd></div>
+              <div><dt>Order ID</dt><dd className="text-[var(--foreground)]">{order.id}</dd></div>
+              <div><dt>Pickup date</dt><dd className="text-[var(--foreground)]">{order.eventDate || "To confirm"}</dd></div>
+              <div><dt>Product</dt><dd className="text-[var(--foreground)]">{order.productType || "Custom order"}</dd></div>
+            </dl>
+            <pre className="mt-5 max-h-80 overflow-auto whitespace-pre-wrap rounded-[8px] bg-[#fffdf8] p-4 text-sm leading-6 text-[var(--muted)]">{order.summary}</pre>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function useStoredOrder() {
+  const rawOrder = useSyncExternalStore(
+    () => () => undefined,
+    () => sessionStorage.getItem("meera:last-order"),
+    () => null
+  );
+
+  return useMemo(() => {
+    if (!rawOrder) return null;
+
+    try {
+      return JSON.parse(rawOrder) as StoredOrder;
+    } catch {
+      return null;
+    }
+  }, [rawOrder]);
+}

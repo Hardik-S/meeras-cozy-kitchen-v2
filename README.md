@@ -1,10 +1,10 @@
 # Meera v2
 
-This repository is the isolated workspace for Meera v2.
+This repository is the isolated workspace for Meera v2: a smoother, mobile-first refresh of Meera's Cozy Kitchen.
 
 ## Status
 
-Setup only. Product implementation has not started.
+V2 now contains the working Next.js app copied from v1 and refactored for faster perceived UX. V1 remains frozen in the parent folder.
 
 ## Version Boundary
 
@@ -18,8 +18,11 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 
 - Use `v2/` as the only editable product workspace for the next version.
 - Keep this repo independent from the parent v1 Git repository.
-- Start with documentation and repository setup only.
-- Wait for the next user instructions before selecting a framework, copying assets, or deploying.
+- Use Next.js, TypeScript, Tailwind CSS, Zod, and the existing Apps Script proxy pattern.
+- Render public catalog pages instantly from local defaults, then refresh from the sheet after hydration.
+- Keep Apps Script as the backend source of truth while making admin edits optimistic in the browser.
+- Store expense quantity in the v2 ledger contract; existing sheet rows default to quantity `1`.
+- Default finance reports to the selected month, initially the current month.
 
 ## Approaches Considered
 
@@ -27,6 +30,28 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Create a branch in the v1 repo. Rejected because a branch still shares repository history and makes accidental v1 edits easier.
 - Create a separate sibling folder outside the workspace. Rejected because the user asked for a new subfolder.
 
-## Next Step
+## Local Setup
 
-Wait for the user's v2 instructions before implementation begins.
+```powershell
+npm install
+npm run dev
+```
+
+Open <http://localhost:3000>.
+
+## Verification
+
+```powershell
+npm run lint
+npm test
+npm run build
+```
+
+## Backend Notes
+
+The v2 Apps Script copy is in `docs/apps-script/Code.gs`. It adds a `quantity` column to the Ledger sheet without clearing existing data, so it is safer for upgrading an existing sheet than the original v1 setup routine.
+
+Payment instructions shown after inquiry submission:
+
+- E-transfer: `m.ssethi1123@gmail.com`
+- Cash: arranged directly with Meera

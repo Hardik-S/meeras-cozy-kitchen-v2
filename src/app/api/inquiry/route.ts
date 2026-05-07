@@ -1,0 +1,61 @@
+import { NextResponse } from "next/server";
+import { submitInquiryToAppsScript } from "@/lib/apps-script";
+import { buildInquirySummary } from "@/lib/inquiry-summary";
+import { sendInquiryEmail } from "@/lib/mail";
+import { inquirySchema } from "@/lib/validation";
+
+const paymentEmail = "m.ssethi1123@gmail.com";
+
+export async function GET() {
+  return NextResponse.json({ ok: true, endpoint: "inquiry" });
+}
+
+export async function POST(request: Request) {
+  let payload: unknown;
+
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: "Invalid JSON." }, { status: 400 });
+  }
+
+  const parsed = inquirySchema.safeParse(payload);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Please review the inquiry details.",
+        issues: parsed.error.flatten().fieldErrors
+      },
+      { status: 400 }
+    );
+  }
+
+  const appsScript = await submitInquiryToAppsScript(parsed.data);
+  const email = appsScript.status === "sent"
+    ? { status: "skipped", reason: "apps-script-sent" }
+    : await sendInquiryEmail(parsed.data);
+
+  return NextResponse.json({
+    ok: true,
+    appsScript,
+    email,
+    summary: buildInquirySummary(parsed.data),
+    order: {
+      id: appsScript.status === "sent" && appsScript.orderId ? appsScript.orderId : `pending_${Date.now()}`,
+      name: parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      eventDate: parsed.data.eventDate,
+      productType: parsed.data.productType,
+      cakeSizeId: parsed.data.cakeSizeId ?? "",
+      flavourId: parsed.data.flavourId ?? "",
+      servings: parsed.data.servings,
+      budget: parsed.data.budget,
+      message: parsed.data.message,
+      paymentEmail,
+      summary: buildInquirySummary(parsed.data)
+    }
+  });
+}
