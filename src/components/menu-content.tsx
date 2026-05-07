@@ -2,38 +2,35 @@
 
 import { useEffect, useState } from "react";
 import type { PublicCatalog } from "@/lib/catalog";
+import { loadPublicCatalog, schedulePublicCatalogSync } from "@/lib/public-catalog-sync";
 import { holdForLaterItems } from "@/lib/pricing";
 
 export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog }) {
   const [catalog, setCatalog] = useState(initialCatalog);
-  const [source, setSource] = useState<"default" | "live" | "fallback">("default");
+  const [source, setSource] = useState<"default" | "cached" | "live" | "fallback">("default");
 
   useEffect(() => {
     let active = true;
 
-    fetch("/api/catalog")
-      .then((response) => response.json())
-      .then((body) => {
-        if (active && body.ok && body.catalog) {
-          setCatalog(body.catalog);
-          setSource(body.source === "live" ? "live" : "fallback");
-        }
-      })
-      .catch(() => {
+    const cancel = schedulePublicCatalogSync(() => {
+      void loadPublicCatalog(initialCatalog).then((result) => {
         if (active) {
-          setSource("fallback");
+          setCatalog(result.catalog);
+          setSource(result.source);
         }
       });
+    });
 
     return () => {
       active = false;
+      cancel();
     };
-  }, []);
+  }, [initialCatalog]);
 
   return (
     <>
       <p className="mt-3 text-sm font-bold text-[var(--muted)]" aria-live="polite">
-        {source === "default" ? "Showing the launch menu instantly while the live sheet refreshes." : source === "live" ? "Live menu refreshed." : "Showing saved launch menu."}
+        {source === "live" ? "Live menu refreshed." : source === "cached" ? "Showing recently refreshed menu." : "Showing saved launch menu."}
       </p>
 
       <section className="mt-12 grid gap-5 md:grid-cols-3" aria-label="Cake sizes">

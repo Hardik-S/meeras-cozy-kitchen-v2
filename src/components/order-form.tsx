@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Copy, Mail, Send } from "lucide-react";
 import { business } from "@/content/business";
 import { defaultPublicCatalog, type PublicCatalog } from "@/lib/catalog";
+import { loadPublicCatalog, schedulePublicCatalogSync } from "@/lib/public-catalog-sync";
 import { calculateQuoteEstimate, quoteRangeLabel, type ProductType } from "@/lib/pricing";
 import { getMinimumPickupDate } from "@/lib/dates";
 import { buildInquirySummary } from "@/lib/inquiry-summary";
@@ -120,11 +121,10 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
   useEffect(() => {
     let active = true;
 
-    fetch("/api/catalog")
-      .then((response) => response.json())
-      .then((body) => {
-        if (active && body.ok && body.catalog) {
-          const nextCatalog = body.catalog as PublicCatalog;
+    const cancel = schedulePublicCatalogSync(() => {
+      void loadPublicCatalog(catalog).then((result) => {
+        if (active) {
+          const nextCatalog = result.catalog;
           setLiveCatalog(nextCatalog);
           setForm((current) => ({
             ...current,
@@ -139,13 +139,14 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
               : nextCatalog.flavours[0]?.id ?? current.flavourId
           }));
         }
-      })
-      .catch(() => undefined);
+      });
+    });
 
     return () => {
       active = false;
+      cancel();
     };
-  }, []);
+  }, [catalog]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
