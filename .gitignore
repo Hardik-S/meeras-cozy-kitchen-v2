@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+dist/
+build/
+out/
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+*.log
+.turbo/
+.vercel/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
