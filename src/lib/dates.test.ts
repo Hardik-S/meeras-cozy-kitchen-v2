@@ -14,4 +14,10 @@ describe("date notice helpers", () => {
     expect(isAtLeastMinimumNotice("2026-05-12", today)).toBe(false);
     expect(isAtLeastMinimumNotice("2026-05-13", today)).toBe(true);
   });
+
+  it("rejects impossible calendar dates before applying notice rules", () => {
+    const today = new Date("2026-05-06T12:00:00-04:00");
+
+    expect(isAtLeastMinimumNotice("9999-99-99", today)).toBe(false);
+  });
 });

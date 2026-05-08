@@ -62,4 +62,15 @@ describe("inquirySchema", () => {
 
     expect(parsed.success).toBe(false);
   });
+
+  it("rejects impossible pickup dates", () => {
+    const schema = createInquirySchema(new Date("2026-05-06T12:00:00-04:00"));
+
+    const parsed = schema.safeParse({
+      ...baseInquiry,
+      eventDate: "9999-99-99"
+    });
+
+    expect(parsed.success).toBe(false);
+  });
 });
