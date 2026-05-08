@@ -80,18 +80,27 @@ export function AdminDashboard() {
   const [confettiKey, setConfettiKey] = useState(0);
 
   async function loadData() {
-    const response = await fetch("/api/admin/data", { cache: "no-store" });
+    let response: Response;
+    let body: { ok?: boolean; error?: string; source?: string; data?: AdminData };
+
+    try {
+      response = await fetch("/api/admin/data", { cache: "no-store" });
+      body = await response.json();
+    } catch {
+      setNotice("Admin data could not be loaded.");
+      return;
+    }
+
     if (response.status === 401) {
       setLocked(true);
       return;
     }
-    const body = await response.json();
-    if (!response.ok || !body.ok) {
+    if (!response.ok || !body.ok || !body.data) {
       setNotice(body.error || "Admin data could not be loaded.");
       return;
     }
     setData(body.data);
-    setSource(body.source);
+    setSource(body.source || "fallback");
     setLocked(false);
   }
 
