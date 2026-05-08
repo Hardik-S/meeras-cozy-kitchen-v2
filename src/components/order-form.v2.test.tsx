@@ -61,4 +61,19 @@ describe("OrderForm v2 submit flow", () => {
       paymentEmail: "m.ssethi1123@gmail.com"
     });
   });
+
+  it("shows an error when inquiry submission cannot reach the API", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("network unavailable");
+    }));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Please review the highlighted details.")).toBeInTheDocument();
+    });
+    expect(pushMock).not.toHaveBeenCalled();
+  });
 });
