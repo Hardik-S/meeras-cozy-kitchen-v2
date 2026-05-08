@@ -53,11 +53,14 @@ export async function postAppsScript<T>(action: string, payload: Record<string, 
   return body as T;
 }
 
-export async function submitInquiryToAppsScript(inquiry: InquiryInput): Promise<AppsScriptSubmitResult> {
+export async function submitInquiryToAppsScript(
+  inquiry: InquiryInput,
+  summary = buildInquirySummary(inquiry)
+): Promise<AppsScriptSubmitResult> {
   try {
     const response = await postAppsScript<{ ok: true; orderId?: string }>("submitOrder", {
       inquiry,
-      summary: buildInquirySummary(inquiry)
+      summary
     });
 
     if (isSkippedResult(response)) {

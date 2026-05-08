@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { defaultAdminData } from "@/lib/catalog";
 import { POST } from "./route";
 
 const validPayload = {
@@ -31,9 +32,15 @@ describe("POST /api/inquiry v2 response", () => {
   it("returns order summary metadata for the payment instructions page", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 })
-    ));
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(init?.body as string);
+
+      if (body.action === "listAdminData") {
+        return new Response(JSON.stringify({ ok: true, data: defaultAdminData }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
+    }));
 
     const response = await POST(
       new Request("http://localhost/api/inquiry", {
