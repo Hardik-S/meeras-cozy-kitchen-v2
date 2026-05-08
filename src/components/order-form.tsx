@@ -32,6 +32,22 @@ type FormState = {
   website: string;
 };
 
+type SubmittedOrder = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  eventDate?: string;
+  productType?: string;
+  cakeSizeId?: string;
+  flavourId?: string;
+  servings?: number;
+  budget?: string;
+  message?: string;
+  paymentEmail: string;
+  summary: string;
+};
+
 const initialForm: FormState = {
   name: "",
   email: "",
@@ -189,13 +205,20 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     const nextSummary = buildInquirySummary(parsed.data, liveCatalog);
     setSummary(nextSummary);
 
-    const response = await fetch("/api/inquiry", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(parsed.data)
-    });
+    let response: Response;
+    let body: { ok?: boolean; order?: SubmittedOrder };
 
-    const body = await response.json().catch(() => ({}));
+    try {
+      response = await fetch("/api/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data)
+      });
+      body = await response.json().catch(() => ({}));
+    } catch {
+      setStatus("error");
+      return;
+    }
 
     if (!response.ok || !body.ok) {
       setStatus("error");
