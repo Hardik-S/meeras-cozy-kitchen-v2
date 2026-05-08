@@ -141,12 +141,21 @@ export function AdminDashboard() {
       setData(optimistic);
     }
 
-    const response = await fetch("/api/admin/data", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, payload })
-    });
-    const body = await response.json();
+    let response: Response;
+    let body: { ok?: boolean; error?: string; result?: { data?: AdminData } };
+
+    try {
+      response = await fetch("/api/admin/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, payload })
+      });
+      body = await response.json();
+    } catch {
+      setData(previous);
+      setNotice("Change could not be saved.");
+      return;
+    }
 
     if (!response.ok || !body.ok) {
       setData(previous);

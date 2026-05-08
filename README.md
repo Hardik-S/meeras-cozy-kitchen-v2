@@ -25,6 +25,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Default finance reports to the selected month, initially the current month.
 - Validate inquiry pickup dates as real calendar days before applying the seven-day notice rule, so impossible `YYYY-MM-DD` strings cannot pass as future dates.
 - Build inquiry summaries from the live public catalog when it is available, so Sheet-managed products and flavours keep their customer-facing labels and quote ranges in emails, Apps Script rows, and the payment-instructions page.
+- Roll back optimistic admin edits when the Apps Script save request fails, so Meera sees the existing save-failure notice instead of a stale local status change.
 
 ## Approaches Considered
 
