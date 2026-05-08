@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { submitInquiryToAppsScript } from "@/lib/apps-script";
+import { listAdminDataFromAppsScript, submitInquiryToAppsScript } from "@/lib/apps-script";
+import { getPublicCatalogFromAdminData } from "@/lib/catalog";
 import { buildInquirySummary } from "@/lib/inquiry-summary";
 import { sendInquiryEmail } from "@/lib/mail";
 import { inquirySchema } from "@/lib/validation";
@@ -32,7 +33,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const appsScript = await submitInquiryToAppsScript(parsed.data);
+  const catalogResult = await listAdminDataFromAppsScript();
+  const catalog = catalogResult.status === "error"
+    ? undefined
+    : getPublicCatalogFromAdminData(catalogResult.data);
+  const summary = buildInquirySummary(parsed.data, catalog);
+  const appsScript = await submitInquiryToAppsScript(parsed.data, summary);
   const email = appsScript.status === "sent"
     ? { status: "skipped", reason: "apps-script-sent" }
     : await sendInquiryEmail(parsed.data);
@@ -41,7 +47,7 @@ export async function POST(request: Request) {
     ok: true,
     appsScript,
     email,
-    summary: buildInquirySummary(parsed.data),
+    summary,
     order: {
       id: appsScript.status === "sent" && appsScript.orderId ? appsScript.orderId : `pending_${Date.now()}`,
       name: parsed.data.name,
@@ -55,7 +61,7 @@ export async function POST(request: Request) {
       budget: parsed.data.budget,
       message: parsed.data.message,
       paymentEmail,
-      summary: buildInquirySummary(parsed.data)
+      summary
     }
   });
 }

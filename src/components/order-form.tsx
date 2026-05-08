@@ -186,7 +186,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       return;
     }
 
-    const nextSummary = buildInquirySummary(parsed.data);
+    const nextSummary = buildInquirySummary(parsed.data, liveCatalog);
     setSummary(nextSummary);
 
     const response = await fetch("/api/inquiry", {
