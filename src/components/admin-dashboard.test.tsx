@@ -18,6 +18,24 @@ describe("AdminDashboard", () => {
     expect(screen.getByLabelText("Admin PIN")).toBeInTheDocument();
   });
 
+  it("shows the load failure notice when admin data cannot be reached after login", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+
+      return Promise.reject(new Error("admin data network unavailable"));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    expect(await screen.findByText("Admin data could not be loaded.")).toBeInTheDocument();
+  });
+
   it("updates order status locally before the sheet mutation resolves", async () => {
     const data: AdminData = {
       ...defaultAdminData,
