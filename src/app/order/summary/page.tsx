@@ -7,8 +7,8 @@ import { CheckCircle2, Copy, Mail, WalletCards } from "lucide-react";
 
 type StoredOrder = {
   id: string;
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   phone?: string;
   eventDate?: string;
   productType?: string;
@@ -30,7 +30,7 @@ export default function OrderSummaryPage() {
   const transferNote = useMemo(() => {
     if (!order) return "";
 
-    return `Meera order ${order.id} - ${order.name}`;
+    return order.name ? `Meera order ${order.id} - ${order.name}` : `Meera order ${order.id}`;
   }, [order]);
 
   async function copyPaymentDetails() {
@@ -97,7 +97,7 @@ export default function OrderSummaryPage() {
           <article className="surface p-5">
             <h2 className="text-2xl font-black">Order summary</h2>
             <dl className="mt-5 grid gap-3 text-sm font-bold text-[var(--muted)] sm:grid-cols-2">
-              <div><dt>Name</dt><dd className="text-[var(--foreground)]">{order.name}</dd></div>
+              <div><dt>Name</dt><dd className="text-[var(--foreground)]">{order.name || "To confirm"}</dd></div>
               <div><dt>Order ID</dt><dd className="text-[var(--foreground)]">{order.id}</dd></div>
               <div><dt>Pickup date</dt><dd className="text-[var(--foreground)]">{order.eventDate || "To confirm"}</dd></div>
               <div><dt>Product</dt><dd className="text-[var(--foreground)]">{order.productType || "Custom order"}</dd></div>
@@ -111,19 +111,47 @@ export default function OrderSummaryPage() {
 }
 
 function useStoredOrder() {
+  const urlOrderId = useSyncExternalStore(
+    () => () => undefined,
+    () => readOrderIdFromLocation(),
+    () => undefined
+  );
   const rawOrder = useSyncExternalStore(
     () => () => undefined,
-    () => sessionStorage.getItem("meera:last-order"),
+    () => readStoredOrder(),
     () => null
   );
 
   return useMemo(() => {
-    if (!rawOrder) return null;
-
-    try {
-      return JSON.parse(rawOrder) as StoredOrder;
-    } catch {
-      return null;
+    if (rawOrder) {
+      try {
+        return JSON.parse(rawOrder) as StoredOrder;
+      } catch {
+        // Fall through to the URL id fallback below.
+      }
     }
-  }, [rawOrder]);
+
+    if (!urlOrderId) return null;
+
+    return {
+      id: urlOrderId,
+      paymentEmail,
+      summary: "Your inquiry was received. Meera will confirm the details directly."
+    };
+  }, [rawOrder, urlOrderId]);
+}
+
+function readStoredOrder() {
+  try {
+    return sessionStorage.getItem("meera:last-order");
+  } catch {
+    return null;
+  }
+}
+
+function readOrderIdFromLocation() {
+  if (typeof window === "undefined") return undefined;
+
+  const id = new URLSearchParams(window.location.search).get("id")?.trim();
+  return id || undefined;
 }
