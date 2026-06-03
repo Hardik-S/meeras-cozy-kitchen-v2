@@ -25,6 +25,7 @@ const validPayload = {
 
 describe("POST /api/inquiry", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
@@ -130,5 +131,21 @@ describe("POST /api/inquiry", () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  it("validates pickup notice against the current request date on long-lived servers", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2099-05-20T12:00:00-04:00"));
+
+    const response = await POST(
+      new Request("http://localhost/api/inquiry", {
+        method: "POST",
+        body: JSON.stringify(validPayload)
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.issues.eventDate).toContain("Please choose a pickup date at least 7 days away.");
   });
 });

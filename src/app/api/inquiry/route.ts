@@ -3,7 +3,7 @@ import { listAdminDataFromAppsScript, submitInquiryToAppsScript } from "@/lib/ap
 import { getPublicCatalogFromAdminData } from "@/lib/catalog";
 import { buildInquirySummary } from "@/lib/inquiry-summary";
 import { sendInquiryEmail } from "@/lib/mail";
-import { inquirySchema } from "@/lib/validation";
+import { createInquirySchema } from "@/lib/validation";
 
 const paymentEmail = "m.ssethi1123@gmail.com";
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON." }, { status: 400 });
   }
 
-  const parsed = inquirySchema.safeParse(payload);
+  const parsed = createInquirySchema().safeParse(payload);
 
   if (!parsed.success) {
     return NextResponse.json(
