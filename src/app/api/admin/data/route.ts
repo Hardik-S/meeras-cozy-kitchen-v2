@@ -19,7 +19,15 @@ function sessionTokenFromRequest(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)meera_admin_session=([^;]+)/);
 
-  return match ? decodeURIComponent(match[1]) : undefined;
+  if (!match) {
+    return undefined;
+  }
+
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return undefined;
+  }
 }
 
 function unauthorized() {
