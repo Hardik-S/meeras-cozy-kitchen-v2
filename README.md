@@ -27,6 +27,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Build inquiry summaries from the live public catalog when it is available, so Sheet-managed products and flavours keep their customer-facing labels and quote ranges in emails, Apps Script rows, and the payment-instructions page.
 - Roll back optimistic admin edits when the Apps Script save request fails, so Meera sees the existing save-failure notice instead of a stale local status change.
 - Catch rejected admin data loads after login or refresh, so a temporary Apps Script or network outage leaves the dashboard on its current screen with a clear load-failure notice instead of an unhandled client error.
+- Create the inquiry validation schema per API request so the seven-day pickup notice window cannot freeze on a long-lived server process.
 
 ## Approaches Considered
 
