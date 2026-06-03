@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { createInquirySchema, inquirySchema } from "./validation";
+import { createInquirySchema } from "./validation";
+
+const fixtureToday = new Date("2026-05-06T12:00:00-04:00");
 
 const baseInquiry = {
   name: "Amina",
@@ -24,12 +26,14 @@ const baseInquiry = {
 
 describe("inquirySchema", () => {
   it("accepts a complete inquiry with required acknowledgements", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse(baseInquiry);
 
     expect(parsed.success).toBe(true);
   });
 
   it("accepts Sheet-driven product ids from the admin catalog", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
       ...baseInquiry,
       productType: "mini-cheesecake-box",
@@ -40,6 +44,7 @@ describe("inquirySchema", () => {
   });
 
   it("rejects missing acknowledgement and honeypot submissions", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
       ...baseInquiry,
       acknowledgements: {
@@ -53,7 +58,7 @@ describe("inquirySchema", () => {
   });
 
   it("rejects pickup dates inside the seven-day notice window", () => {
-    const schema = createInquirySchema(new Date("2026-05-06T12:00:00-04:00"));
+    const schema = createInquirySchema(fixtureToday);
 
     const parsed = schema.safeParse({
       ...baseInquiry,
@@ -64,7 +69,7 @@ describe("inquirySchema", () => {
   });
 
   it("rejects impossible pickup dates", () => {
-    const schema = createInquirySchema(new Date("2026-05-06T12:00:00-04:00"));
+    const schema = createInquirySchema(fixtureToday);
 
     const parsed = schema.safeParse({
       ...baseInquiry,
