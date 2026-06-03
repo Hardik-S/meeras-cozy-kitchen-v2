@@ -27,6 +27,7 @@ function fillValidInquiry() {
 
 describe("OrderForm v2 submit flow", () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     sessionStorage.clear();
     pushMock.mockClear();
@@ -75,5 +76,34 @@ describe("OrderForm v2 submit flow", () => {
       expect(screen.getByText("Please review the highlighted details.")).toBeInTheDocument();
     });
     expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("still navigates after success when browser storage is unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "ord_storage_blocked",
+          name: "Amina",
+          email: "amina@example.com",
+          paymentEmail: "m.ssethi1123@gmail.com",
+          summary: "Name: Amina"
+        }
+      }), { status: 200 })
+    ));
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("storage unavailable");
+    });
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_storage_blocked");
+    });
+    expect(screen.queryByText("Please review the highlighted details.")).not.toBeInTheDocument();
+
+    setItemSpy.mockRestore();
   });
 });

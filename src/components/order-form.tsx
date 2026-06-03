@@ -84,6 +84,14 @@ function mailtoLink(summary: string) {
   return `mailto:${business.orderEmail}?subject=${subject}&body=${body}`;
 }
 
+function storeSubmittedOrder(order: SubmittedOrder) {
+  try {
+    sessionStorage.setItem("meera:last-order", JSON.stringify(order));
+  } catch {
+    // Browser storage can be unavailable in privacy modes; the inquiry already succeeded.
+  }
+}
+
 export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: PublicCatalog }) {
   const router = useRouter();
   const [liveCatalog, setLiveCatalog] = useState(catalog);
@@ -240,7 +248,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       paymentEmail: "m.ssethi1123@gmail.com",
       summary: nextSummary
     };
-    sessionStorage.setItem("meera:last-order", JSON.stringify(order));
+    storeSubmittedOrder(order);
     setStatus("sent");
     router.push(`/order/summary?id=${encodeURIComponent(order.id)}`);
   }
