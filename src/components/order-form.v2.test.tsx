@@ -25,8 +25,14 @@ function fillValidInquiry() {
   }
 }
 
+function fillInquiryWithPickupDate(eventDate: string) {
+  fillValidInquiry();
+  fireEvent.change(screen.getByLabelText("Pickup date"), { target: { value: eventDate } });
+}
+
 describe("OrderForm v2 submit flow", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     sessionStorage.clear();
@@ -75,6 +81,32 @@ describe("OrderForm v2 submit flow", () => {
     await waitFor(() => {
       expect(screen.getByText("Please review the highlighted details.")).toBeInTheDocument();
     });
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("validates pickup notice against the current browser date before submit", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2099-01-01T12:00:00"));
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "ord_stale_notice",
+          name: "Amina",
+          email: "amina@example.com",
+          paymentEmail: "m.ssethi1123@gmail.com",
+          summary: "Name: Amina"
+        }
+      }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { container } = render(<OrderForm />);
+    fillInquiryWithPickupDate("2099-01-07");
+    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+
+    expect(screen.getByText("Please choose a pickup date at least 7 days away.")).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
   });
 

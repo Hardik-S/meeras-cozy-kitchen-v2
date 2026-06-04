@@ -9,7 +9,7 @@ import { loadPublicCatalog, schedulePublicCatalogSync } from "@/lib/public-catal
 import { calculateQuoteEstimate, quoteRangeLabel, type ProductType } from "@/lib/pricing";
 import { getMinimumPickupDate } from "@/lib/dates";
 import { buildInquirySummary } from "@/lib/inquiry-summary";
-import { inquirySchema, type InquiryInput } from "@/lib/validation";
+import { createInquirySchema, type InquiryInput } from "@/lib/validation";
 
 type FormState = {
   name: string;
@@ -198,7 +198,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     setConfettiKey((value) => value + 1);
     setErrors({});
 
-    const parsed = inquirySchema.safeParse(toPayload(form));
+    const parsed = createInquirySchema().safeParse(toPayload(form));
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       setErrors(
