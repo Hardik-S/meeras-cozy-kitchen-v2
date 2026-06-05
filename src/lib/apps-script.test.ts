@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listAdminDataFromAppsScript, submitInquiryToAppsScript } from "./apps-script";
+import { listAdminDataFromAppsScript, mutateAdminDataInAppsScript, submitInquiryToAppsScript } from "./apps-script";
 import type { InquiryInput } from "./validation";
 
 const inquiry: InquiryInput = {
@@ -75,5 +75,17 @@ describe("Apps Script integration", () => {
       status: "error",
       message: "Apps Script returned malformed admin data."
     });
+  });
+
+  it("rejects malformed admin data returned after a mutation", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ ok: true, data: { orders: null, products: [] } }), { status: 200 })
+    ));
+
+    await expect(mutateAdminDataInAppsScript("upsertProduct", { product: { id: "cake" } }))
+      .rejects
+      .toThrow("Apps Script returned malformed admin data.");
   });
 });
