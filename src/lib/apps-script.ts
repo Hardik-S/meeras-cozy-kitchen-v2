@@ -27,6 +27,20 @@ function isSkippedResult(value: unknown): value is AppsScriptSkippedResult {
   return Boolean(value && typeof value === "object" && "status" in value && value.status === "skipped");
 }
 
+function isAdminData(value: unknown): value is AdminData {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const data = value as Partial<AdminData>;
+
+  return Boolean(data.settings && typeof data.settings === "object")
+    && Array.isArray(data.products)
+    && Array.isArray(data.offerings)
+    && Array.isArray(data.orders)
+    && Array.isArray(data.ledger);
+}
+
 export async function postAppsScript<T>(action: string, payload: Record<string, unknown> = {}): Promise<T | AppsScriptSkippedResult> {
   const config = getAppsScriptConfig();
 
@@ -82,6 +96,10 @@ export async function listAdminDataFromAppsScript(): Promise<AppsScriptDataResul
 
     if (isSkippedResult(response)) {
       return { status: "fallback", data: defaultAdminData, reason: "missing-env" };
+    }
+
+    if (!isAdminData(response.data)) {
+      throw new Error("Apps Script returned malformed admin data.");
     }
 
     return { status: "live", data: response.data };

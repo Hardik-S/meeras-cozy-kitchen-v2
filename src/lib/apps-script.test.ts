@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { submitInquiryToAppsScript } from "./apps-script";
+import { listAdminDataFromAppsScript, submitInquiryToAppsScript } from "./apps-script";
 import type { InquiryInput } from "./validation";
 
 const inquiry: InquiryInput = {
@@ -61,6 +61,19 @@ describe("Apps Script integration", () => {
       action: "submitOrder",
       secret: "shared-secret",
       inquiry: { name: "Amina", email: "amina@example.com" }
+    });
+  });
+
+  it("reports malformed live admin data instead of treating it as catalog data", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ ok: true, data: { products: null, offerings: [] } }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toEqual({
+      status: "error",
+      message: "Apps Script returned malformed admin data."
     });
   });
 });
