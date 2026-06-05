@@ -36,6 +36,29 @@ describe("AdminDashboard", () => {
     expect(await screen.findByText("Admin data could not be loaded.")).toBeInTheDocument();
   });
 
+  it("shows the load failure notice when admin data is malformed after login", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({
+        ok: true,
+        source: "live",
+        data: { ...defaultAdminData, orders: null }
+      }), { status: 200 }));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    expect(await screen.findByText("Admin data could not be loaded.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Admin PIN")).toBeInTheDocument();
+  });
+
   it("shows a login failure notice when the admin session request is unreachable", async () => {
     vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
       const url = String(input);
