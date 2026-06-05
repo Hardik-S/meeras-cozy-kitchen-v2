@@ -40,4 +40,28 @@ describe("public catalog sync", () => {
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("falls back instead of caching malformed live catalog data", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        source: "live",
+        catalog: {
+          products: "not an array",
+          offerings: [],
+          cakeSizes: [],
+          flavours: [],
+          addOns: []
+        }
+      })
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
+      catalog: defaultPublicCatalog,
+      source: "default"
+    });
+    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+  });
 });
