@@ -65,6 +65,17 @@ function csvEscape(value: unknown) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
+function isAdminData(value: unknown): value is AdminData {
+  if (!value || typeof value !== "object") return false;
+
+  const data = value as Partial<AdminData>;
+  return Boolean(data.settings && typeof data.settings === "object")
+    && Array.isArray(data.products)
+    && Array.isArray(data.offerings)
+    && Array.isArray(data.orders)
+    && Array.isArray(data.ledger);
+}
+
 export function AdminDashboard() {
   const [locked, setLocked] = useState(true);
   const [pin, setPin] = useState("");
@@ -95,7 +106,7 @@ export function AdminDashboard() {
       setLocked(true);
       return;
     }
-    if (!response.ok || !body.ok || !body.data) {
+    if (!response.ok || !body.ok || !isAdminData(body.data)) {
       setNotice(body.error || "Admin data could not be loaded.");
       return;
     }
