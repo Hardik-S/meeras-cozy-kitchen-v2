@@ -107,11 +107,18 @@ export function AdminDashboard() {
   async function login(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNotice("");
-    const response = await fetch("/api/admin/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pin })
-    });
+    let response: Response;
+
+    try {
+      response = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin })
+      });
+    } catch {
+      setNotice("Admin login could not be reached.");
+      return;
+    }
 
     if (!response.ok) {
       setNotice("That PIN did not open the kitchen.");

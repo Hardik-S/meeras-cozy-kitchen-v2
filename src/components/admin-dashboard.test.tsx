@@ -36,6 +36,24 @@ describe("AdminDashboard", () => {
     expect(await screen.findByText("Admin data could not be loaded.")).toBeInTheDocument();
   });
 
+  it("shows a login failure notice when the admin session request is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.reject(new Error("admin session network unavailable"));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    expect(await screen.findByText("Admin login could not be reached.")).toBeInTheDocument();
+  });
+
   it("updates order status locally before the sheet mutation resolves", async () => {
     const data: AdminData = {
       ...defaultAdminData,
