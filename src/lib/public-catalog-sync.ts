@@ -9,13 +9,24 @@ const cacheKey = "meera:public-catalog";
 const cacheTtlMs = 10 * 60 * 1000;
 let inFlight: Promise<CatalogSyncResult> | undefined;
 
+function isPublicCatalog(value: unknown): value is PublicCatalog {
+  if (!value || typeof value !== "object") return false;
+
+  const catalog = value as Partial<Record<keyof PublicCatalog, unknown>>;
+  return Array.isArray(catalog.products)
+    && Array.isArray(catalog.offerings)
+    && Array.isArray(catalog.cakeSizes)
+    && Array.isArray(catalog.flavours)
+    && Array.isArray(catalog.addOns);
+}
+
 function readCachedCatalog(now = Date.now()): CatalogSyncResult | undefined {
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (!cached) return undefined;
 
-    const parsed = JSON.parse(cached) as { savedAt?: number; catalog?: PublicCatalog };
-    if (!parsed.catalog || !parsed.savedAt || now - parsed.savedAt > cacheTtlMs) {
+    const parsed = JSON.parse(cached) as { savedAt?: number; catalog?: unknown };
+    if (!isPublicCatalog(parsed.catalog) || !parsed.savedAt || now - parsed.savedAt > cacheTtlMs) {
       return undefined;
     }
 
@@ -50,10 +61,10 @@ export async function loadPublicCatalog(
       const response = await fetch("/api/catalog", { signal: controller.signal });
       const body = await response.json();
 
-      if (response.ok && body.ok && body.catalog) {
+      if (response.ok && body.ok && isPublicCatalog(body.catalog)) {
         writeCachedCatalog(body.catalog);
         return {
-          catalog: body.catalog as PublicCatalog,
+          catalog: body.catalog,
           source: body.source === "live" ? "live" : "fallback"
         };
       }
