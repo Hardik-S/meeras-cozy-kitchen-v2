@@ -118,5 +118,9 @@ export async function mutateAdminDataInAppsScript(action: string, payload: Recor
     return response;
   }
 
+  if ("data" in response && response.data !== undefined && !isAdminData(response.data)) {
+    throw new Error("Apps Script returned malformed admin data.");
+  }
+
   return response;
 }
