@@ -191,6 +191,12 @@ export function AdminDashboard() {
     }
 
     if (body.result?.data) {
+      if (!isAdminData(body.result.data)) {
+        setData(previous);
+        setNotice("Change could not be saved.");
+        return;
+      }
+
       setData(body.result.data);
     } else {
       await loadData();
