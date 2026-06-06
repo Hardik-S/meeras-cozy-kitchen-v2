@@ -102,7 +102,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     flavourId: catalog.flavours[0]?.id ?? initialForm.flavourId
   }));
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error" | "copied">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error" | "copied" | "copy-error">("idle");
   const [summary, setSummary] = useState("");
   const [confettiKey, setConfettiKey] = useState(0);
   const estimate = useMemo(
@@ -187,9 +187,14 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
   }
 
   async function copySummary() {
-    await navigator.clipboard.writeText(currentSummary);
-    setSummary(currentSummary);
-    setStatus("copied");
+    try {
+      await navigator.clipboard.writeText(currentSummary);
+      setSummary(currentSummary);
+      setStatus("copied");
+    } catch {
+      setSummary(currentSummary);
+      setStatus("copy-error");
+    }
   }
 
   async function submitInquiry(event: React.FormEvent<HTMLFormElement>) {
@@ -421,6 +426,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
               Email
             </a>
           </div>
+          {status === "copy-error" ? <p className="mt-3 text-sm font-bold text-[var(--accent-strong)]">Copy failed. Use the email button or select the summary manually.</p> : null}
         </div>
       </aside>
     </div>

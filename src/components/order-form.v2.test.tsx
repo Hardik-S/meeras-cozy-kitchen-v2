@@ -138,4 +138,22 @@ describe("OrderForm v2 submit flow", () => {
 
     setItemSpy.mockRestore();
   });
+
+  it("shows a copy-specific notice when clipboard access is blocked", async () => {
+    const writeTextMock = vi.fn(async () => {
+      throw new Error("clipboard blocked");
+    });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock }
+    });
+
+    render(<OrderForm />);
+    fireEvent.click(screen.getByRole("button", { name: /^copy$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Copy failed. Use the email button or select the summary manually.")).toBeInTheDocument();
+    });
+    expect(writeTextMock).toHaveBeenCalled();
+  });
 });
