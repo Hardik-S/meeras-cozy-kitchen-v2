@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import OrderSummaryPage from "./page";
 
@@ -21,5 +21,29 @@ describe("OrderSummaryPage", () => {
     expect(screen.getByRole("heading", { name: "Here are your payment instructions." })).toBeInTheDocument();
     expect(screen.getAllByText("ord_storage_blocked")[0]).toBeInTheDocument();
     expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
+  });
+
+  it("shows a payment copy fallback when clipboard access is blocked", async () => {
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: "ord_clipboard_blocked",
+      name: "Amina",
+      paymentEmail: "m.ssethi1123@gmail.com",
+      summary: "Name: Amina"
+    }));
+    const writeTextMock = vi.fn(async () => {
+      throw new Error("clipboard blocked");
+    });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock }
+    });
+
+    render(<OrderSummaryPage />);
+    fireEvent.click(screen.getByRole("button", { name: /copy e-transfer details/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Copy failed. Use the email button or select the payment details manually.")).toBeInTheDocument();
+    });
+    expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_clipboard_blocked - Amina");
   });
 });

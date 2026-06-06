@@ -26,6 +26,7 @@ const paymentEmail = "m.ssethi1123@gmail.com";
 export default function OrderSummaryPage() {
   const order = useStoredOrder();
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const transferNote = useMemo(() => {
     if (!order) return "";
@@ -34,8 +35,14 @@ export default function OrderSummaryPage() {
   }, [order]);
 
   async function copyPaymentDetails() {
-    await navigator.clipboard.writeText(`E-transfer: ${paymentEmail}\nMemo: ${transferNote}`);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(`E-transfer: ${paymentEmail}\nMemo: ${transferNote}`);
+      setCopied(true);
+      setCopyFailed(false);
+    } catch {
+      setCopied(false);
+      setCopyFailed(true);
+    }
   }
 
   if (!order) {
@@ -73,6 +80,11 @@ export default function OrderSummaryPage() {
               Email Meera
             </a>
           </div>
+          {copyFailed ? (
+            <p className="mt-3 text-sm font-bold text-[var(--accent-strong)]">
+              Copy failed. Use the email button or select the payment details manually.
+            </p>
+          ) : null}
         </div>
 
         <div className="grid gap-5">
