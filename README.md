@@ -33,6 +33,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Guard malformed admin data after browser dashboard mutations too, so optimistic edits roll back when a proxy response is incomplete.
 - Catch rejected admin data loads after login or refresh, so a temporary Apps Script or network outage leaves the dashboard on its current screen with a clear load-failure notice instead of an unhandled client error.
 - Catch rejected admin login requests too, so a temporary session endpoint outage leaves the PIN screen with a clear retry notice.
+- Catch rejected browser clipboard writes, so customers can fall back to email or manual selection instead of hitting an unhandled copy action.
 - Create the inquiry validation schema per API request so the seven-day pickup notice window cannot freeze on a long-lived server process.
 - Create the browser form validation schema at submit time too, so an already-open order tab uses the current pickup notice window before calling the API.
 
