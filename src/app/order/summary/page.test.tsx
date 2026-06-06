@@ -23,6 +23,20 @@ describe("OrderSummaryPage", () => {
     expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
   });
 
+  it("falls back to the URL id when stored order data is malformed", () => {
+    window.history.replaceState(null, "", "/order/summary?id=ord_valid_url");
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: 123,
+      paymentEmail: "m.ssethi1123@gmail.com"
+    }));
+
+    render(<OrderSummaryPage />);
+
+    expect(screen.getByRole("heading", { name: "Here are your payment instructions." })).toBeInTheDocument();
+    expect(screen.getAllByText("ord_valid_url")[0]).toBeInTheDocument();
+    expect(screen.getByText("Your inquiry was received. Meera will confirm the details directly.")).toBeInTheDocument();
+  });
+
   it("shows a payment copy fallback when clipboard access is blocked", async () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_clipboard_blocked",

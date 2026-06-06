@@ -137,7 +137,11 @@ function useStoredOrder() {
   return useMemo(() => {
     if (rawOrder) {
       try {
-        return JSON.parse(rawOrder) as StoredOrder;
+        const parsed = JSON.parse(rawOrder);
+
+        if (isStoredOrder(parsed)) {
+          return parsed;
+        }
       } catch {
         // Fall through to the URL id fallback below.
       }
@@ -151,6 +155,28 @@ function useStoredOrder() {
       summary: "Your inquiry was received. Meera will confirm the details directly."
     };
   }, [rawOrder, urlOrderId]);
+}
+
+function isStoredOrder(value: unknown): value is StoredOrder {
+  if (!value || typeof value !== "object") return false;
+
+  const order = value as Record<string, unknown>;
+
+  return typeof order.id === "string"
+    && order.id.trim().length > 0
+    && typeof order.summary === "string"
+    && order.summary.trim().length > 0
+    && (order.name === undefined || typeof order.name === "string")
+    && (order.email === undefined || typeof order.email === "string")
+    && (order.phone === undefined || typeof order.phone === "string")
+    && (order.eventDate === undefined || typeof order.eventDate === "string")
+    && (order.productType === undefined || typeof order.productType === "string")
+    && (order.cakeSizeId === undefined || typeof order.cakeSizeId === "string")
+    && (order.flavourId === undefined || typeof order.flavourId === "string")
+    && (order.servings === undefined || typeof order.servings === "number")
+    && (order.budget === undefined || typeof order.budget === "string")
+    && (order.message === undefined || typeof order.message === "string")
+    && (order.paymentEmail === undefined || typeof order.paymentEmail === "string");
 }
 
 function readStoredOrder() {
