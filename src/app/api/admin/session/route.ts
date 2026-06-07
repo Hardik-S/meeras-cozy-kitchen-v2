@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminSessionToken, verifyAdminPin } from "@/lib/admin-auth";
 
+function recordFromJson(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}));
+  const body = recordFromJson(await request.json().catch(() => ({})));
   const pin = typeof body.pin === "string" ? body.pin : "";
 
   if (!verifyAdminPin(pin)) {

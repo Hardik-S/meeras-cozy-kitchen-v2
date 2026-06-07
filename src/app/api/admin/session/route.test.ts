@@ -26,4 +26,16 @@ describe("POST /api/admin/session", () => {
 
     expect(response.status).toBe(401);
   });
+
+  it("rejects a null login body without throwing", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/admin/session", {
+        method: "POST",
+        body: JSON.stringify(null)
+      })
+    );
+
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Invalid PIN." });
+  });
 });
