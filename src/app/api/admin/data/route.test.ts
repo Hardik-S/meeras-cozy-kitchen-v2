@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { GET } from "./route";
+import { createAdminSessionToken } from "@/lib/admin-auth";
+import { GET, POST } from "./route";
 
 describe("GET /api/admin/data", () => {
   it("rejects requests without an admin session", async () => {
@@ -16,5 +17,20 @@ describe("GET /api/admin/data", () => {
     }));
 
     expect(response.status).toBe(401);
+  });
+});
+
+describe("POST /api/admin/data", () => {
+  it("rejects a null mutation body without throwing", async () => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: "null"
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported admin action." });
   });
 });
