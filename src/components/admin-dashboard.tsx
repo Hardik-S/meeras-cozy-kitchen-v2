@@ -81,6 +81,7 @@ export function AdminDashboard() {
   const [pin, setPin] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("orders");
   const [data, setData] = useState<AdminData>(defaultAdminData);
+  const [settingsDraft, setSettingsDraft] = useState(defaultAdminData.settings);
   const [source, setSource] = useState("fallback");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
@@ -111,6 +112,7 @@ export function AdminDashboard() {
       return;
     }
     setData(body.data);
+    setSettingsDraft(body.data.settings);
     setSource(body.source || "fallback");
     setLocked(false);
   }
@@ -181,27 +183,29 @@ export function AdminDashboard() {
     } catch {
       setData(previous);
       setNotice("Change could not be saved.");
-      return;
+      return false;
     }
 
     if (!response.ok || !body.ok) {
       setData(previous);
       setNotice(body.error || "Change could not be saved.");
-      return;
+      return false;
     }
 
     if (body.result?.data) {
       if (!isAdminData(body.result.data)) {
         setData(previous);
         setNotice("Change could not be saved.");
-        return;
+        return false;
       }
 
       setData(body.result.data);
+      setSettingsDraft(body.result.data.settings);
     } else {
       await loadData();
     }
     setNotice("Saved.");
+    return true;
   }
 
   const sortedOrders = useMemo(
@@ -437,7 +441,17 @@ export function AdminDashboard() {
       {activeTab === "settings" ? (
         <div className="admin-panel max-w-3xl">
           <h2>Email settings</h2>
-          <SettingsEditor data={data} setData={setData} save={() => mutate("updateSettings", { settings: data.settings })} />
+          <SettingsEditor settings={settingsDraft} setSettings={setSettingsDraft} save={async () => {
+            const previousSettings = data.settings;
+            const saved = await mutate("updateSettings", { settings: settingsDraft }, (current) => ({
+              ...current,
+              settings: settingsDraft
+            }));
+
+            if (!saved) {
+              setSettingsDraft(previousSettings);
+            }
+          }} />
         </div>
       ) : null}
     </section>
@@ -501,20 +515,20 @@ function LedgerEditor({ entry, onChange, onSave }: { entry: LedgerEntry; onChang
   );
 }
 
-function SettingsEditor({ data, setData, save }: { data: AdminData; setData: (data: AdminData) => void; save: () => void }) {
+function SettingsEditor({ settings, setSettings, save }: { settings: AdminData["settings"]; setSettings: (settings: AdminData["settings"]) => void; save: () => void }) {
   return (
     <div className="grid gap-4">
       <label className="grid gap-2 text-sm font-black">Default sender
-        <input className="admin-input" value={data.settings.defaultSender} onChange={(event) => setData({ ...data, settings: { ...data.settings, defaultSender: event.target.value } })} />
+        <input className="admin-input" value={settings.defaultSender} onChange={(event) => setSettings({ ...settings, defaultSender: event.target.value })} />
       </label>
       <label className="grid gap-2 text-sm font-black">Default receiver
-        <input className="admin-input" value={data.settings.defaultReceiver} onChange={(event) => setData({ ...data, settings: { ...data.settings, defaultReceiver: event.target.value } })} />
+        <input className="admin-input" value={settings.defaultReceiver} onChange={(event) => setSettings({ ...settings, defaultReceiver: event.target.value })} />
       </label>
       <label className="grid gap-2 text-sm font-black">Sender display name
-        <input className="admin-input" value={data.settings.senderName} onChange={(event) => setData({ ...data, settings: { ...data.settings, senderName: event.target.value } })} />
+        <input className="admin-input" value={settings.senderName} onChange={(event) => setSettings({ ...settings, senderName: event.target.value })} />
       </label>
       <label className="grid gap-2 text-sm font-black">Chef notification copy
-        <textarea className="admin-input min-h-28" value={data.settings.chefNotificationCopy} onChange={(event) => setData({ ...data, settings: { ...data.settings, chefNotificationCopy: event.target.value } })} />
+        <textarea className="admin-input min-h-28" value={settings.chefNotificationCopy} onChange={(event) => setSettings({ ...settings, chefNotificationCopy: event.target.value })} />
       </label>
       <button className="btn-primary" type="button" onClick={save}><Save size={17} /> Save settings</button>
     </div>
