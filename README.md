@@ -37,6 +37,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Catch rejected payment-instruction clipboard writes too, so customers can still email Meera or manually select the e-transfer details.
 - Ignore malformed stored order summaries on the payment page, so customers can still use the URL order id fallback.
 - Normalize Apps Script order ids before building payment instructions, so malformed success responses fall back to a pending local id.
+- Ignore malformed order metadata returned to the browser after a successful inquiry, so customers land on a valid pending payment page instead of storing an unusable order.
 - Create the inquiry validation schema per API request so the seven-day pickup notice window cannot freeze on a long-lived server process.
 - Create the browser form validation schema at submit time too, so an already-open order tab uses the current pickup notice window before calling the API.
 
