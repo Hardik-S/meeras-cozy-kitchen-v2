@@ -15,6 +15,10 @@ const allowedMutations = new Set([
   "updateOrderStatus"
 ]);
 
+function recordFromJson(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 function sessionTokenFromRequest(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)meera_admin_session=([^;]+)/);
@@ -61,7 +65,7 @@ export async function POST(request: Request) {
     return unauthorized();
   }
 
-  const body = await request.json().catch(() => ({}));
+  const body = recordFromJson(await request.json().catch(() => ({})));
   const action = typeof body.action === "string" ? body.action : "";
 
   if (!allowedMutations.has(action)) {
@@ -69,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await mutateAdminDataInAppsScript(action, typeof body.payload === "object" && body.payload ? body.payload : {});
+    const result = await mutateAdminDataInAppsScript(action, recordFromJson(body.payload));
 
     if ("status" in result && result.status === "skipped") {
       return NextResponse.json(

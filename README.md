@@ -33,6 +33,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Guard malformed admin data after browser dashboard mutations too, so optimistic edits roll back when a proxy response is incomplete.
 - Catch rejected admin data loads after login or refresh, so a temporary Apps Script or network outage leaves the dashboard on its current screen with a clear load-failure notice instead of an unhandled client error.
 - Catch rejected admin login requests too, so a temporary session endpoint outage leaves the PIN screen with a clear retry notice.
+- Reject non-object admin mutation bodies as unsupported actions, so malformed dashboard requests return a controlled 400 instead of a server error.
 - Keep email settings edits in a draft until save succeeds, so a failed sheet write does not leave unsaved inbox settings visible as if they persisted.
 - Clear malformed public catalog cache entries when the live catalog is unavailable, so stale browser storage does not keep slowing fallback page loads.
 - Catch rejected browser clipboard writes, so customers can fall back to email or manual selection instead of hitting an unhandled copy action.

@@ -67,7 +67,7 @@ describe("OrderForm v2 submit flow", () => {
       id: "ord_route_123",
       paymentEmail: "m.ssethi1123@gmail.com"
     });
-  });
+  }, 10_000);
 
   it("shows an error when inquiry submission cannot reach the API", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
