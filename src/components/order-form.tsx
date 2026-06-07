@@ -92,6 +92,54 @@ function storeSubmittedOrder(order: SubmittedOrder) {
   }
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === "string";
+}
+
+function isSubmittedOrder(value: unknown): value is SubmittedOrder {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const order = value as Record<string, unknown>;
+
+  return isNonEmptyString(order.id)
+    && isNonEmptyString(order.name)
+    && isNonEmptyString(order.email)
+    && isOptionalString(order.phone)
+    && isOptionalString(order.eventDate)
+    && isOptionalString(order.productType)
+    && isOptionalString(order.cakeSizeId)
+    && isOptionalString(order.flavourId)
+    && (order.servings === undefined || typeof order.servings === "number")
+    && isOptionalString(order.budget)
+    && isOptionalString(order.message)
+    && isNonEmptyString(order.paymentEmail)
+    && isNonEmptyString(order.summary);
+}
+
+function buildPendingOrder(data: InquiryInput, summary: string): SubmittedOrder {
+  return {
+    id: `pending_${Date.now()}`,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    eventDate: data.eventDate,
+    productType: data.productType,
+    cakeSizeId: data.cakeSizeId ?? "",
+    flavourId: data.flavourId ?? "",
+    servings: data.servings,
+    budget: data.budget,
+    message: data.message,
+    paymentEmail: "m.ssethi1123@gmail.com",
+    summary
+  };
+}
+
 export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: PublicCatalog }) {
   const router = useRouter();
   const [liveCatalog, setLiveCatalog] = useState(catalog);
@@ -219,7 +267,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     setSummary(nextSummary);
 
     let response: Response;
-    let body: { ok?: boolean; order?: SubmittedOrder };
+    let body: { ok?: boolean; order?: unknown };
 
     try {
       response = await fetch("/api/inquiry", {
@@ -238,21 +286,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       return;
     }
 
-    const order = body.order ?? {
-      id: `pending_${Date.now()}`,
-      name: parsed.data.name,
-      email: parsed.data.email,
-      phone: parsed.data.phone,
-      eventDate: parsed.data.eventDate,
-      productType: parsed.data.productType,
-      cakeSizeId: parsed.data.cakeSizeId ?? "",
-      flavourId: parsed.data.flavourId ?? "",
-      servings: parsed.data.servings,
-      budget: parsed.data.budget,
-      message: parsed.data.message,
-      paymentEmail: "m.ssethi1123@gmail.com",
-      summary: nextSummary
-    };
+    const order = isSubmittedOrder(body.order) ? body.order : buildPendingOrder(parsed.data, nextSummary);
     storeSubmittedOrder(order);
     setStatus("sent");
     router.push(`/order/summary?id=${encodeURIComponent(order.id)}`);

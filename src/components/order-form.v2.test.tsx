@@ -139,6 +139,36 @@ describe("OrderForm v2 submit flow", () => {
     setItemSpy.mockRestore();
   });
 
+  it("falls back to a pending order when the API returns malformed order metadata", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date("2099-01-01T12:00:00-05:00"));
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: 123,
+          name: "Amina",
+          email: "amina@example.com",
+          paymentEmail: "",
+          summary: ""
+        }
+      }), { status: 200 })
+    ));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=pending_4070970000000");
+    });
+
+    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
+      id: "pending_4070970000000",
+      paymentEmail: "m.ssethi1123@gmail.com"
+    });
+  });
+
   it("shows a copy-specific notice when clipboard access is blocked", async () => {
     const writeTextMock = vi.fn(async () => {
       throw new Error("clipboard blocked");
