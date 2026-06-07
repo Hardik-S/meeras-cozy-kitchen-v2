@@ -20,18 +20,28 @@ function isPublicCatalog(value: unknown): value is PublicCatalog {
     && Array.isArray(catalog.addOns);
 }
 
+function clearCachedCatalog() {
+  try {
+    sessionStorage.removeItem(cacheKey);
+  } catch {
+    // Public pages should continue with defaults even when browser storage is unavailable.
+  }
+}
+
 function readCachedCatalog(now = Date.now()): CatalogSyncResult | undefined {
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (!cached) return undefined;
 
     const parsed = JSON.parse(cached) as { savedAt?: number; catalog?: unknown };
-    if (!isPublicCatalog(parsed.catalog) || !parsed.savedAt || now - parsed.savedAt > cacheTtlMs) {
+    if (!isPublicCatalog(parsed.catalog) || typeof parsed.savedAt !== "number" || now - parsed.savedAt > cacheTtlMs) {
+      clearCachedCatalog();
       return undefined;
     }
 
     return { catalog: parsed.catalog, source: "cached" };
   } catch {
+    clearCachedCatalog();
     return undefined;
   }
 }
