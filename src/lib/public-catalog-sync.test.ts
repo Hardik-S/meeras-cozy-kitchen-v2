@@ -41,6 +41,27 @@ describe("public catalog sync", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("clears malformed cached catalog data before falling back", async () => {
+    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
+      savedAt: Date.now(),
+      catalog: {
+        products: "not an array",
+        offerings: [],
+        cakeSizes: [],
+        flavours: [],
+        addOns: []
+      }
+    }));
+    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
+      catalog: defaultPublicCatalog,
+      source: "default"
+    });
+    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+  });
+
   it("falls back instead of caching malformed live catalog data", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
