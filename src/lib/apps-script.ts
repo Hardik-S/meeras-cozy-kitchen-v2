@@ -41,6 +41,10 @@ function isAdminData(value: unknown): value is AdminData {
     && Array.isArray(data.ledger);
 }
 
+function normalizeOrderId(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
 export async function postAppsScript<T>(action: string, payload: Record<string, unknown> = {}): Promise<T | AppsScriptSkippedResult> {
   const config = getAppsScriptConfig();
 
@@ -81,7 +85,7 @@ export async function submitInquiryToAppsScript(
       return response;
     }
 
-    return { status: "sent", orderId: response.orderId };
+    return { status: "sent", orderId: normalizeOrderId(response.orderId) };
   } catch (error) {
     return {
       status: "error",
