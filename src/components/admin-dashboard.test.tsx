@@ -240,4 +240,41 @@ describe("AdminDashboard", () => {
     await waitFor(() => expect(screen.getByText("Change could not be saved.")).toBeInTheDocument());
     expect(statusSelect).toHaveValue("new");
   });
+
+  it("rolls back settings edits when the sheet save request fails", async () => {
+    const data: AdminData = {
+      ...defaultAdminData,
+      settings: {
+        ...defaultAdminData.settings,
+        defaultReceiver: "meera@example.com"
+      }
+    };
+
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+      if (url.includes("/api/admin/data") && init?.method === "POST") {
+        return Promise.reject(new Error("sheet unavailable"));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, source: "live", data }), { status: 200 }));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "settings" }));
+    const receiverInput = screen.getByLabelText("Default receiver");
+
+    fireEvent.change(receiverInput, { target: { value: "wrong@example.com" } });
+    expect(receiverInput).toHaveValue("wrong@example.com");
+
+    fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
+
+    await waitFor(() => expect(screen.getByText("Change could not be saved.")).toBeInTheDocument());
+    expect(receiverInput).toHaveValue("meera@example.com");
+  });
 });
