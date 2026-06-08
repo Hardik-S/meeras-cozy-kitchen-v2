@@ -77,6 +77,19 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("reports non-object Apps Script responses as request failures", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response("null", { status: 200, headers: { "Content-Type": "application/json" } })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toEqual({
+      status: "error",
+      message: "Apps Script request failed."
+    });
+  });
+
   it("rejects malformed admin data returned after a mutation", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
