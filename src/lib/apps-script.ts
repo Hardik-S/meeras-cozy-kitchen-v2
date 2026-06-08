@@ -45,6 +45,10 @@ function normalizeOrderId(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function recordFromJson(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 export async function postAppsScript<T>(action: string, payload: Record<string, unknown> = {}): Promise<T | AppsScriptSkippedResult> {
   const config = getAppsScriptConfig();
 
@@ -62,10 +66,14 @@ export async function postAppsScript<T>(action: string, payload: Record<string, 
     })
   });
 
-  const body = await response.json().catch(() => ({}));
+  const body = recordFromJson(await response.json().catch(() => ({})));
 
   if (!response.ok || body.ok === false) {
     throw new Error(typeof body.error === "string" ? body.error : "Apps Script request failed.");
+  }
+
+  if (body.ok !== true) {
+    throw new Error("Apps Script request failed.");
   }
 
   return body as T;
