@@ -169,6 +169,21 @@ describe("OrderForm v2 submit flow", () => {
     });
   });
 
+  it("shows an error when the inquiry API returns a null response envelope", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response("null", { status: 200 })
+    ));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Please review the highlighted details.")).toBeInTheDocument();
+    });
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
   it("shows a copy-specific notice when clipboard access is blocked", async () => {
     const writeTextMock = vi.fn(async () => {
       throw new Error("clipboard blocked");
