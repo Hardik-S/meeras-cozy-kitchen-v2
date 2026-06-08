@@ -45,6 +45,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Ignore malformed order metadata returned to the browser after a successful inquiry, so customers land on a valid pending payment page instead of storing an unusable order.
 - Create the inquiry validation schema per API request so the seven-day pickup notice window cannot freeze on a long-lived server process.
 - Create the browser form validation schema at submit time too, so an already-open order tab uses the current pickup notice window before calling the API.
+- Return controlled email-delivery errors when Resend rejects, so fallback inquiry mail failures do not become unhandled server errors.
 
 ## Approaches Considered
 

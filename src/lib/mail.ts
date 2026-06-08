@@ -6,7 +6,8 @@ export { buildInquirySummary } from "./inquiry-summary";
 
 export type SendInquiryResult =
   | { status: "sent"; id?: string }
-  | { status: "skipped"; reason: "missing-env" };
+  | { status: "skipped"; reason: "missing-env" }
+  | { status: "error"; message: string };
 
 export async function sendInquiryEmail(inquiry: InquiryInput): Promise<SendInquiryResult> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -17,13 +18,20 @@ export async function sendInquiryEmail(inquiry: InquiryInput): Promise<SendInqui
   }
 
   const resend = new Resend(apiKey);
-  const response = await resend.emails.send({
-    from: "Meera's Cozy Kitchen <orders@resend.dev>",
-    to: notifyEmail,
-    replyTo: inquiry.email,
-    subject: `New cake inquiry from ${inquiry.name}`,
-    text: buildInquirySummary(inquiry)
-  });
+  try {
+    const response = await resend.emails.send({
+      from: "Meera's Cozy Kitchen <orders@resend.dev>",
+      to: notifyEmail,
+      replyTo: inquiry.email,
+      subject: `New cake inquiry from ${inquiry.name}`,
+      text: buildInquirySummary(inquiry)
+    });
 
-  return { status: "sent", id: response.data?.id };
+    return { status: "sent", id: response.data?.id };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Inquiry email failed."
+    };
+  }
 }
