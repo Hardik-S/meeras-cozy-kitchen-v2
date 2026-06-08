@@ -76,6 +76,10 @@ function isAdminData(value: unknown): value is AdminData {
     && Array.isArray(data.ledger);
 }
 
+function recordFromJson(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 export function AdminDashboard() {
   const [locked, setLocked] = useState(true);
   const [pin, setPin] = useState("");
@@ -93,11 +97,11 @@ export function AdminDashboard() {
 
   async function loadData() {
     let response: Response;
-    let body: { ok?: boolean; error?: string; source?: string; data?: AdminData };
+    let body: Record<string, unknown>;
 
     try {
       response = await fetch("/api/admin/data", { cache: "no-store" });
-      body = await response.json();
+      body = recordFromJson(await response.json().catch(() => ({})));
     } catch {
       setNotice("Admin data could not be loaded.");
       return;
@@ -107,13 +111,13 @@ export function AdminDashboard() {
       setLocked(true);
       return;
     }
-    if (!response.ok || !body.ok || !isAdminData(body.data)) {
-      setNotice(body.error || "Admin data could not be loaded.");
+    if (!response.ok || body.ok !== true || !isAdminData(body.data)) {
+      setNotice(typeof body.error === "string" ? body.error : "Admin data could not be loaded.");
       return;
     }
     setData(body.data);
     setSettingsDraft(body.data.settings);
-    setSource(body.source || "fallback");
+    setSource(typeof body.source === "string" ? body.source : "fallback");
     setLocked(false);
   }
 
@@ -171,7 +175,7 @@ export function AdminDashboard() {
     }
 
     let response: Response;
-    let body: { ok?: boolean; error?: string; result?: { data?: AdminData } };
+    let body: Record<string, unknown>;
 
     try {
       response = await fetch("/api/admin/data", {
@@ -179,28 +183,30 @@ export function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, payload })
       });
-      body = await response.json();
+      body = recordFromJson(await response.json().catch(() => ({})));
     } catch {
       setData(previous);
       setNotice("Change could not be saved.");
       return false;
     }
 
-    if (!response.ok || !body.ok) {
+    if (!response.ok || body.ok !== true) {
       setData(previous);
-      setNotice(body.error || "Change could not be saved.");
+      setNotice(typeof body.error === "string" ? body.error : "Change could not be saved.");
       return false;
     }
 
-    if (body.result?.data) {
-      if (!isAdminData(body.result.data)) {
+    const result = recordFromJson(body.result);
+
+    if ("data" in result && result.data !== undefined) {
+      if (!isAdminData(result.data)) {
         setData(previous);
         setNotice("Change could not be saved.");
         return false;
       }
 
-      setData(body.result.data);
-      setSettingsDraft(body.result.data.settings);
+      setData(result.data);
+      setSettingsDraft(result.data.settings);
     } else {
       await loadData();
     }

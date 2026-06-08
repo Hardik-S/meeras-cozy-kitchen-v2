@@ -241,6 +241,56 @@ describe("AdminDashboard", () => {
     expect(statusSelect).toHaveValue("new");
   });
 
+  it("rolls back optimistic order status when the mutation envelope is null", async () => {
+    const data: AdminData = {
+      ...defaultAdminData,
+      orders: [
+        {
+          id: "ord_1",
+          createdAt: "2026-05-01T12:00:00.000Z",
+          name: "Amina",
+          email: "amina@example.com",
+          phone: "4165550101",
+          eventDate: "2099-05-20",
+          productType: "cake",
+          cakeSizeId: "eight-inch",
+          flavourId: "vanilla-rose",
+          budget: "100-150",
+          message: "Birthday cake",
+          estimateLow: 100,
+          estimateHigh: 150,
+          status: "new",
+          hearted: false,
+          pinned: false,
+          summary: "summary"
+        }
+      ]
+    };
+
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+      if (url.includes("/api/admin/data") && init?.method === "POST") {
+        return Promise.resolve(new Response("null", { status: 200, headers: { "Content-Type": "application/json" } }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, source: "live", data }), { status: 200 }));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    const statusSelect = await screen.findByDisplayValue("new");
+    fireEvent.change(statusSelect, { target: { value: "confirmed" } });
+
+    expect(statusSelect).toHaveValue("confirmed");
+    await waitFor(() => expect(screen.getByText("Change could not be saved.")).toBeInTheDocument());
+    expect(statusSelect).toHaveValue("new");
+  });
+
   it("rolls back settings edits when the sheet save request fails", async () => {
     const data: AdminData = {
       ...defaultAdminData,
