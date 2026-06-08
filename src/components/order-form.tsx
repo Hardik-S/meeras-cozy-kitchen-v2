@@ -100,6 +100,10 @@ function isOptionalString(value: unknown): value is string | undefined {
   return value === undefined || typeof value === "string";
 }
 
+function recordFromJson(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
 function isSubmittedOrder(value: unknown): value is SubmittedOrder {
   if (!value || typeof value !== "object") {
     return false;
@@ -267,7 +271,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     setSummary(nextSummary);
 
     let response: Response;
-    let body: { ok?: boolean; order?: unknown };
+    let body: Record<string, unknown>;
 
     try {
       response = await fetch("/api/inquiry", {
@@ -275,13 +279,13 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data)
       });
-      body = await response.json().catch(() => ({}));
+      body = recordFromJson(await response.json().catch(() => ({})));
     } catch {
       setStatus("error");
       return;
     }
 
-    if (!response.ok || !body.ok) {
+    if (!response.ok || body.ok !== true) {
       setStatus("error");
       return;
     }
