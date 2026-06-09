@@ -369,6 +369,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
                 </option>
               ))}
             </select>
+            {errors.flavourId ? <span className="text-sm font-bold text-[var(--accent-strong)]">{errors.flavourId}</span> : null}
           </label>
           <label className="grid gap-2 text-sm font-black">
             Servings
