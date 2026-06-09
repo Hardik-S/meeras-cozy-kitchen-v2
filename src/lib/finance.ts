@@ -50,10 +50,10 @@ export function calculateMonthlyFinanceReport(
     .filter((entry) => monthKey(entry.date) === month);
   const income = normalizedEntries
     .filter((entry) => entry.type === "income")
-    .reduce((total, entry) => total + entry.amount, 0);
+    .reduce((total, entry) => total + ledgerEntryTotal(entry), 0);
   const expenses = normalizedEntries
     .filter((entry) => entry.type === "expense")
-    .reduce((total, entry) => total + entry.amount, 0);
+    .reduce((total, entry) => total + ledgerEntryTotal(entry), 0);
   const confirmedPotential = orders
     .filter((order) => monthKey(order.eventDate) === month)
     .filter((order) => order.status === "confirmed" || order.status === "completed")

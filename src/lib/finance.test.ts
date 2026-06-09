@@ -108,9 +108,27 @@ describe("finance helpers", () => {
     expect(report.month).toBe("2026-05");
     expect(report.entries.map((entry) => entry.id)).toEqual(["led_1", "led_2"]);
     expect(report.income).toBe(120);
-    expect(report.expenses).toBe(45);
-    expect(report.net).toBe(75);
+    expect(report.expenses).toBe(135);
+    expect(report.net).toBe(-15);
     expect(report.confirmedPotential).toBe(150);
+  });
+
+  it("uses unit amount and quantity when calculating ledger totals", () => {
+    const report = calculateMonthlyFinanceReport([
+      {
+        id: "bulk_packaging",
+        date: "2026-05-05",
+        type: "expense",
+        category: "Packaging",
+        description: "Cupcake boxes",
+        amount: 8,
+        quantity: 12,
+        orderId: ""
+      }
+    ], [], "2026-05");
+
+    expect(report.expenses).toBe(96);
+    expect(report.net).toBe(-96);
   });
 
   it("creates CSV rows with quantity for the selected month", () => {
