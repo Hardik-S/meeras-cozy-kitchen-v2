@@ -68,6 +68,17 @@ describe("inquirySchema", () => {
     expect(parsed.success).toBe(false);
   });
 
+  it("rejects inquiries without a selected flavour", () => {
+    const schema = createInquirySchema(fixtureToday);
+
+    const parsed = schema.safeParse({
+      ...baseInquiry,
+      flavourId: ""
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+
   it("rejects impossible pickup dates", () => {
     const schema = createInquirySchema(fixtureToday);
 
