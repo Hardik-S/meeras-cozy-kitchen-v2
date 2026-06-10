@@ -73,6 +73,14 @@ export function formatCurrency(value: number) {
   }).format(value);
 }
 
+function normalizeQuoteLine(line: QuoteLine): QuoteLine {
+  return {
+    ...line,
+    low: Math.min(line.low, line.high),
+    high: Math.max(line.low, line.high)
+  };
+}
+
 export function calculateQuoteEstimate(
   input: QuoteInput,
   catalog?: {
@@ -94,12 +102,12 @@ export function calculateQuoteEstimate(
       high: 0
     };
 
-  lines.push({ label: base.label, low: base.low, high: base.high });
+  lines.push(normalizeQuoteLine({ label: base.label, low: base.low, high: base.high }));
 
   for (const addOnId of input.addOnIds ?? []) {
     const addOn = (catalog?.addOns ?? addOns).find((item) => item.id === addOnId);
     if (addOn) {
-      lines.push({ label: addOn.label, low: addOn.low, high: addOn.high });
+      lines.push(normalizeQuoteLine({ label: addOn.label, low: addOn.low, high: addOn.high }));
     }
   }
 
