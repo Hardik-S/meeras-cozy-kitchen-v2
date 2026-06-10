@@ -192,7 +192,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     },
     website: ""
   };
-  const currentSummary = summary || buildInquirySummary(previewInquiry);
+  const currentSummary = summary || buildInquirySummary(previewInquiry, liveCatalog);
 
   useEffect(() => {
     let active = true;

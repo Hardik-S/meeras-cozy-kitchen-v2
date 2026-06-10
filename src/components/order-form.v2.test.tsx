@@ -1,6 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { defaultPublicCatalog } from "@/lib/catalog";
 import { OrderForm } from "./order-form";
 
 const pushMock = vi.fn();
@@ -200,5 +201,47 @@ describe("OrderForm v2 submit flow", () => {
       expect(screen.getByText("Copy failed. Use the email button or select the summary manually.")).toBeInTheDocument();
     });
     expect(writeTextMock).toHaveBeenCalled();
+  });
+
+  it("previews Sheet-driven catalog labels and prices before submit", () => {
+    render(
+      <OrderForm
+        catalog={{
+          ...defaultPublicCatalog,
+          cakeSizes: [
+            {
+              id: "tall-six-inch",
+              productId: "cake",
+              category: "cake-size",
+              label: "Tall six inch celebration cake",
+              low: 72,
+              high: 84,
+              servings: "10-12",
+              enabled: true,
+              sortOrder: 1
+            }
+          ],
+          flavours: [
+            {
+              id: "mango-saffron",
+              productId: "all",
+              category: "flavour",
+              label: "Mango saffron",
+              low: 0,
+              high: 0,
+              servings: "",
+              enabled: true,
+              sortOrder: 1
+            }
+          ]
+        }}
+      />
+    );
+
+    const summaryPreview = screen.getByText(/Meera's Cozy Kitchen inquiry/);
+
+    expect(summaryPreview).toHaveTextContent("Cake size: Tall six inch celebration cake");
+    expect(summaryPreview).toHaveTextContent("Flavour: Mango saffron");
+    expect(summaryPreview).toHaveTextContent("Estimated range: $72-$84");
   });
 });
