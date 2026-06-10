@@ -34,7 +34,8 @@ function readCachedCatalog(now = Date.now()): CatalogSyncResult | undefined {
     if (!cached) return undefined;
 
     const parsed = JSON.parse(cached) as { savedAt?: number; catalog?: unknown };
-    if (!isPublicCatalog(parsed.catalog) || typeof parsed.savedAt !== "number" || now - parsed.savedAt > cacheTtlMs) {
+    const cacheAge = typeof parsed.savedAt === "number" ? now - parsed.savedAt : Number.POSITIVE_INFINITY;
+    if (!isPublicCatalog(parsed.catalog) || cacheAge < 0 || cacheAge > cacheTtlMs) {
       clearCachedCatalog();
       return undefined;
     }
