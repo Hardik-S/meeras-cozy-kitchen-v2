@@ -142,7 +142,10 @@ export function sortByOrder<T extends { sortOrder: number; label: string }>(item
 
 export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
   const products = sortByOrder(data.products.filter((product) => product.enabled));
-  const offerings = sortByOrder(data.offerings.filter((offering) => offering.enabled));
+  const enabledProductIds = new Set<ProductType>(products.map((product) => product.id));
+  const offerings = sortByOrder(data.offerings.filter((offering) =>
+    offering.enabled && (offering.productId === "all" || enabledProductIds.has(offering.productId))
+  ));
 
   return {
     products,
