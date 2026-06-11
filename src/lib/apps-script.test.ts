@@ -104,6 +104,43 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("rejects blank live catalog labels before public catalog mapping", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          settings: {
+            defaultSender: "batb4016@gmail.com",
+            defaultReceiver: "batb4016@gmail.com",
+            senderName: "Meera's Cozy Kitchen",
+            chefNotificationCopy: "New inquiry"
+          },
+          products: [{ id: "cake", label: "   ", low: 58, high: 150, enabled: true, sortOrder: 1 }],
+          offerings: [{
+            id: "six-inch",
+            productId: "cake",
+            category: "cake-size",
+            label: "6 inch round cake",
+            low: 58,
+            high: 68,
+            servings: "",
+            enabled: true,
+            sortOrder: 1
+          }],
+          orders: [],
+          ledger: []
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toEqual({
+      status: "error",
+      message: "Apps Script returned malformed admin data."
+    });
+  });
+
   it("reports non-object Apps Script responses as request failures", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
