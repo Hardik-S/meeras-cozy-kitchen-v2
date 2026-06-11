@@ -30,6 +30,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Hide offerings attached to disabled products in the public catalog, so retired Sheet products do not leave stray add-ons or options on customer-facing pages.
 - Treat malformed live Apps Script admin data as a fallback condition, so public catalog refreshes do not crash when a sheet or script response is incomplete.
 - Validate live Apps Script row shapes before accepting admin data, so malformed product labels cannot crash public catalog mapping.
+- Reject blank live catalog row IDs and labels too, so Sheet whitespace cannot publish empty customer-facing menu options.
 - Treat non-object Apps Script JSON responses as request failures, so null proxy bodies do not leak raw TypeErrors into catalog or inquiry flows.
 - Treat malformed public catalog responses or cached browser catalog data as a local-default fallback, so an incomplete refresh cannot poison the customer menu cache.
 - Roll back optimistic admin edits when the Apps Script save request fails, so Meera sees the existing save-failure notice instead of a stale local status change.
