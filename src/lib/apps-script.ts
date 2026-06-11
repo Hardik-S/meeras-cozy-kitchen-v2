@@ -1,5 +1,5 @@
 import { buildInquirySummary } from "./inquiry-summary";
-import { defaultAdminData, type AdminData } from "./catalog";
+import { defaultAdminData, type AdminData, type OfferingCategory, type OrderStatus } from "./catalog";
 import type { InquiryInput } from "./validation";
 
 export type AppsScriptSkippedResult = { status: "skipped"; reason: "missing-env" };
@@ -27,18 +27,107 @@ function isSkippedResult(value: unknown): value is AppsScriptSkippedResult {
   return Boolean(value && typeof value === "object" && "status" in value && value.status === "skipped");
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
+}
+
+function hasStringFields(value: Record<string, unknown>, fields: string[]) {
+  return fields.every((field) => isString(value[field]));
+}
+
+function hasNumberFields(value: Record<string, unknown>, fields: string[]) {
+  return fields.every((field) => isFiniteNumber(value[field]));
+}
+
+function isAdminSettings(value: unknown) {
+  return isRecord(value)
+    && hasStringFields(value, ["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
+}
+
+function isAdminProduct(value: unknown) {
+  return isRecord(value)
+    && hasStringFields(value, ["id", "label"])
+    && hasNumberFields(value, ["low", "high", "sortOrder"])
+    && isBoolean(value.enabled);
+}
+
+function isOfferingCategory(value: unknown): value is OfferingCategory {
+  return value === "cake-size" || value === "flavour" || value === "add-on";
+}
+
+function isAdminOffering(value: unknown) {
+  return isRecord(value)
+    && hasStringFields(value, ["id", "productId", "label", "servings"])
+    && isOfferingCategory(value.category)
+    && hasNumberFields(value, ["low", "high", "sortOrder"])
+    && isBoolean(value.enabled);
+}
+
+function isOrderStatus(value: unknown): value is OrderStatus {
+  return value === "new"
+    || value === "replied"
+    || value === "confirmed"
+    || value === "completed"
+    || value === "cancelled";
+}
+
+function isAdminOrder(value: unknown) {
+  return isRecord(value)
+    && hasStringFields(value, [
+      "id",
+      "createdAt",
+      "name",
+      "email",
+      "phone",
+      "eventDate",
+      "productType",
+      "cakeSizeId",
+      "flavourId",
+      "budget",
+      "message",
+      "summary"
+    ])
+    && hasNumberFields(value, ["estimateLow", "estimateHigh"])
+    && isOrderStatus(value.status)
+    && isBoolean(value.hearted)
+    && isBoolean(value.pinned);
+}
+
+function isLedgerEntry(value: unknown) {
+  return isRecord(value)
+    && hasStringFields(value, ["id", "date", "type", "category", "description", "orderId"])
+    && (value.type === "income" || value.type === "expense")
+    && hasNumberFields(value, ["amount", "quantity"]);
+}
+
 function isAdminData(value: unknown): value is AdminData {
-  if (!value || typeof value !== "object") {
+  if (!isRecord(value)) {
     return false;
   }
 
   const data = value as Partial<AdminData>;
 
-  return Boolean(data.settings && typeof data.settings === "object")
+  return isAdminSettings(data.settings)
     && Array.isArray(data.products)
+    && data.products.every(isAdminProduct)
     && Array.isArray(data.offerings)
+    && data.offerings.every(isAdminOffering)
     && Array.isArray(data.orders)
-    && Array.isArray(data.ledger);
+    && data.orders.every(isAdminOrder)
+    && Array.isArray(data.ledger)
+    && data.ledger.every(isLedgerEntry);
 }
 
 function normalizeOrderId(value: unknown) {
@@ -46,7 +135,7 @@ function normalizeOrderId(value: unknown) {
 }
 
 function recordFromJson(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return isRecord(value) ? value : {};
 }
 
 export async function postAppsScript<T>(action: string, payload: Record<string, unknown> = {}): Promise<T | AppsScriptSkippedResult> {
