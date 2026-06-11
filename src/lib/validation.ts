@@ -1,8 +1,5 @@
 import { z } from "zod";
 import { isAtLeastMinimumNotice, isValidDateInput } from "./dates";
-import { cakeSizes } from "./pricing";
-
-const cakeSizeIds = cakeSizes.map((size) => size.id);
 
 export function createInquirySchema(today = new Date()) {
   return z.object({
@@ -42,7 +39,7 @@ export function createInquirySchema(today = new Date()) {
       });
     }
 
-    if (value.productType === "cake" && (!value.cakeSizeId || !cakeSizeIds.includes(value.cakeSizeId))) {
+    if (value.productType === "cake" && !value.cakeSizeId?.trim()) {
       context.addIssue({
         code: "custom",
         path: ["cakeSizeId"],
