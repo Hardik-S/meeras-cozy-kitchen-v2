@@ -2,6 +2,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultAdminData } from "@/lib/catalog";
 import { POST } from "./route";
 
+const resendSendMock = vi.hoisted(() => vi.fn());
+
+vi.mock("resend", () => ({
+  Resend: vi.fn(function Resend() {
+    return {
+      emails: {
+        send: resendSendMock
+      }
+    };
+  })
+}));
+
 const validPayload = {
   name: "Amina",
   email: "amina@example.com",
@@ -25,6 +37,7 @@ const validPayload = {
 
 describe("POST /api/inquiry", () => {
   afterEach(() => {
+    resendSendMock.mockReset();
     vi.useRealTimers();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
@@ -120,6 +133,62 @@ describe("POST /api/inquiry", () => {
     expect(body.summary).toContain("Product: Mini cheesecake box");
     expect(body.summary).toContain("Estimated range: $42-$52");
     expect(submitBody.summary).toContain("Product: Mini cheesecake box");
+  });
+
+  it("keeps the live catalog summary in fallback email when Apps Script submission fails", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubEnv("RESEND_API_KEY", "test-key");
+    vi.stubEnv("ORDER_NOTIFY_EMAIL", "orders@example.com");
+    resendSendMock.mockResolvedValue({ data: { id: "email_123" } });
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(init?.body as string);
+
+      if (body.action === "listAdminData") {
+        return new Response(JSON.stringify({
+          ok: true,
+          data: {
+            ...defaultAdminData,
+            products: [
+              ...defaultAdminData.products,
+              {
+                id: "mini-cheesecake-box",
+                label: "Mini cheesecake box",
+                low: 42,
+                high: 52,
+                enabled: true,
+                sortOrder: 4
+              }
+            ]
+          }
+        }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ ok: false, error: "Sheet write failed." }), { status: 500 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      new Request("http://localhost/api/inquiry", {
+        method: "POST",
+        body: JSON.stringify({
+          ...validPayload,
+          productType: "mini-cheesecake-box",
+          cakeSizeId: undefined,
+          addOnIds: []
+        })
+      })
+    );
+    const body = await response.json();
+    const fallbackEmail = resendSendMock.mock.calls[0][0];
+
+    expect(response.status).toBe(200);
+    expect(body.appsScript).toEqual({ status: "error", message: "Sheet write failed." });
+    expect(body.email).toEqual({ status: "sent", id: "email_123" });
+    expect(body.summary).toContain("Product: Mini cheesecake box");
+    expect(body.summary).toContain("Estimated range: $42-$52");
+    expect(fallbackEmail.text).toContain("Product: Mini cheesecake box");
+    expect(fallbackEmail.text).toContain("Estimated range: $42-$52");
   });
 
   it("rejects honeypot submissions", async () => {
