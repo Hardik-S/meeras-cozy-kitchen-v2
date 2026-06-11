@@ -9,7 +9,7 @@ export type SendInquiryResult =
   | { status: "skipped"; reason: "missing-env" }
   | { status: "error"; message: string };
 
-export async function sendInquiryEmail(inquiry: InquiryInput): Promise<SendInquiryResult> {
+export async function sendInquiryEmail(inquiry: InquiryInput, summary = buildInquirySummary(inquiry)): Promise<SendInquiryResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const notifyEmail = process.env.ORDER_NOTIFY_EMAIL;
 
@@ -24,7 +24,7 @@ export async function sendInquiryEmail(inquiry: InquiryInput): Promise<SendInqui
       to: notifyEmail,
       replyTo: inquiry.email,
       subject: `New cake inquiry from ${inquiry.name}`,
-      text: buildInquirySummary(inquiry)
+      text: summary
     });
 
     return { status: "sent", id: response.data?.id };

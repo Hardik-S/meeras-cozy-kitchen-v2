@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   const appsScript = await submitInquiryToAppsScript(parsed.data, summary);
   const email = appsScript.status === "sent"
     ? { status: "skipped", reason: "apps-script-sent" }
-    : await sendInquiryEmail(parsed.data);
+    : await sendInquiryEmail(parsed.data, summary);
 
   return NextResponse.json({
     ok: true,
