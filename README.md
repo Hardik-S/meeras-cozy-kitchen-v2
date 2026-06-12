@@ -34,6 +34,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Treat non-object Apps Script JSON responses as request failures, so null proxy bodies do not leak raw TypeErrors into catalog or inquiry flows.
 - Treat malformed public catalog responses or cached browser catalog data as a local-default fallback, so an incomplete refresh cannot poison the customer menu cache.
 - Cache only live Sheet-backed public catalog responses, so temporary server fallbacks do not pin stale customer menus.
+- Drop selected add-ons that disappear after a live catalog refresh, so stale Sheet options are not submitted silently.
 - Roll back optimistic admin edits when the Apps Script save request fails, so Meera sees the existing save-failure notice instead of a stale local status change.
 - Reject malformed admin data returned after an Apps Script mutation, so optimistic edits roll back instead of replacing the dashboard with incomplete sheet state.
 - Guard malformed admin data in the browser dashboard too, so a bad proxy response shows the load-failure notice instead of rendering incomplete arrays.

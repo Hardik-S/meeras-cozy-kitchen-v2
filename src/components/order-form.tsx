@@ -212,7 +212,8 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
               : nextCatalog.cakeSizes[0]?.id ?? current.cakeSizeId,
             flavourId: nextCatalog.flavours.some((flavour) => flavour.id === current.flavourId)
               ? current.flavourId
-              : nextCatalog.flavours[0]?.id ?? current.flavourId
+              : nextCatalog.flavours[0]?.id ?? current.flavourId,
+            addOnIds: current.addOnIds.filter((id) => nextCatalog.addOns.some((addOn) => addOn.id === id))
           }));
         }
       });

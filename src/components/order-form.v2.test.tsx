@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultPublicCatalog } from "@/lib/catalog";
 import { OrderForm } from "./order-form";
@@ -243,5 +243,49 @@ describe("OrderForm v2 submit flow", () => {
     expect(summaryPreview).toHaveTextContent("Cake size: Tall six inch celebration cake");
     expect(summaryPreview).toHaveTextContent("Flavour: Mango saffron");
     expect(summaryPreview).toHaveTextContent("Estimated range: $72-$84");
+  });
+
+  it("drops selected add-ons that disappear after a live catalog refresh", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const liveCatalogWithoutAddOns = {
+      ...defaultPublicCatalog,
+      offerings: defaultPublicCatalog.offerings.filter((offering) => offering.category !== "add-on"),
+      addOns: []
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        ok: true,
+        source: "live",
+        catalog: liveCatalogWithoutAddOns
+      }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "ord_refreshed_catalog",
+          name: "Amina",
+          email: "amina@example.com",
+          paymentEmail: "m.ssethi1123@gmail.com",
+          summary: "Name: Amina"
+        }
+      }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<OrderForm />);
+    fireEvent.click(screen.getByLabelText(/Fresh berry finish/i));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/catalog", expect.any(Object));
+    });
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_refreshed_catalog");
+    });
+    const inquiryCall = fetchMock.mock.calls.find(([url]) => url === "/api/inquiry");
+    expect(JSON.parse(inquiryCall?.[1]?.body as string).addOnIds).toEqual([]);
   });
 });
