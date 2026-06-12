@@ -9,20 +9,24 @@ const paymentEmail = "m.ssethi1123@gmail.com";
 
 function validateCatalogSelections(inquiry: InquiryInput, catalog: PublicCatalog) {
   const issues: Partial<Record<"productType" | "cakeSizeId" | "flavourId" | "addOnIds", string[]>> = {};
+  const isAvailableForProduct = (offering: { productId: string }) =>
+    offering.productId === "all" || offering.productId === inquiry.productType;
 
   if (!catalog.products.some((product) => product.id === inquiry.productType)) {
     issues.productType = ["Please choose an available product."];
   }
 
-  if (inquiry.productType === "cake" && !catalog.cakeSizes.some((size) => size.id === inquiry.cakeSizeId)) {
+  const availableCakeSizes = catalog.cakeSizes.filter(isAvailableForProduct);
+  if (inquiry.productType === "cake" && !availableCakeSizes.some((size) => size.id === inquiry.cakeSizeId)) {
     issues.cakeSizeId = ["Please choose an available cake size."];
   }
 
-  if (!catalog.flavours.some((flavour) => flavour.id === inquiry.flavourId)) {
+  const availableFlavours = catalog.flavours.filter(isAvailableForProduct);
+  if (!availableFlavours.some((flavour) => flavour.id === inquiry.flavourId)) {
     issues.flavourId = ["Please choose an available flavour."];
   }
 
-  const availableAddOns = new Set(catalog.addOns.map((addOn) => addOn.id));
+  const availableAddOns = new Set(catalog.addOns.filter(isAvailableForProduct).map((addOn) => addOn.id));
   if (inquiry.addOnIds.some((addOnId) => !availableAddOns.has(addOnId))) {
     issues.addOnIds = ["Please remove unavailable add-ons and try again."];
   }

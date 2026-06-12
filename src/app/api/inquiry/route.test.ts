@@ -224,6 +224,57 @@ describe("POST /api/inquiry", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("rejects product-scoped add-ons for the wrong live catalog product", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(init?.body as string);
+
+      if (body.action === "listAdminData") {
+        return new Response(JSON.stringify({
+          ok: true,
+          data: {
+            ...defaultAdminData,
+            offerings: [
+              ...defaultAdminData.offerings,
+              {
+                id: "cake-topper",
+                productId: "cake",
+                category: "add-on",
+                label: "Cake topper",
+                low: 10,
+                high: 14,
+                servings: "",
+                enabled: true,
+                sortOrder: 99
+              }
+            ]
+          }
+        }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      new Request("http://localhost/api/inquiry", {
+        method: "POST",
+        body: JSON.stringify({
+          ...validPayload,
+          productType: "cupcakes",
+          cakeSizeId: undefined,
+          addOnIds: ["cake-topper"]
+        })
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.issues.addOnIds).toContain("Please remove unavailable add-ons and try again.");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects honeypot submissions", async () => {
     const response = await POST(
       new Request("http://localhost/api/inquiry", {
