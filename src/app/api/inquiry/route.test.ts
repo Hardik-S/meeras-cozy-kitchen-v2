@@ -191,6 +191,39 @@ describe("POST /api/inquiry", () => {
     expect(fallbackEmail.text).toContain("Estimated range: $42-$52");
   });
 
+  it("rejects stale add-ons that are no longer in the live catalog", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(init?.body as string);
+
+      if (body.action === "listAdminData") {
+        return new Response(JSON.stringify({
+          ok: true,
+          data: {
+            ...defaultAdminData,
+            offerings: defaultAdminData.offerings.filter((offering) => offering.id !== "fresh-berries")
+          }
+        }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      new Request("http://localhost/api/inquiry", {
+        method: "POST",
+        body: JSON.stringify(validPayload)
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.issues.addOnIds).toContain("Please remove unavailable add-ons and try again.");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects honeypot submissions", async () => {
     const response = await POST(
       new Request("http://localhost/api/inquiry", {
