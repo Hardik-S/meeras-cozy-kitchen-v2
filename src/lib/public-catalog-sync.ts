@@ -73,7 +73,9 @@ export async function loadPublicCatalog(
       const body = await response.json();
 
       if (response.ok && body.ok && isPublicCatalog(body.catalog)) {
-        writeCachedCatalog(body.catalog);
+        if (body.source === "live") {
+          writeCachedCatalog(body.catalog);
+        }
         return {
           catalog: body.catalog,
           source: body.source === "live" ? "live" : "fallback"

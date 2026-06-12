@@ -100,4 +100,37 @@ describe("public catalog sync", () => {
     });
     expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
   });
+
+  it("does not cache server fallback catalog responses", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          source: "fallback",
+          catalog: defaultPublicCatalog
+        })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          source: "live",
+          catalog: defaultPublicCatalog
+        })
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
+      catalog: defaultPublicCatalog,
+      source: "fallback"
+    });
+    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
+      catalog: defaultPublicCatalog,
+      source: "live"
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
