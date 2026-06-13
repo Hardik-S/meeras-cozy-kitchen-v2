@@ -144,19 +144,58 @@ function buildPendingOrder(data: InquiryInput, summary: string): SubmittedOrder 
   };
 }
 
+function isOfferingAvailableForProduct(offering: { productId: string }, productType: ProductType) {
+  return offering.productId === "all" || offering.productId === productType;
+}
+
+function scopeCatalogToProduct(catalog: PublicCatalog, productType: ProductType): PublicCatalog {
+  const offerings = catalog.offerings.filter((offering) => isOfferingAvailableForProduct(offering, productType));
+
+  return {
+    ...catalog,
+    offerings,
+    cakeSizes: catalog.cakeSizes.filter((size) => isOfferingAvailableForProduct(size, productType)),
+    flavours: catalog.flavours.filter((flavour) => isOfferingAvailableForProduct(flavour, productType)),
+    addOns: catalog.addOns.filter((addOn) => isOfferingAvailableForProduct(addOn, productType))
+  };
+}
+
+function availableId<T extends { id: string }>(items: T[], currentId: string) {
+  return items.some((item) => item.id === currentId) ? currentId : items[0]?.id ?? currentId;
+}
+
+function reconcileFormWithCatalog(form: FormState, catalog: PublicCatalog): FormState {
+  const productType = catalog.products.some((product) => product.id === form.productType)
+    ? form.productType
+    : catalog.products[0]?.id ?? form.productType;
+  const scopedCatalog = scopeCatalogToProduct(catalog, productType);
+
+  return {
+    ...form,
+    productType,
+    cakeSizeId: productType === "cake" ? availableId(scopedCatalog.cakeSizes, form.cakeSizeId) : form.cakeSizeId,
+    flavourId: availableId(scopedCatalog.flavours, form.flavourId),
+    addOnIds: form.addOnIds.filter((id) => scopedCatalog.addOns.some((addOn) => addOn.id === id))
+  };
+}
+
 export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: PublicCatalog }) {
   const router = useRouter();
   const [liveCatalog, setLiveCatalog] = useState(catalog);
-  const [form, setForm] = useState<FormState>(() => ({
-    ...initialForm,
-    productType: catalog.products[0]?.id ?? initialForm.productType,
-    cakeSizeId: catalog.cakeSizes[0]?.id ?? initialForm.cakeSizeId,
-    flavourId: catalog.flavours[0]?.id ?? initialForm.flavourId
-  }));
+  const [form, setForm] = useState<FormState>(() =>
+    reconcileFormWithCatalog({
+      ...initialForm,
+      productType: catalog.products[0]?.id ?? initialForm.productType
+    }, catalog)
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error" | "copied" | "copy-error">("idle");
   const [summary, setSummary] = useState("");
   const [confettiKey, setConfettiKey] = useState(0);
+  const scopedCatalog = useMemo(
+    () => scopeCatalogToProduct(liveCatalog, form.productType),
+    [liveCatalog, form.productType]
+  );
   const estimate = useMemo(
     () =>
       calculateQuoteEstimate({
@@ -166,10 +205,10 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       },
       {
         products: liveCatalog.products,
-        cakeSizes: liveCatalog.cakeSizes,
-        addOns: liveCatalog.addOns
+        cakeSizes: scopedCatalog.cakeSizes,
+        addOns: scopedCatalog.addOns
       }),
-    [liveCatalog, form.addOnIds, form.cakeSizeId, form.productType]
+    [liveCatalog.products, scopedCatalog.addOns, scopedCatalog.cakeSizes, form.addOnIds, form.cakeSizeId, form.productType]
   );
   const minimumDate = getMinimumPickupDate();
   const previewInquiry: InquiryInput = {
@@ -192,7 +231,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     },
     website: ""
   };
-  const currentSummary = summary || buildInquirySummary(previewInquiry, liveCatalog);
+  const currentSummary = summary || buildInquirySummary(previewInquiry, scopedCatalog);
 
   useEffect(() => {
     let active = true;
@@ -202,19 +241,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
         if (active) {
           const nextCatalog = result.catalog;
           setLiveCatalog(nextCatalog);
-          setForm((current) => ({
-            ...current,
-            productType: nextCatalog.products.some((product) => product.id === current.productType)
-              ? current.productType
-              : nextCatalog.products[0]?.id ?? current.productType,
-            cakeSizeId: nextCatalog.cakeSizes.some((size) => size.id === current.cakeSizeId)
-              ? current.cakeSizeId
-              : nextCatalog.cakeSizes[0]?.id ?? current.cakeSizeId,
-            flavourId: nextCatalog.flavours.some((flavour) => flavour.id === current.flavourId)
-              ? current.flavourId
-              : nextCatalog.flavours[0]?.id ?? current.flavourId,
-            addOnIds: current.addOnIds.filter((id) => nextCatalog.addOns.some((addOn) => addOn.id === id))
-          }));
+          setForm((current) => reconcileFormWithCatalog(current, nextCatalog));
         }
       });
     });
@@ -228,6 +255,17 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors((current) => ({ ...current, [key]: "" }));
+  }
+
+  function selectProductType(productType: ProductType) {
+    setForm((current) => reconcileFormWithCatalog({ ...current, productType }, liveCatalog));
+    setErrors((current) => ({
+      ...current,
+      productType: "",
+      cakeSizeId: "",
+      flavourId: "",
+      addOnIds: ""
+    }));
   }
 
   function toggleAddOn(id: string) {
@@ -268,7 +306,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       return;
     }
 
-    const nextSummary = buildInquirySummary(parsed.data, liveCatalog);
+    const nextSummary = buildInquirySummary(parsed.data, scopedCatalog);
     setSummary(nextSummary);
 
     let response: Response;
@@ -333,7 +371,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
                 className={`rounded-[8px] border p-4 text-left font-black ${form.productType === product.id ? "border-[var(--accent)] bg-[var(--surface-rose)]" : "border-[var(--line)] bg-white/70"}`}
                 key={product.id}
                 type="button"
-                onClick={() => update("productType", product.id)}
+                onClick={() => selectProductType(product.id)}
               >
                 {product.label}
               </button>
@@ -345,7 +383,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
           <fieldset className="grid gap-3">
             <legend className="text-sm font-black">Cake size</legend>
             <div className="grid gap-3 sm:grid-cols-3">
-            {liveCatalog.cakeSizes.map((size) => (
+            {scopedCatalog.cakeSizes.map((size) => (
                 <button
                   className={`rounded-[8px] border p-4 text-left ${form.cakeSizeId === size.id ? "border-[var(--accent)] bg-[var(--surface-rose)]" : "border-[var(--line)] bg-white/70"}`}
                   key={size.id}
@@ -364,7 +402,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
           <label className="grid gap-2 text-sm font-black">
             Flavour
             <select className="rounded-[8px] border border-[var(--line)] px-3 py-3 font-semibold" value={form.flavourId} onChange={(event) => update("flavourId", event.target.value)}>
-              {liveCatalog.flavours.map((flavour) => (
+              {scopedCatalog.flavours.map((flavour) => (
                 <option key={flavour.id} value={flavour.id}>
                   {flavour.label}
                 </option>
@@ -382,7 +420,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
         <fieldset className="grid gap-3">
           <legend className="text-sm font-black">Add-ons</legend>
           <div className="grid gap-2">
-            {liveCatalog.addOns.map((addOn) => (
+            {scopedCatalog.addOns.map((addOn) => (
               <label key={addOn.id} className="flex items-center justify-between gap-3 rounded-[8px] border border-[var(--line)] bg-white/70 p-3">
                 <span className="flex items-center gap-3 font-bold">
                   <input type="checkbox" checked={form.addOnIds.includes(addOn.id)} onChange={() => toggleAddOn(addOn.id)} />
