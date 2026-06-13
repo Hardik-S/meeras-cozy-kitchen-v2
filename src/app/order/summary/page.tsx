@@ -21,12 +21,13 @@ type StoredOrder = {
   summary: string;
 };
 
-const paymentEmail = "m.ssethi1123@gmail.com";
+const defaultPaymentEmail = "m.ssethi1123@gmail.com";
 
 export default function OrderSummaryPage() {
   const order = useStoredOrder();
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
+  const paymentEmail = order?.paymentEmail?.trim() || defaultPaymentEmail;
 
   const transferNote = useMemo(() => {
     if (!order) return "";
@@ -151,7 +152,7 @@ function useStoredOrder() {
 
     return {
       id: urlOrderId,
-      paymentEmail,
+      paymentEmail: defaultPaymentEmail,
       summary: "Your inquiry was received. Meera will confirm the details directly."
     };
   }, [rawOrder, urlOrderId]);

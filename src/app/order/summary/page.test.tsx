@@ -60,4 +60,27 @@ describe("OrderSummaryPage", () => {
     });
     expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_clipboard_blocked - Amina");
   });
+
+  it("uses the stored payment email in visible and copied payment details", async () => {
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: "ord_custom_payment",
+      name: "Amina",
+      paymentEmail: "payments@example.com",
+      summary: "Name: Amina"
+    }));
+    const writeTextMock = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock }
+    });
+
+    render(<OrderSummaryPage />);
+    fireEvent.click(screen.getByRole("button", { name: /copy e-transfer details/i }));
+
+    expect(screen.getByText("payments@example.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /email meera/i })).toHaveAttribute("href", expect.stringContaining("mailto:payments@example.com"));
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: payments@example.com\nMemo: Meera order ord_custom_payment - Amina");
+    });
+  });
 });
