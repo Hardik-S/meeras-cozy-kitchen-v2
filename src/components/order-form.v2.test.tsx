@@ -288,4 +288,70 @@ describe("OrderForm v2 submit flow", () => {
     const inquiryCall = fetchMock.mock.calls.find(([url]) => url === "/api/inquiry");
     expect(JSON.parse(inquiryCall?.[1]?.body as string).addOnIds).toEqual([]);
   });
+
+  it("hides and drops add-ons that are scoped to a different selected product", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "ord_product_scoped_addons",
+          name: "Amina",
+          email: "amina@example.com",
+          paymentEmail: "m.ssethi1123@gmail.com",
+          summary: "Name: Amina"
+        }
+      }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <OrderForm
+        catalog={{
+          ...defaultPublicCatalog,
+          addOns: [
+            ...defaultPublicCatalog.addOns,
+            {
+              id: "cake-topper",
+              productId: "cake",
+              category: "add-on",
+              label: "Cake topper",
+              low: 10,
+              high: 14,
+              servings: "",
+              enabled: true,
+              sortOrder: 99
+            },
+            {
+              id: "cupcake-sleeve",
+              productId: "cupcakes",
+              category: "add-on",
+              label: "Cupcake sleeve",
+              low: 4,
+              high: 6,
+              servings: "",
+              enabled: true,
+              sortOrder: 100
+            }
+          ]
+        }}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText(/Cake topper/i));
+    expect(screen.queryByLabelText(/Cupcake sleeve/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Cupcake dozen/i }));
+
+    expect(screen.queryByLabelText(/Cake topper/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Cupcake sleeve/i)).toBeInTheDocument();
+
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_product_scoped_addons");
+    });
+    const inquiryCall = fetchMock.mock.calls.find(([url]) => url === "/api/inquiry");
+    expect(JSON.parse(inquiryCall?.[1]?.body as string).addOnIds).not.toContain("cake-topper");
+  });
 });
