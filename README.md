@@ -55,6 +55,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Catch rejected browser clipboard writes, so customers can fall back to email or manual selection instead of hitting an unhandled copy action.
 - Catch rejected payment-instruction clipboard writes too, so customers can still email Meera or manually select the e-transfer details.
 - Ignore malformed stored order summaries on the payment page, so customers can still use the URL order id fallback.
+- Ignore stored order summaries for a different URL id too, so shared payment links cannot show stale browser-session orders.
 - Use the stored order payment email on the payment page when present, so copied e-transfer details stay aligned with inquiry metadata.
 - Fall back from malformed stored payment emails on the payment page, so cached metadata cannot corrupt e-transfer copy or mail links.
 - Normalize Apps Script order ids before building payment instructions, so malformed success responses fall back to a pending local id.

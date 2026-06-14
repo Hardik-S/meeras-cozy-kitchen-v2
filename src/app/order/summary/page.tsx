@@ -140,7 +140,7 @@ function useStoredOrder() {
       try {
         const parsed = JSON.parse(rawOrder);
 
-        if (isStoredOrder(parsed)) {
+        if (isStoredOrder(parsed) && (!urlOrderId || parsed.id === urlOrderId)) {
           return parsed;
         }
       } catch {
