@@ -24,7 +24,9 @@ export function buildInquirySummary(inquiry: InquiryInput, catalog?: PublicCatal
     `Pickup date: ${inquiry.eventDate}`,
     `Servings: ${inquiry.servings}`,
     `Product: ${titleCaseProduct(inquiry.productType, catalog)}`,
-    `Cake size: ${labelFor(catalog?.cakeSizes ?? cakeSizes, inquiry.cakeSizeId)}`,
+    ...(inquiry.productType === "cake"
+      ? [`Cake size: ${labelFor(catalog?.cakeSizes ?? cakeSizes, inquiry.cakeSizeId)}`]
+      : []),
     `Flavour: ${labelFor(catalog?.flavours ?? flavours, inquiry.flavourId)}`,
     `Budget: ${inquiry.budget || "Not provided"}`,
     `Estimated range: ${quoteRangeLabel(estimate)}`,
