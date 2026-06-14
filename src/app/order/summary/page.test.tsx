@@ -83,4 +83,19 @@ describe("OrderSummaryPage", () => {
       expect(writeTextMock).toHaveBeenCalledWith("E-transfer: payments@example.com\nMemo: Meera order ord_custom_payment - Amina");
     });
   });
+
+  it("falls back when stored payment metadata has a malformed email", () => {
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: "ord_bad_payment",
+      name: "Amina",
+      paymentEmail: "payments@example.com?cc=someone@example.com",
+      summary: "Name: Amina"
+    }));
+
+    render(<OrderSummaryPage />);
+
+    expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
+    expect(screen.queryByText("payments@example.com?cc=someone@example.com")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /email meera/i })).toHaveAttribute("href", expect.stringContaining("mailto:m.ssethi1123@gmail.com"));
+  });
 });
