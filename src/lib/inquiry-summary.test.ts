@@ -58,4 +58,24 @@ describe("buildInquirySummary", () => {
     expect(summary).toContain("Flavour: Mango saffron");
     expect(summary).toContain("Estimated range: $42-$52");
   });
+
+  it("omits the cake-size line for non-cake product summaries", () => {
+    const summary = buildInquirySummary(inquiry, {
+      ...defaultPublicCatalog,
+      products: [
+        ...defaultPublicCatalog.products,
+        {
+          id: "mini-cheesecake-box",
+          label: "Mini cheesecake box",
+          low: 42,
+          high: 52,
+          enabled: true,
+          sortOrder: 4
+        }
+      ]
+    });
+
+    expect(summary).toContain("Product: Mini cheesecake box");
+    expect(summary).not.toContain("Cake size:");
+  });
 });
