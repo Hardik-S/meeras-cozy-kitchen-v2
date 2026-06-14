@@ -27,7 +27,7 @@ export default function OrderSummaryPage() {
   const order = useStoredOrder();
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
-  const paymentEmail = order?.paymentEmail?.trim() || defaultPaymentEmail;
+  const paymentEmail = paymentEmailOrDefault(order?.paymentEmail);
 
   const transferNote = useMemo(() => {
     if (!order) return "";
@@ -178,6 +178,16 @@ function isStoredOrder(value: unknown): value is StoredOrder {
     && (order.budget === undefined || typeof order.budget === "string")
     && (order.message === undefined || typeof order.message === "string")
     && (order.paymentEmail === undefined || typeof order.paymentEmail === "string");
+}
+
+function paymentEmailOrDefault(value: string | undefined) {
+  const email = value?.trim();
+
+  if (!email || !/^[^\s@?&=]+@[^\s@?&=]+\.[^\s@?&=]+$/.test(email)) {
+    return defaultPaymentEmail;
+  }
+
+  return email;
 }
 
 function readStoredOrder() {
