@@ -17,7 +17,49 @@ function isPublicCatalog(value: unknown): value is PublicCatalog {
     && Array.isArray(catalog.offerings)
     && Array.isArray(catalog.cakeSizes)
     && Array.isArray(catalog.flavours)
-    && Array.isArray(catalog.addOns);
+    && Array.isArray(catalog.addOns)
+    && catalog.products.every(isPublicProduct)
+    && catalog.offerings.every(isPublicOffering)
+    && catalog.cakeSizes.every((offering) => isPublicOffering(offering) && offering.category === "cake-size")
+    && catalog.flavours.every((offering) => isPublicOffering(offering) && offering.category === "flavour")
+    && catalog.addOns.every((offering) => isPublicOffering(offering) && offering.category === "add-on");
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isFiniteNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isPublicProduct(value: unknown) {
+  if (!isRecord(value)) return false;
+
+  return isNonEmptyString(value.id)
+    && isNonEmptyString(value.label)
+    && isFiniteNumber(value.low)
+    && isFiniteNumber(value.high)
+    && typeof value.enabled === "boolean"
+    && isFiniteNumber(value.sortOrder);
+}
+
+function isPublicOffering(value: unknown) {
+  if (!isRecord(value)) return false;
+
+  return isNonEmptyString(value.id)
+    && isNonEmptyString(value.productId)
+    && (value.category === "cake-size" || value.category === "flavour" || value.category === "add-on")
+    && isNonEmptyString(value.label)
+    && isFiniteNumber(value.low)
+    && isFiniteNumber(value.high)
+    && typeof value.servings === "string"
+    && typeof value.enabled === "boolean"
+    && isFiniteNumber(value.sortOrder);
 }
 
 function clearCachedCatalog() {
