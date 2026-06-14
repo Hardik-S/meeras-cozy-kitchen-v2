@@ -37,6 +37,24 @@ describe("OrderSummaryPage", () => {
     expect(screen.getByText("Your inquiry was received. Meera will confirm the details directly.")).toBeInTheDocument();
   });
 
+  it("ignores a stored order when the summary URL points to a different order", () => {
+    window.history.replaceState(null, "", "/order/summary?id=ord_fresh_link");
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: "ord_previous_session",
+      name: "Amina",
+      paymentEmail: "payments@example.com",
+      summary: "Name: Amina"
+    }));
+
+    render(<OrderSummaryPage />);
+
+    expect(screen.getByRole("heading", { name: "Here are your payment instructions." })).toBeInTheDocument();
+    expect(screen.getAllByText("ord_fresh_link")[0]).toBeInTheDocument();
+    expect(screen.queryByText("ord_previous_session")).not.toBeInTheDocument();
+    expect(screen.queryByText("Name: Amina")).not.toBeInTheDocument();
+    expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
+  });
+
   it("shows a payment copy fallback when clipboard access is blocked", async () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_clipboard_blocked",
