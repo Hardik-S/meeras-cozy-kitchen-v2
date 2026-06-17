@@ -71,6 +71,39 @@ describe("mail helpers", () => {
     expect(result).toEqual({ status: "skipped", reason: "missing-env" });
   });
 
+  it("uses product-neutral notification subjects for non-cake inquiries", async () => {
+    vi.stubEnv("RESEND_API_KEY", "test-key");
+    vi.stubEnv("ORDER_NOTIFY_EMAIL", "orders@example.com");
+    sendMock.mockResolvedValue({ data: { id: "email_123" } });
+
+    await expect(sendInquiryEmail({
+      name: "Amina",
+      email: "amina@example.com",
+      phone: "4165550101",
+      eventDate: "2026-05-20",
+      servings: 24,
+      productType: "cupcakes",
+      flavourId: "vanilla-rose",
+      addOnIds: [],
+      budget: "80-100",
+      message: "Cupcakes with soft floral piping.",
+      acknowledgements: {
+        notice: true,
+        allergens: true,
+        address: true,
+        certification: true
+      },
+      website: ""
+    })).resolves.toEqual({ status: "sent", id: "email_123" });
+
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({
+      subject: "New bakery inquiry from Amina"
+    }));
+    expect(sendMock).not.toHaveBeenCalledWith(expect.objectContaining({
+      subject: expect.stringContaining("cake")
+    }));
+  });
+
   it("returns a controlled error when the provider rejects inquiry mail", async () => {
     vi.stubEnv("RESEND_API_KEY", "test-key");
     vi.stubEnv("ORDER_NOTIFY_EMAIL", "orders@example.com");
