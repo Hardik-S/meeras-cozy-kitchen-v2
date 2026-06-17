@@ -75,6 +75,17 @@ describe("inquirySchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("trims copied cake size ids before catalog validation uses them", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      cakeSizeId: " eight-inch "
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.cakeSizeId).toBe("eight-inch");
+  });
+
   it("rejects missing acknowledgement and honeypot submissions", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
