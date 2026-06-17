@@ -23,7 +23,7 @@ export async function sendInquiryEmail(inquiry: InquiryInput, summary = buildInq
       from: "Meera's Cozy Kitchen <orders@resend.dev>",
       to: notifyEmail,
       replyTo: inquiry.email,
-      subject: `New cake inquiry from ${inquiry.name}`,
+      subject: `New bakery inquiry from ${inquiry.name}`,
       text: summary
     });
 

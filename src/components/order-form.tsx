@@ -78,7 +78,7 @@ function toPayload(form: FormState) {
 }
 
 function mailtoLink(summary: string) {
-  const subject = encodeURIComponent(`Cake inquiry for ${business.name}`);
+  const subject = encodeURIComponent(`Bakery inquiry for ${business.name}`);
   const body = encodeURIComponent(summary);
 
   return `mailto:${business.orderEmail}?subject=${subject}&body=${body}`;

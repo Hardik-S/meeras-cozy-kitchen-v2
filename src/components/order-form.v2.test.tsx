@@ -245,6 +245,18 @@ describe("OrderForm v2 submit flow", () => {
     expect(summaryPreview).toHaveTextContent("Estimated range: $72-$84");
   });
 
+  it("uses product-neutral copy for the customer email fallback", () => {
+    render(<OrderForm />);
+
+    const emailLink = screen.getByRole("link", { name: /email/i });
+
+    expect(emailLink).toHaveAttribute(
+      "href",
+      expect.stringContaining("subject=Bakery%20inquiry%20for%20Meera's%20Cozy%20Kitchen")
+    );
+    expect(emailLink).not.toHaveAttribute("href", expect.stringContaining("Cake%20inquiry"));
+  });
+
   it("drops selected add-ons that disappear after a live catalog refresh", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const liveCatalogWithoutAddOns = {
