@@ -86,6 +86,17 @@ describe("inquirySchema", () => {
     expect(parsed.data?.cakeSizeId).toBe("eight-inch");
   });
 
+  it("trims copied pickup dates before notice validation uses them", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      eventDate: " 2026-05-20 "
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.eventDate).toBe("2026-05-20");
+  });
+
   it("rejects missing acknowledgement and honeypot submissions", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
