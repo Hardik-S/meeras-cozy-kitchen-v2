@@ -122,5 +122,8 @@ export function calculateQuoteEstimate(
 }
 
 export function quoteRangeLabel(estimate: PriceRange) {
-  return `${formatCurrency(estimate.low)}-${formatCurrency(estimate.high)}`;
+  const low = Math.min(estimate.low, estimate.high);
+  const high = Math.max(estimate.low, estimate.high);
+
+  return `${formatCurrency(low)}-${formatCurrency(high)}`;
 }

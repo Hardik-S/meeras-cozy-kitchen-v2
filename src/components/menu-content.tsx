@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { PublicCatalog } from "@/lib/catalog";
 import { loadPublicCatalog, schedulePublicCatalogSync } from "@/lib/public-catalog-sync";
-import { holdForLaterItems } from "@/lib/pricing";
+import { holdForLaterItems, quoteRangeLabel } from "@/lib/pricing";
 
 export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog }) {
   const [catalog, setCatalog] = useState(initialCatalog);
@@ -39,7 +39,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
             <p className="text-sm font-black text-[var(--sage)]">{size.servings} servings</p>
             <h2 className="mt-2 text-2xl font-black">{size.label}</h2>
             <p className="mt-5 text-2xl font-black text-[var(--accent-strong)]">
-              ${size.low}-${size.high}
+              {quoteRangeLabel(size)}
             </p>
           </article>
         ))}
@@ -53,7 +53,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
               <div key={product.id} className="rounded-[8px] border border-[var(--line)] bg-white/75 p-4">
                 <p className="font-black">{product.label}</p>
                 <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-                  ${product.low}-${product.high}
+                  {quoteRangeLabel(product)}
                 </p>
               </div>
             ))}
@@ -80,7 +80,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
               <div key={addOn.id} className="flex items-center justify-between gap-4 rounded-[8px] border border-[var(--line)] bg-white/75 p-4">
                 <p className="font-black">{addOn.label}</p>
                 <p className="shrink-0 text-sm font-extrabold text-[var(--accent-strong)]">
-                  ${addOn.low}-${addOn.high}
+                  {quoteRangeLabel(addOn)}
                 </p>
               </div>
             ))}
