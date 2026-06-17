@@ -43,6 +43,17 @@ describe("inquirySchema", () => {
     expect(parsed.data?.email).toBe("amina@example.com");
   });
 
+  it("normalizes copied add-on ids before pricing and summaries use them", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      addOnIds: [" fresh-berries ", "fresh-berries", " floral-piping "]
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.addOnIds).toEqual(["fresh-berries", "floral-piping"]);
+  });
+
   it("accepts Sheet-driven product ids from the admin catalog", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
