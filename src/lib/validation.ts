@@ -11,7 +11,7 @@ export function createInquirySchema(today = new Date()) {
     productType: z.string().trim().min(1, "Please choose a product."),
     cakeSizeId: z.string().optional(),
     flavourId: z.string().trim().min(1, "Please choose a flavour."),
-    addOnIds: z.array(z.string()).default([]),
+    addOnIds: z.array(z.string().trim().min(1)).default([]).transform((ids) => [...new Set(ids)]),
     budget: z.string().trim().max(80).optional().default(""),
     message: z.string().trim().min(10, "Please share a few design details.").max(1200),
     acknowledgements: z.object({
