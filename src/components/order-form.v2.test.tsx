@@ -245,6 +245,33 @@ describe("OrderForm v2 submit flow", () => {
     expect(summaryPreview).toHaveTextContent("Estimated range: $72-$84");
   });
 
+  it("shows Sheet-driven add-on ranges in ascending order", () => {
+    render(
+      <OrderForm
+        catalog={{
+          ...defaultPublicCatalog,
+          addOns: [
+            {
+              id: "rush-finish",
+              productId: "all",
+              category: "add-on",
+              label: "Rush finish",
+              low: 15,
+              high: 10,
+              servings: "",
+              enabled: true,
+              sortOrder: 1
+            }
+          ]
+        }}
+      />
+    );
+
+    expect(screen.getByLabelText(/Rush finish/i)).toBeInTheDocument();
+    expect(screen.getByText("$10-$15")).toBeInTheDocument();
+    expect(screen.queryByText("$15-$10")).not.toBeInTheDocument();
+  });
+
   it("uses product-neutral copy for the customer email fallback", () => {
     render(<OrderForm />);
 

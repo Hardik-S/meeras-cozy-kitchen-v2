@@ -66,6 +66,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Require a selected inquiry flavour at both the browser and API validation boundary, so customer summaries do not save `Not selected` flavour rows.
 - Accept Sheet-managed cake size IDs while still requiring a selected cake size, so live menu options can submit through browser and API validation.
 - Normalize Sheet-driven quote ranges before totaling, so swapped low/high cells do not show inverted customer prices.
+- Normalize Sheet-driven price ranges before rendering menu and add-on labels, so copied admin cells do not show inverted customer prices.
 - Use product-neutral bakery wording in customer and chef email subjects, so non-cake inquiries do not carry stale cake-only copy.
 - Trim pasted customer email whitespace before validation, so copied addresses stay usable in summaries, replies, and order metadata.
 - Normalize copied add-on IDs before validation output, so duplicate or padded selections cannot inflate pricing or summaries.

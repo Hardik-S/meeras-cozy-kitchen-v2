@@ -426,7 +426,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
                   <input type="checkbox" checked={form.addOnIds.includes(addOn.id)} onChange={() => toggleAddOn(addOn.id)} />
                   {addOn.label}
                 </span>
-                <span className="text-sm font-extrabold text-[var(--accent-strong)]">${addOn.low}-${addOn.high}</span>
+                <span className="text-sm font-extrabold text-[var(--accent-strong)]">{quoteRangeLabel(addOn)}</span>
               </label>
             ))}
           </div>
@@ -486,7 +486,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
             {estimate.lines.map((line) => (
               <div key={line.label} className="flex justify-between gap-3 border-b border-[var(--line)] py-2 text-sm font-bold">
                 <span>{line.label}</span>
-                <span>${line.low}-${line.high}</span>
+                <span>{quoteRangeLabel(line)}</span>
               </div>
             ))}
           </div>
