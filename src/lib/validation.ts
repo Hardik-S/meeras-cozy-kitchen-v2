@@ -4,7 +4,7 @@ import { isAtLeastMinimumNotice, isValidDateInput } from "./dates";
 export function createInquirySchema(today = new Date()) {
   return z.object({
     name: z.string().trim().min(2, "Please enter your name."),
-    email: z.email("Please enter a valid email."),
+    email: z.string().trim().pipe(z.email("Please enter a valid email.")),
     phone: z.string().trim().min(7, "Please include a phone number."),
     eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Please choose a pickup date."),
     servings: z.coerce.number().int().min(1).max(120),

@@ -32,6 +32,17 @@ describe("inquirySchema", () => {
     expect(parsed.success).toBe(true);
   });
 
+  it("trims pasted whitespace around customer email addresses", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      email: "  amina@example.com  "
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.email).toBe("amina@example.com");
+  });
+
   it("accepts Sheet-driven product ids from the admin catalog", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({

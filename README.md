@@ -67,6 +67,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Accept Sheet-managed cake size IDs while still requiring a selected cake size, so live menu options can submit through browser and API validation.
 - Normalize Sheet-driven quote ranges before totaling, so swapped low/high cells do not show inverted customer prices.
 - Use product-neutral bakery wording in customer and chef email subjects, so non-cake inquiries do not carry stale cake-only copy.
+- Trim pasted customer email whitespace before validation, so copied addresses stay usable in summaries, replies, and order metadata.
 - Return controlled email-delivery errors when Resend rejects, so fallback inquiry mail failures do not become unhandled server errors.
 
 ## Approaches Considered
