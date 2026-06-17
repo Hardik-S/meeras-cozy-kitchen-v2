@@ -9,7 +9,7 @@ export function createInquirySchema(today = new Date()) {
     eventDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Please choose a pickup date."),
     servings: z.coerce.number().int().min(1).max(120),
     productType: z.string().trim().min(1, "Please choose a product."),
-    cakeSizeId: z.string().optional(),
+    cakeSizeId: z.string().trim().optional(),
     flavourId: z.string().trim().min(1, "Please choose a flavour."),
     addOnIds: z.array(z.string().trim().min(1)).default([]).transform((ids) => [...new Set(ids)]),
     budget: z.string().trim().max(80).optional().default(""),
