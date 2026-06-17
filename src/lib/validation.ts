@@ -20,7 +20,7 @@ export function createInquirySchema(today = new Date()) {
       address: z.literal(true, { error: "Please confirm pickup details are shared after booking." }),
       certification: z.literal(true, { error: "Please confirm the certification note." })
     }),
-    website: z.string().max(0, "Spam check failed.").optional().default("")
+    website: z.string().trim().max(0, "Spam check failed.").optional().default("")
   }).superRefine((value, context) => {
     if (!isValidDateInput(value.eventDate)) {
       context.addIssue({
