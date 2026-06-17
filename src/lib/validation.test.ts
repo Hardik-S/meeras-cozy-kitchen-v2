@@ -97,6 +97,17 @@ describe("inquirySchema", () => {
     expect(parsed.data?.eventDate).toBe("2026-05-20");
   });
 
+  it("treats whitespace-only honeypot values as empty browser noise", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      website: "   "
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.website).toBe("");
+  });
+
   it("rejects missing acknowledgement and honeypot submissions", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
