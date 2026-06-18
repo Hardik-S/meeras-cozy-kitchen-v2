@@ -140,12 +140,37 @@ export function sortByOrder<T extends { sortOrder: number; label: string }>(item
   return [...items].sort((left, right) => left.sortOrder - right.sortOrder || left.label.localeCompare(right.label));
 }
 
+function normalizeProduct(product: AdminProduct): AdminProduct {
+  return {
+    ...product,
+    id: product.id.trim(),
+    label: product.label.trim()
+  };
+}
+
+function normalizeOffering(offering: AdminOffering): AdminOffering {
+  return {
+    ...offering,
+    id: offering.id.trim(),
+    productId: offering.productId.trim(),
+    label: offering.label.trim(),
+    servings: offering.servings.trim()
+  };
+}
+
 export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
-  const products = sortByOrder(data.products.filter((product) => product.enabled));
+  const products = sortByOrder(data.products
+    .map(normalizeProduct)
+    .filter((product) => product.enabled && product.id.length > 0 && product.label.length > 0));
   const enabledProductIds = new Set<ProductType>(products.map((product) => product.id));
-  const offerings = sortByOrder(data.offerings.filter((offering) =>
-    offering.enabled && (offering.productId === "all" || enabledProductIds.has(offering.productId))
-  ));
+  const offerings = sortByOrder(data.offerings
+    .map(normalizeOffering)
+    .filter((offering) =>
+      offering.enabled
+      && offering.id.length > 0
+      && offering.label.length > 0
+      && (offering.productId === "all" || enabledProductIds.has(offering.productId))
+    ));
 
   return {
     products,
