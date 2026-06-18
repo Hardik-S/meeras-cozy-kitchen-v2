@@ -53,4 +53,42 @@ describe("catalog mappers", () => {
     expect(catalog.offerings.map((offering) => offering.id)).not.toContain("mini-cupcake-tray");
     expect(catalog.addOns.map((offering) => offering.id)).not.toContain("mini-cupcake-tray");
   });
+
+  it("normalizes Sheet text keys before public catalog consumers use them", () => {
+    const catalog = getPublicCatalogFromAdminData({
+      ...defaultAdminData,
+      products: [
+        ...defaultAdminData.products,
+        {
+          id: " mini-cheesecake-box ",
+          label: " Mini cheesecake box ",
+          low: 42,
+          high: 52,
+          enabled: true,
+          sortOrder: 99
+        }
+      ],
+      offerings: [
+        ...defaultAdminData.offerings,
+        {
+          id: " cookie-topper ",
+          productId: " mini-cheesecake-box ",
+          category: "add-on",
+          label: " Cookie topper ",
+          low: 8,
+          high: 10,
+          servings: " ",
+          enabled: true,
+          sortOrder: 99
+        }
+      ]
+    });
+
+    expect(catalog.products.find((product) => product.label === "Mini cheesecake box")?.id).toBe("mini-cheesecake-box");
+    expect(catalog.addOns.find((addOn) => addOn.label === "Cookie topper")).toMatchObject({
+      id: "cookie-topper",
+      productId: "mini-cheesecake-box",
+      servings: ""
+    });
+  });
 });
