@@ -1,4 +1,4 @@
-import type { PublicCatalog } from "./catalog";
+import type { OfferingCategory, PublicCatalog } from "./catalog";
 
 type CatalogSyncResult = {
   catalog: PublicCatalog;
@@ -20,9 +20,9 @@ function isPublicCatalog(value: unknown): value is PublicCatalog {
     && Array.isArray(catalog.addOns)
     && catalog.products.every(isPublicProduct)
     && catalog.offerings.every(isPublicOffering)
-    && catalog.cakeSizes.every((offering) => isPublicOffering(offering) && offering.category === "cake-size")
-    && catalog.flavours.every((offering) => isPublicOffering(offering) && offering.category === "flavour")
-    && catalog.addOns.every((offering) => isPublicOffering(offering) && offering.category === "add-on");
+    && catalog.cakeSizes.every((offering) => hasPublicOfferingCategory(offering, "cake-size"))
+    && catalog.flavours.every((offering) => hasPublicOfferingCategory(offering, "flavour"))
+    && catalog.addOns.every((offering) => hasPublicOfferingCategory(offering, "add-on"));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -35,6 +35,15 @@ function isNonEmptyString(value: unknown) {
 
 function isFiniteNumber(value: unknown) {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined {
+  if (typeof value !== "string") return undefined;
+
+  const category = value.trim();
+  return category === "cake-size" || category === "flavour" || category === "add-on"
+    ? category
+    : undefined;
 }
 
 function isPublicProduct(value: unknown) {
@@ -53,13 +62,51 @@ function isPublicOffering(value: unknown) {
 
   return isNonEmptyString(value.id)
     && isNonEmptyString(value.productId)
-    && (value.category === "cake-size" || value.category === "flavour" || value.category === "add-on")
+    && normalizeOfferingCategory(value.category) !== undefined
     && isNonEmptyString(value.label)
     && isFiniteNumber(value.low)
     && isFiniteNumber(value.high)
     && typeof value.servings === "string"
     && typeof value.enabled === "boolean"
     && isFiniteNumber(value.sortOrder);
+}
+
+function hasPublicOfferingCategory(value: unknown, category: OfferingCategory) {
+  return isPublicOffering(value)
+    && isRecord(value)
+    && normalizeOfferingCategory(value.category) === category;
+}
+
+function normalizePublicProduct(product: PublicCatalog["products"][number]): PublicCatalog["products"][number] {
+  return {
+    ...product,
+    id: product.id.trim(),
+    label: product.label.trim()
+  };
+}
+
+function normalizePublicOffering(offering: PublicCatalog["offerings"][number]): PublicCatalog["offerings"][number] {
+  return {
+    ...offering,
+    id: offering.id.trim(),
+    productId: offering.productId.trim(),
+    category: normalizeOfferingCategory(offering.category) ?? offering.category,
+    label: offering.label.trim(),
+    servings: offering.servings.trim()
+  };
+}
+
+function normalizePublicCatalog(catalog: PublicCatalog): PublicCatalog {
+  const products = catalog.products.map(normalizePublicProduct);
+  const offerings = catalog.offerings.map(normalizePublicOffering);
+
+  return {
+    products,
+    offerings,
+    cakeSizes: offerings.filter((offering) => offering.category === "cake-size"),
+    flavours: offerings.filter((offering) => offering.category === "flavour"),
+    addOns: offerings.filter((offering) => offering.category === "add-on")
+  };
 }
 
 function clearCachedCatalog() {
@@ -82,7 +129,7 @@ function readCachedCatalog(now = Date.now()): CatalogSyncResult | undefined {
       return undefined;
     }
 
-    return { catalog: parsed.catalog, source: "cached" };
+    return { catalog: normalizePublicCatalog(parsed.catalog), source: "cached" };
   } catch {
     clearCachedCatalog();
     return undefined;
@@ -115,11 +162,12 @@ export async function loadPublicCatalog(
       const body = await response.json();
 
       if (response.ok && body.ok && isPublicCatalog(body.catalog)) {
+        const catalog = normalizePublicCatalog(body.catalog);
         if (body.source === "live") {
-          writeCachedCatalog(body.catalog);
+          writeCachedCatalog(catalog);
         }
         return {
-          catalog: body.catalog,
+          catalog,
           source: body.source === "live" ? "live" : "fallback"
         };
       }

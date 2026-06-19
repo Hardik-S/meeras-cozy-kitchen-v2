@@ -38,6 +38,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Treat non-object Apps Script JSON responses as request failures, so null proxy bodies do not leak raw TypeErrors into catalog or inquiry flows.
 - Treat malformed public catalog responses or cached browser catalog data as a local-default fallback, so an incomplete refresh cannot poison the customer menu cache.
 - Validate cached and live public catalog row shapes before using them in the browser, so malformed Sheet snapshots cannot break customer menu rendering.
+- Normalize cached and live public catalog text before browser consumers use it, so old Sheet snapshots with copied whitespace do not break menu selection.
 - Cache only live Sheet-backed public catalog responses, so temporary server fallbacks do not pin stale customer menus.
 - Drop selected add-ons that disappear after a live catalog refresh, so stale Sheet options are not submitted silently.
 - Reject unavailable catalog IDs at the inquiry API boundary too, so stale direct submissions cannot save hidden menu options.
