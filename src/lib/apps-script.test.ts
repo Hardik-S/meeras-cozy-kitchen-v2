@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { listAdminDataFromAppsScript, mutateAdminDataInAppsScript, submitInquiryToAppsScript } from "./apps-script";
-import { defaultAdminData } from "./catalog";
+import { defaultAdminData, getPublicCatalogFromAdminData } from "./catalog";
 import type { InquiryInput } from "./validation";
 
 const inquiry: InquiryInput = {
@@ -173,6 +173,45 @@ describe("Apps Script integration", () => {
           })
         ]
       }
+    });
+  });
+
+  it("normalizes copied offering categories before public catalog mapping", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          offerings: [
+            ...defaultAdminData.offerings,
+            {
+              id: " cookie-topper ",
+              productId: " cake ",
+              category: " add-on ",
+              label: " Cookie topper ",
+              low: 8,
+              high: 10,
+              servings: "",
+              enabled: true,
+              sortOrder: 99
+            }
+          ]
+        }
+      }), { status: 200 })
+    ));
+
+    const result = await listAdminDataFromAppsScript();
+
+    expect(result.status).toBe("live");
+    if (result.status !== "live") return;
+
+    const catalog = getPublicCatalogFromAdminData(result.data);
+    expect(catalog.addOns.find((addOn) => addOn.id === "cookie-topper")).toMatchObject({
+      productId: "cake",
+      category: "add-on",
+      label: "Cookie topper"
     });
   });
 
