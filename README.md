@@ -22,6 +22,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Render public catalog pages instantly from local defaults, then refresh from the sheet after hydration.
 - Keep Apps Script as the backend source of truth while making admin edits optimistic in the browser.
 - Store expense quantity in the v2 ledger contract; existing sheet rows default to quantity `1`.
+- Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
 - Default finance reports to the selected month, initially the current month.
 - Validate inquiry pickup dates as real calendar days before applying the seven-day notice rule, so impossible `YYYY-MM-DD` strings cannot pass as future dates.
 - Build inquiry summaries from the live public catalog when it is available, so Sheet-managed products and flavours keep their customer-facing labels and quote ranges in emails, Apps Script rows, and the payment-instructions page.

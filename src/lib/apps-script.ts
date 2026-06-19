@@ -1,5 +1,6 @@
 import { buildInquirySummary } from "./inquiry-summary";
 import { defaultAdminData, type AdminData, type OfferingCategory, type OrderStatus } from "./catalog";
+import { normalizeLedgerEntry } from "./finance";
 import type { InquiryInput } from "./validation";
 
 export type AppsScriptSkippedResult = { status: "skipped"; reason: "missing-env" };
@@ -114,7 +115,8 @@ function isLedgerEntry(value: unknown) {
   return isRecord(value)
     && hasStringFields(value, ["id", "date", "type", "category", "description", "orderId"])
     && (value.type === "income" || value.type === "expense")
-    && hasNumberFields(value, ["amount", "quantity"]);
+    && hasNumberFields(value, ["amount"])
+    && (value.quantity === undefined || isFiniteNumber(value.quantity));
 }
 
 function isAdminData(value: unknown): value is AdminData {
@@ -137,6 +139,13 @@ function isAdminData(value: unknown): value is AdminData {
 
 function normalizeOrderId(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function normalizeAdminData(data: AdminData): AdminData {
+  return {
+    ...data,
+    ledger: data.ledger.map(normalizeLedgerEntry)
+  };
 }
 
 function recordFromJson(value: unknown): Record<string, unknown> {
@@ -208,7 +217,7 @@ export async function listAdminDataFromAppsScript(): Promise<AppsScriptDataResul
       throw new Error("Apps Script returned malformed admin data.");
     }
 
-    return { status: "live", data: response.data };
+    return { status: "live", data: normalizeAdminData(response.data) };
   } catch (error) {
     return {
       status: "error",
@@ -226,6 +235,10 @@ export async function mutateAdminDataInAppsScript(action: string, payload: Recor
 
   if ("data" in response && response.data !== undefined && !isAdminData(response.data)) {
     throw new Error("Apps Script returned malformed admin data.");
+  }
+
+  if ("data" in response && response.data !== undefined) {
+    return { ...response, data: normalizeAdminData(response.data) };
   }
 
   return response;
