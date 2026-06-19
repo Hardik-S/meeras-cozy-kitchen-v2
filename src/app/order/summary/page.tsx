@@ -17,7 +17,7 @@ type StoredOrder = {
   servings?: number;
   budget?: string;
   message?: string;
-  paymentEmail: string;
+  paymentEmail?: string;
   summary: string;
 };
 
@@ -140,8 +140,12 @@ function useStoredOrder() {
       try {
         const parsed = JSON.parse(rawOrder);
 
-        if (isStoredOrder(parsed) && (!urlOrderId || parsed.id === urlOrderId)) {
-          return parsed;
+        if (isStoredOrder(parsed)) {
+          const order = normalizeStoredOrder(parsed);
+
+          if (!urlOrderId || order.id === urlOrderId) {
+            return order;
+          }
         }
       } catch {
         // Fall through to the URL id fallback below.
@@ -178,6 +182,24 @@ function isStoredOrder(value: unknown): value is StoredOrder {
     && (order.budget === undefined || typeof order.budget === "string")
     && (order.message === undefined || typeof order.message === "string")
     && (order.paymentEmail === undefined || typeof order.paymentEmail === "string");
+}
+
+function normalizeStoredOrder(order: StoredOrder): StoredOrder {
+  return {
+    ...order,
+    id: order.id.trim(),
+    name: order.name?.trim(),
+    email: order.email?.trim(),
+    phone: order.phone?.trim(),
+    eventDate: order.eventDate?.trim(),
+    productType: order.productType?.trim(),
+    cakeSizeId: order.cakeSizeId?.trim(),
+    flavourId: order.flavourId?.trim(),
+    budget: order.budget?.trim(),
+    message: order.message?.trim(),
+    paymentEmail: order.paymentEmail?.trim(),
+    summary: order.summary.trim()
+  };
 }
 
 function paymentEmailOrDefault(value: string | undefined) {

@@ -55,6 +55,23 @@ describe("OrderSummaryPage", () => {
     expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
   });
 
+  it("normalizes copied stored order ids before matching the summary URL", () => {
+    window.history.replaceState(null, "", "/order/summary?id=ord_copied_storage");
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: " ord_copied_storage ",
+      name: "Amina",
+      paymentEmail: "payments@example.com",
+      summary: "Name: Amina from stored payment metadata"
+    }));
+
+    render(<OrderSummaryPage />);
+
+    expect(screen.getByText("Name: Amina from stored payment metadata")).toBeInTheDocument();
+    expect(screen.getAllByText("ord_copied_storage")[0]).toBeInTheDocument();
+    expect(screen.queryByText(" ord_copied_storage ")).not.toBeInTheDocument();
+    expect(screen.getByText("payments@example.com")).toBeInTheDocument();
+  });
+
   it("shows a payment copy fallback when clipboard access is blocked", async () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_clipboard_blocked",
