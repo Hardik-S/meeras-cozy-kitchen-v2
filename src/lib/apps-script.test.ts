@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { listAdminDataFromAppsScript, mutateAdminDataInAppsScript, submitInquiryToAppsScript } from "./apps-script";
+import { defaultAdminData } from "./catalog";
 import type { InquiryInput } from "./validation";
 
 const inquiry: InquiryInput = {
@@ -138,6 +139,40 @@ describe("Apps Script integration", () => {
     await expect(listAdminDataFromAppsScript()).resolves.toEqual({
       status: "error",
       message: "Apps Script returned malformed admin data."
+    });
+  });
+
+  it("defaults legacy ledger rows without quantity after Apps Script validation", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          ledger: [{
+            id: "legacy_box_row",
+            date: "2026-05-03",
+            type: "expense",
+            category: "Packaging",
+            description: "Legacy cake box row",
+            amount: 12,
+            orderId: ""
+          }]
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toMatchObject({
+      status: "live",
+      data: {
+        ledger: [
+          expect.objectContaining({
+            id: "legacy_box_row",
+            quantity: 1
+          })
+        ]
+      }
     });
   });
 
