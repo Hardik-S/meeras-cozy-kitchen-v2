@@ -34,6 +34,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Validate live Apps Script row shapes before accepting admin data, so malformed product labels cannot crash public catalog mapping.
 - Reject blank live catalog row IDs and labels too, so Sheet whitespace cannot publish empty customer-facing menu options.
 - Trim Sheet-backed catalog IDs, labels, product links, and servings before public mapping, so copied admin cells cannot break menu selection or pricing lookups.
+- Normalize copied Sheet offering categories before public mapping, so valid add-ons, flavours, and cake sizes do not disappear after cell edits.
 - Treat non-object Apps Script JSON responses as request failures, so null proxy bodies do not leak raw TypeErrors into catalog or inquiry flows.
 - Treat malformed public catalog responses or cached browser catalog data as a local-default fallback, so an incomplete refresh cannot poison the customer menu cache.
 - Validate cached and live public catalog row shapes before using them in the browser, so malformed Sheet snapshots cannot break customer menu rendering.

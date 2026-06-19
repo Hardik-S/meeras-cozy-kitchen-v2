@@ -68,8 +68,17 @@ function isAdminProduct(value: unknown) {
     && isBoolean(value.enabled);
 }
 
-function isOfferingCategory(value: unknown): value is OfferingCategory {
-  return value === "cake-size" || value === "flavour" || value === "add-on";
+function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined {
+  if (!isString(value)) return undefined;
+
+  const category = value.trim();
+  return category === "cake-size" || category === "flavour" || category === "add-on"
+    ? category
+    : undefined;
+}
+
+function isOfferingCategory(value: unknown) {
+  return normalizeOfferingCategory(value) !== undefined;
 }
 
 function isAdminOffering(value: unknown) {
@@ -141,9 +150,17 @@ function normalizeOrderId(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function normalizeAdminOffering(offering: AdminData["offerings"][number]): AdminData["offerings"][number] {
+  return {
+    ...offering,
+    category: normalizeOfferingCategory(offering.category) ?? offering.category
+  };
+}
+
 function normalizeAdminData(data: AdminData): AdminData {
   return {
     ...data,
+    offerings: data.offerings.map(normalizeAdminOffering),
     ledger: data.ledger.map(normalizeLedgerEntry)
   };
 }

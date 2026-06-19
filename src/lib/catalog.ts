@@ -153,6 +153,7 @@ function normalizeOffering(offering: AdminOffering): AdminOffering {
     ...offering,
     id: offering.id.trim(),
     productId: offering.productId.trim(),
+    category: offering.category.trim() as OfferingCategory,
     label: offering.label.trim(),
     servings: offering.servings.trim()
   };
