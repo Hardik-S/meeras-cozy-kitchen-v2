@@ -41,6 +41,37 @@ describe("public catalog sync", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("normalizes copied cached catalog text before browser consumers use it", async () => {
+    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
+      savedAt: Date.now(),
+      catalog: {
+        ...defaultPublicCatalog,
+        products: [
+          { ...defaultPublicCatalog.products[0], id: " cake ", label: " Custom cake " }
+        ],
+        offerings: [
+          { ...defaultPublicCatalog.addOns[0], id: " fresh-berries ", productId: " all ", category: " add-on ", label: " Fresh berry finish " }
+        ],
+        cakeSizes: [],
+        flavours: [],
+        addOns: [
+          { ...defaultPublicCatalog.addOns[0], id: " fresh-berries ", productId: " all ", category: " add-on ", label: " Fresh berry finish " }
+        ]
+      }
+    }));
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await loadPublicCatalog(defaultPublicCatalog);
+
+    expect(result.source).toBe("cached");
+    expect(result.catalog.products[0]).toMatchObject({ id: "cake", label: "Custom cake" });
+    expect(result.catalog.offerings[0]).toMatchObject({ id: "fresh-berries", productId: "all", category: "add-on" });
+    expect(result.catalog.addOns).toHaveLength(1);
+    expect(result.catalog.addOns[0].id).toBe("fresh-berries");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("clears malformed cached catalog data before falling back", async () => {
     sessionStorage.setItem("meera:public-catalog", JSON.stringify({
       savedAt: Date.now(),
