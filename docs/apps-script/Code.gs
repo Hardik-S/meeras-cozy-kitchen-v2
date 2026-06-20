@@ -477,15 +477,20 @@ function findRowById(sheetName, id) {
 }
 
 function settingsObject() {
-  return readObjects("Settings").reduce(function(settings, row) {
-    settings[row.key] = row.value;
-    return settings;
-  }, {
+  const defaults = {
     defaultSender: SETTINGS.defaultEmail,
     defaultReceiver: SETTINGS.defaultEmail,
     senderName: SETTINGS.senderName,
     chefNotificationCopy: "New bakery inquiry received. Reply from the admin dashboard or your inbox."
-  });
+  };
+  return readObjects("Settings").reduce(function(settings, row) {
+    const key = clean(row.key);
+    if (!Object.prototype.hasOwnProperty.call(settings, key)) {
+      return settings;
+    }
+    settings[key] = clean(row.value) || defaults[key];
+    return settings;
+  }, defaults);
 }
 
 function setSetting(key, value) {
