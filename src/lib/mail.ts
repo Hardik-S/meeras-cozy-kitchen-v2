@@ -10,8 +10,8 @@ export type SendInquiryResult =
   | { status: "error"; message: string };
 
 export async function sendInquiryEmail(inquiry: InquiryInput, summary = buildInquirySummary(inquiry)): Promise<SendInquiryResult> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const notifyEmail = process.env.ORDER_NOTIFY_EMAIL;
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const notifyEmail = process.env.ORDER_NOTIFY_EMAIL?.trim();
 
   if (!apiKey || !notifyEmail) {
     return { status: "skipped", reason: "missing-env" };
