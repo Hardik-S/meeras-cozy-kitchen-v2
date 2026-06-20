@@ -166,11 +166,30 @@ function normalizeAdminSettings(settings: AdminData["settings"]): AdminData["set
   };
 }
 
+function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["orders"][number] {
+  return {
+    ...order,
+    id: order.id.trim(),
+    createdAt: order.createdAt.trim(),
+    name: order.name.trim(),
+    email: order.email.trim(),
+    phone: order.phone.trim(),
+    eventDate: order.eventDate.trim(),
+    productType: order.productType.trim(),
+    cakeSizeId: order.cakeSizeId.trim(),
+    flavourId: order.flavourId.trim(),
+    budget: order.budget.trim(),
+    message: order.message.trim(),
+    summary: order.summary.trim()
+  };
+}
+
 function normalizeAdminData(data: AdminData): AdminData {
   return {
     ...data,
     settings: normalizeAdminSettings(data.settings),
     offerings: data.offerings.map(normalizeAdminOffering),
+    orders: data.orders.map(normalizeAdminOrder),
     ledger: data.ledger.map(normalizeLedgerEntry)
   };
 }
