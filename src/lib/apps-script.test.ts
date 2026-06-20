@@ -39,9 +39,19 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("skips submission when Apps Script env vars are blank copied values", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "   ");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "   ");
+
+    await expect(submitInquiryToAppsScript(inquiry)).resolves.toEqual({
+      status: "skipped",
+      reason: "missing-env"
+    });
+  });
+
   it("forwards a validated inquiry with the shared secret", async () => {
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", " https://script.google.com/macros/s/test/exec ");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", " shared-secret ");
     const fetchMock = vi.fn(async () =>
       new Response(JSON.stringify({ ok: true, orderId: "ord_123" }), { status: 200 })
     );
