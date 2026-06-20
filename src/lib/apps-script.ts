@@ -1,5 +1,5 @@
 import { buildInquirySummary } from "./inquiry-summary";
-import { defaultAdminData, type AdminData, type OfferingCategory, type OrderStatus } from "./catalog";
+import { defaultAdminData, type AdminData, type LedgerEntryType, type OfferingCategory, type OrderStatus } from "./catalog";
 import { normalizeLedgerEntry } from "./finance";
 import type { InquiryInput } from "./validation";
 
@@ -81,6 +81,17 @@ function isOfferingCategory(value: unknown) {
   return normalizeOfferingCategory(value) !== undefined;
 }
 
+function normalizeLedgerEntryType(value: unknown): LedgerEntryType | undefined {
+  if (!isString(value)) return undefined;
+
+  const type = value.trim();
+  return type === "income" || type === "expense" ? type : undefined;
+}
+
+function isLedgerEntryType(value: unknown) {
+  return normalizeLedgerEntryType(value) !== undefined;
+}
+
 function isAdminOffering(value: unknown) {
   return isRecord(value)
     && hasNonEmptyStringFields(value, ["id", "productId", "label"])
@@ -123,7 +134,7 @@ function isAdminOrder(value: unknown) {
 function isLedgerEntry(value: unknown) {
   return isRecord(value)
     && hasStringFields(value, ["id", "date", "type", "category", "description", "orderId"])
-    && (value.type === "income" || value.type === "expense")
+    && isLedgerEntryType(value.type)
     && hasNumberFields(value, ["amount"])
     && (value.quantity === undefined || isFiniteNumber(value.quantity));
 }

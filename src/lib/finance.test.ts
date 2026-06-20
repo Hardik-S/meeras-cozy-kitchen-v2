@@ -139,6 +139,39 @@ describe("finance helpers", () => {
     ]);
   });
 
+  it("normalizes copied ledger text before reports and exports use it", () => {
+    const copiedRows: LedgerEntry[] = [{
+      id: " led_copied ",
+      date: " 2026-05-09 ",
+      type: "income",
+      category: " Order ",
+      description: " Cake balance ",
+      amount: 75,
+      quantity: 2,
+      orderId: " ord_1 "
+    }];
+
+    const report = calculateMonthlyFinanceReport(copiedRows, [], "2026-05");
+
+    expect(report.income).toBe(150);
+    expect(report.entries[0]).toMatchObject({
+      id: "led_copied",
+      date: "2026-05-09",
+      category: "Order",
+      description: "Cake balance",
+      orderId: "ord_1"
+    });
+    expect(buildLedgerCsvRows(copiedRows, "2026-05")[1]).toEqual([
+      "2026-05-09",
+      "income",
+      "Order",
+      "Cake balance",
+      2,
+      75,
+      "ord_1"
+    ]);
+  });
+
   it("formats the current month key from a date", () => {
     expect(currentMonthKey(new Date("2026-05-07T12:00:00"))).toBe("2026-05");
   });
