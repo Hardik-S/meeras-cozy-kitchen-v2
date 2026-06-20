@@ -104,6 +104,37 @@ describe("mail helpers", () => {
     }));
   });
 
+  it("trims copied notification env vars before sending inquiry mail", async () => {
+    vi.stubEnv("RESEND_API_KEY", " test-key ");
+    vi.stubEnv("ORDER_NOTIFY_EMAIL", " orders@example.com ");
+    sendMock.mockResolvedValue({ data: { id: "email_456" } });
+
+    await expect(sendInquiryEmail({
+      name: "Amina",
+      email: "amina@example.com",
+      phone: "4165550101",
+      eventDate: "2026-05-20",
+      servings: 18,
+      productType: "cake",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla-rose",
+      addOnIds: [],
+      budget: "100-150",
+      message: "Birthday cake with soft florals.",
+      acknowledgements: {
+        notice: true,
+        allergens: true,
+        address: true,
+        certification: true
+      },
+      website: ""
+    })).resolves.toEqual({ status: "sent", id: "email_456" });
+
+    expect(sendMock).toHaveBeenCalledWith(expect.objectContaining({
+      to: "orders@example.com"
+    }));
+  });
+
   it("returns a controlled error when the provider rejects inquiry mail", async () => {
     vi.stubEnv("RESEND_API_KEY", "test-key");
     vi.stubEnv("ORDER_NOTIFY_EMAIL", "orders@example.com");
