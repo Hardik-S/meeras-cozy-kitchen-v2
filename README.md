@@ -54,6 +54,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Treat non-object admin login bodies as invalid PIN attempts, so malformed requests return a controlled 401 instead of a server error.
 - Reject non-object admin mutation bodies as unsupported actions, so malformed dashboard requests return a controlled 400 instead of a server error.
 - Keep email settings edits in a draft until save succeeds, so a failed sheet write does not leave unsaved inbox settings visible as if they persisted.
+- Default blank copied email setting cells back to the configured owner values, so notification routing does not silently lose the recipient or sender name.
 - Clear malformed public catalog cache entries when the live catalog is unavailable, so stale browser storage does not keep slowing fallback page loads.
 - Clear future-dated public catalog cache entries too, so clock-skewed browser storage cannot pin stale menu data.
 - Catch rejected browser clipboard writes, so customers can fall back to email or manual selection instead of hitting an unhandled copy action.

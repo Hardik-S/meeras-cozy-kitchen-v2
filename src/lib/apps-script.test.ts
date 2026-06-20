@@ -215,6 +215,32 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("defaults blank live email settings after Apps Script validation", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          settings: {
+            defaultSender: "   ",
+            defaultReceiver: "   ",
+            senderName: "   ",
+            chefNotificationCopy: "   "
+          }
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toMatchObject({
+      status: "live",
+      data: {
+        settings: defaultAdminData.settings
+      }
+    });
+  });
+
   it("reports non-object Apps Script responses as request failures", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");

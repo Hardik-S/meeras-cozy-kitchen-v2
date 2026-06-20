@@ -157,9 +157,19 @@ function normalizeAdminOffering(offering: AdminData["offerings"][number]): Admin
   };
 }
 
+function normalizeAdminSettings(settings: AdminData["settings"]): AdminData["settings"] {
+  return {
+    defaultSender: settings.defaultSender.trim() || defaultAdminData.settings.defaultSender,
+    defaultReceiver: settings.defaultReceiver.trim() || defaultAdminData.settings.defaultReceiver,
+    senderName: settings.senderName.trim() || defaultAdminData.settings.senderName,
+    chefNotificationCopy: settings.chefNotificationCopy.trim() || defaultAdminData.settings.chefNotificationCopy
+  };
+}
+
 function normalizeAdminData(data: AdminData): AdminData {
   return {
     ...data,
+    settings: normalizeAdminSettings(data.settings),
     offerings: data.offerings.map(normalizeAdminOffering),
     ledger: data.ledger.map(normalizeLedgerEntry)
   };
