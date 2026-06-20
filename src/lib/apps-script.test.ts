@@ -296,6 +296,44 @@ describe("Apps Script integration", () => {
     expect(calculateMonthlyFinanceReport([], result.data.orders, "2026-06").confirmedPotential).toBe(125);
   });
 
+  it("normalizes copied live ledger strings before finance summaries use them", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          ledger: [{
+            id: " led_copied ",
+            date: " 2026-06-10 ",
+            type: " income ",
+            category: " Order ",
+            description: " Cake balance ",
+            amount: 80,
+            quantity: 2,
+            orderId: " ord_copied "
+          }]
+        }
+      }), { status: 200 })
+    ));
+
+    const result = await listAdminDataFromAppsScript();
+
+    expect(result.status).toBe("live");
+    if (result.status !== "live") return;
+
+    expect(result.data.ledger[0]).toMatchObject({
+      id: "led_copied",
+      date: "2026-06-10",
+      type: "income",
+      category: "Order",
+      description: "Cake balance",
+      orderId: "ord_copied"
+    });
+    expect(calculateMonthlyFinanceReport(result.data.ledger, [], "2026-06").income).toBe(160);
+  });
+
   it("reports non-object Apps Script responses as request failures", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");

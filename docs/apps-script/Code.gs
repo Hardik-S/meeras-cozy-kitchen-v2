@@ -185,14 +185,14 @@ function listAdminData() {
       }),
       ledger: readObjects("Ledger").map(function(row) {
         return {
-          id: row.id,
-          date: row.date,
-          type: row.type,
-          category: row.category,
-          description: row.description,
+          id: clean(row.id),
+          date: clean(row.date),
+          type: clean(row.type),
+          category: clean(row.category),
+          description: clean(row.description),
           amount: toNumber(row.amount),
           quantity: toPositiveNumber(row.quantity, 1),
-          orderId: row.orderId
+          orderId: clean(row.orderId)
         };
       })
     }

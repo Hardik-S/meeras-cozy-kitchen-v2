@@ -1,4 +1,4 @@
-import type { AdminOrder, LedgerEntry } from "./catalog";
+import type { AdminOrder, LedgerEntry, LedgerEntryType } from "./catalog";
 
 export type LedgerEntryLike = Omit<LedgerEntry, "quantity"> & { quantity?: number };
 
@@ -22,12 +22,22 @@ function monthKey(value: string) {
   return /^\d{4}-\d{2}/.test(value) ? value.slice(0, 7) : "";
 }
 
+function normalizeLedgerType(value: LedgerEntry["type"]): LedgerEntryType {
+  return value.trim() as LedgerEntryType;
+}
+
 export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {
   const quantity = Number(entry.quantity);
 
   return {
     ...entry,
-    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+    id: entry.id.trim(),
+    date: entry.date.trim(),
+    type: normalizeLedgerType(entry.type),
+    category: entry.category.trim(),
+    description: entry.description.trim(),
+    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+    orderId: entry.orderId.trim()
   };
 }
 
