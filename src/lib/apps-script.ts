@@ -14,8 +14,8 @@ export type AppsScriptDataResult =
   | AppsScriptErrorResult;
 
 function getAppsScriptConfig() {
-  const url = process.env.GOOGLE_APPS_SCRIPT_URL;
-  const secret = process.env.GOOGLE_APPS_SCRIPT_SECRET;
+  const url = process.env.GOOGLE_APPS_SCRIPT_URL?.trim();
+  const secret = process.env.GOOGLE_APPS_SCRIPT_SECRET?.trim();
 
   if (!url || !secret) {
     return undefined;
