@@ -126,6 +126,24 @@ function isSubmittedOrder(value: unknown): value is SubmittedOrder {
     && isNonEmptyString(order.summary);
 }
 
+function normalizeSubmittedOrder(order: SubmittedOrder): SubmittedOrder {
+  return {
+    ...order,
+    id: order.id.trim(),
+    name: order.name.trim(),
+    email: order.email.trim(),
+    phone: order.phone?.trim(),
+    eventDate: order.eventDate?.trim(),
+    productType: order.productType?.trim(),
+    cakeSizeId: order.cakeSizeId?.trim(),
+    flavourId: order.flavourId?.trim(),
+    budget: order.budget?.trim(),
+    message: order.message?.trim(),
+    paymentEmail: order.paymentEmail.trim(),
+    summary: order.summary.trim()
+  };
+}
+
 function buildPendingOrder(data: InquiryInput, summary: string): SubmittedOrder {
   return {
     id: `pending_${Date.now()}`,
@@ -329,7 +347,9 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       return;
     }
 
-    const order = isSubmittedOrder(body.order) ? body.order : buildPendingOrder(parsed.data, nextSummary);
+    const order = isSubmittedOrder(body.order)
+      ? normalizeSubmittedOrder(body.order)
+      : buildPendingOrder(parsed.data, nextSummary);
     storeSubmittedOrder(order);
     setStatus("sent");
     router.push(`/order/summary?id=${encodeURIComponent(order.id)}`);

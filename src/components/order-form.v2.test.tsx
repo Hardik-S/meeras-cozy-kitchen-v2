@@ -70,6 +70,44 @@ describe("OrderForm v2 submit flow", () => {
     });
   }, 10_000);
 
+  it("normalizes returned order metadata before storing and routing", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "  ord_copied_response  ",
+          name: "  Amina  ",
+          email: "  amina@example.com  ",
+          phone: "  4165550101  ",
+          eventDate: "  2099-05-20  ",
+          productType: "  cake  ",
+          cakeSizeId: "  eight-inch  ",
+          flavourId: "  vanilla-rose  ",
+          budget: "  100-150  ",
+          message: "  Birthday cake with soft floral piping.  ",
+          paymentEmail: "  payments@example.com  ",
+          summary: "  Name: Amina from copied response  "
+        }
+      }), { status: 200 })
+    ));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_copied_response");
+    });
+
+    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
+      id: "ord_copied_response",
+      name: "Amina",
+      email: "amina@example.com",
+      paymentEmail: "payments@example.com",
+      summary: "Name: Amina from copied response"
+    });
+  });
+
   it("shows an error when inquiry submission cannot reach the API", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new Error("network unavailable");
