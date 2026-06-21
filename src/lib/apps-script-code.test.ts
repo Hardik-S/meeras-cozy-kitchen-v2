@@ -41,7 +41,7 @@ describe("Apps Script Code.gs estimateInquiry", () => {
         return [{ id: " dessert-box ", low: 38, high: 48 }];
       }
       if (sheetName === "Offerings") {
-        return [{ id: " fresh-berries ", low: 10, high: 12 }];
+        return [{ id: " fresh-berries ", productId: " all ", low: 10, high: 12 }];
       }
       return [];
     });
@@ -50,5 +50,25 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       productType: "dessert-box",
       addOnIds: ["fresh-berries"]
     })).toEqual({ low: 48, high: 60 });
+  });
+
+  it("ignores copied add-ons scoped to another product", () => {
+    const estimateInquiry = loadEstimateInquiry((sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: " cupcakes ", low: 34, high: 44 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: " cake-topper ", productId: " cake ", low: 10, high: 14 },
+          { id: " sprinkle-pack ", productId: " cupcakes ", low: 4, high: 6 }
+        ];
+      }
+      return [];
+    });
+
+    expect(estimateInquiry({
+      productType: "cupcakes",
+      addOnIds: ["cake-topper", "sprinkle-pack"]
+    })).toEqual({ low: 38, high: 50 });
   });
 });
