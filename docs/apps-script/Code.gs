@@ -177,7 +177,7 @@ function listAdminData() {
           message: row.message,
           estimateLow: toNumber(row.estimateLow),
           estimateHigh: toNumber(row.estimateHigh),
-          status: row.status || "new",
+          status: clean(row.status) || "new",
           hearted: toBoolean(row.hearted),
           pinned: toBoolean(row.pinned),
           summary: row.summary

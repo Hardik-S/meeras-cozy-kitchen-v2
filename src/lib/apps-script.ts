@@ -101,12 +101,21 @@ function isAdminOffering(value: unknown) {
     && isBoolean(value.enabled);
 }
 
+function normalizeOrderStatus(value: unknown): OrderStatus | undefined {
+  if (!isString(value)) return undefined;
+
+  const status = value.trim();
+  return status === "new"
+    || status === "replied"
+    || status === "confirmed"
+    || status === "completed"
+    || status === "cancelled"
+    ? status
+    : undefined;
+}
+
 function isOrderStatus(value: unknown): value is OrderStatus {
-  return value === "new"
-    || value === "replied"
-    || value === "confirmed"
-    || value === "completed"
-    || value === "cancelled";
+  return normalizeOrderStatus(value) !== undefined;
 }
 
 function isAdminOrder(value: unknown) {
@@ -191,6 +200,7 @@ function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["ord
     flavourId: order.flavourId.trim(),
     budget: order.budget.trim(),
     message: order.message.trim(),
+    status: normalizeOrderStatus(order.status) ?? order.status,
     summary: order.summary.trim()
   };
 }
