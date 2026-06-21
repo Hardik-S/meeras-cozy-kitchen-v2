@@ -274,7 +274,7 @@ describe("Apps Script integration", () => {
             message: " Birthday cake with soft florals. ",
             estimateLow: 95,
             estimateHigh: 125,
-            status: "confirmed",
+            status: " confirmed ",
             hearted: false,
             pinned: false,
             summary: " Custom cake inquiry "
@@ -291,7 +291,8 @@ describe("Apps Script integration", () => {
     expect(result.data.orders[0]).toMatchObject({
       id: "ord_copied_date",
       eventDate: "2026-06-28",
-      email: "amina@example.com"
+      email: "amina@example.com",
+      status: "confirmed"
     });
     expect(calculateMonthlyFinanceReport([], result.data.orders, "2026-06").confirmedPotential).toBe(125);
   });

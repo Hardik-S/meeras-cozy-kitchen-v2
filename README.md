@@ -50,6 +50,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Guard malformed admin data in the browser dashboard too, so a bad proxy response shows the load-failure notice instead of rendering incomplete arrays.
 - Guard malformed admin data after browser dashboard mutations too, so optimistic edits roll back when a proxy response is incomplete.
 - Normalize live Sheet order text before admin and finance consumers use it, so copied dates cannot hide confirmed monthly order potential.
+- Normalize live Sheet order statuses before admin and finance consumers use them, so copied statuses cannot hide valid orders.
 - Treat null admin dashboard response envelopes as save/load failures, so optimistic browser edits roll back instead of leaking client TypeErrors.
 - Catch rejected admin data loads after login or refresh, so a temporary Apps Script or network outage leaves the dashboard on its current screen with a clear load-failure notice instead of an unhandled client error.
 - Catch rejected admin login requests too, so a temporary session endpoint outage leaves the PIN screen with a clear retry notice.
