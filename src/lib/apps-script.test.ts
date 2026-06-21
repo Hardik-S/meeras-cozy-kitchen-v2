@@ -226,6 +226,55 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("normalizes copied live catalog text before admin consumers use it", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          products: [{
+            id: " cake ",
+            label: " Custom Cakes ",
+            low: 58,
+            high: 150,
+            enabled: true,
+            sortOrder: 1
+          }],
+          offerings: [{
+            id: " eight-inch ",
+            productId: " cake ",
+            category: " cake-size ",
+            label: " 8 inch round cake ",
+            low: 88,
+            high: 110,
+            servings: " 16-20 ",
+            enabled: true,
+            sortOrder: 2
+          }]
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toMatchObject({
+      status: "live",
+      data: {
+        products: [expect.objectContaining({
+          id: "cake",
+          label: "Custom Cakes"
+        })],
+        offerings: [expect.objectContaining({
+          id: "eight-inch",
+          productId: "cake",
+          category: "cake-size",
+          label: "8 inch round cake",
+          servings: "16-20"
+        })]
+      }
+    });
+  });
+
   it("defaults blank live email settings after Apps Script validation", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");

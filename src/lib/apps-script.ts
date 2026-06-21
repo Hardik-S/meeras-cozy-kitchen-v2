@@ -173,7 +173,19 @@ function normalizeOrderId(value: unknown) {
 function normalizeAdminOffering(offering: AdminData["offerings"][number]): AdminData["offerings"][number] {
   return {
     ...offering,
-    category: normalizeOfferingCategory(offering.category) ?? offering.category
+    id: offering.id.trim(),
+    productId: offering.productId.trim(),
+    category: normalizeOfferingCategory(offering.category) ?? offering.category,
+    label: offering.label.trim(),
+    servings: offering.servings.trim()
+  };
+}
+
+function normalizeAdminProduct(product: AdminData["products"][number]): AdminData["products"][number] {
+  return {
+    ...product,
+    id: product.id.trim(),
+    label: product.label.trim()
   };
 }
 
@@ -209,6 +221,7 @@ function normalizeAdminData(data: AdminData): AdminData {
   return {
     ...data,
     settings: normalizeAdminSettings(data.settings),
+    products: data.products.map(normalizeAdminProduct),
     offerings: data.offerings.map(normalizeAdminOffering),
     orders: data.orders.map(normalizeAdminOrder),
     ledger: data.ledger.map(normalizeLedgerEntry)
