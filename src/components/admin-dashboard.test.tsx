@@ -327,4 +327,47 @@ describe("AdminDashboard", () => {
     await waitFor(() => expect(screen.getByText("Change could not be saved.")).toBeInTheDocument());
     expect(receiverInput).toHaveValue("meera@example.com");
   });
+
+  it("saves ledger unit amount separately from quantity", async () => {
+    const data: AdminData = defaultAdminData;
+    const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+      if (url.includes("/api/admin/data") && init?.method === "POST") {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true, result: { data } }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, source: "live", data }), { status: 200 }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "finances" }));
+    fireEvent.change(screen.getByLabelText("Category"), { target: { value: "Packaging" } });
+    fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Cake boxes" } });
+    fireEvent.change(screen.getByLabelText("Unit amount"), { target: { value: "8" } });
+    fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "12" } });
+    fireEvent.click(screen.getByRole("button", { name: /save ledger entry/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
+      "/api/admin/data",
+      expect.objectContaining({ method: "POST" })
+    ));
+    const mutationCall = fetchMock.mock.calls.find(([input, init]) =>
+      String(input).includes("/api/admin/data") && init?.method === "POST"
+    );
+    const body = JSON.parse(mutationCall?.[1]?.body as string);
+
+    expect(body.payload.entry).toMatchObject({
+      category: "Packaging",
+      description: "Cake boxes",
+      amount: 8,
+      quantity: 12
+    });
+  });
 });
