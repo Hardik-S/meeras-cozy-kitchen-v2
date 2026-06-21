@@ -349,13 +349,16 @@ function sendMail(settings, to, subject, body, replyTo) {
 function estimateInquiry(inquiry) {
   const products = readObjects("Products");
   const offerings = readObjects("Offerings");
-  const cakeSize = offerings.filter(function(row) { return row.id === inquiry.cakeSizeId; })[0];
-  const product = products.filter(function(row) { return row.id === inquiry.productType; })[0];
-  const base = inquiry.productType === "cake" && cakeSize ? cakeSize : product;
+  const productType = clean(inquiry.productType);
+  const cakeSizeId = clean(inquiry.cakeSizeId);
+  const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id); });
+  const cakeSize = offerings.filter(function(row) { return clean(row.id) === cakeSizeId; })[0];
+  const product = products.filter(function(row) { return clean(row.id) === productType; })[0];
+  const base = productType === "cake" && cakeSize ? cakeSize : product;
   let low = base ? toNumber(base.low) : 0;
   let high = base ? toNumber(base.high) : 0;
-  (inquiry.addOnIds || []).forEach(function(id) {
-    const addOn = offerings.filter(function(row) { return row.id === id; })[0];
+  addOnIds.forEach(function(id) {
+    const addOn = offerings.filter(function(row) { return clean(row.id) === id; })[0];
     if (addOn) {
       low += toNumber(addOn.low);
       high += toNumber(addOn.high);

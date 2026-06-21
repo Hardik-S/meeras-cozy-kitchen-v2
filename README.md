@@ -23,6 +23,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Keep Apps Script as the backend source of truth while making admin edits optimistic in the browser.
 - Store expense quantity in the v2 ledger contract; existing sheet rows default to quantity `1`.
 - Save ledger unit amounts separately from quantity, so multi-quantity expenses are not multiplied twice in reports.
+- Trim copied Apps Script catalog IDs before estimating submitted orders, so Sheet-managed prices do not save as zero.
 - Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
 - Normalize live Sheet ledger text before finance reports and CSV exports use it, so copied dates and order IDs stay visible in monthly totals.
 - Default finance reports to the selected month, initially the current month.
