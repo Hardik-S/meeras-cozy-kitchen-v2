@@ -436,7 +436,7 @@ export function AdminDashboard() {
               {financeReport.entries.map((entry) => (
                 <div key={entry.id} className="admin-row">
                   <span><strong>{entry.description}</strong><small>{entry.date} - {entry.category} - qty {entry.quantity}</small></span>
-                  <strong>{entry.type === "expense" ? "-" : ""}{currency(entry.amount)}</strong>
+                  <strong>{entry.type === "expense" ? "-" : ""}{currency(ledgerEntryTotal(entry))}</strong>
                 </div>
               ))}
             </div>

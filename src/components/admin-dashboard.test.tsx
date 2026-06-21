@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultAdminData, type AdminData } from "@/lib/catalog";
 import { AdminDashboard } from "./admin-dashboard";
@@ -369,5 +369,44 @@ describe("AdminDashboard", () => {
       amount: 8,
       quantity: 12
     });
+  });
+
+  it("shows multi-quantity ledger row totals in the finance ledger", async () => {
+    const data: AdminData = {
+      ...defaultAdminData,
+      ledger: [{
+        id: "led_boxes",
+        date: "2026-06-10",
+        type: "expense",
+        category: "Packaging",
+        description: "Cake boxes",
+        amount: 8,
+        quantity: 12,
+        orderId: ""
+      }]
+    };
+
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, source: "live", data }), { status: 200 }));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+
+    fireEvent.click(await screen.findByRole("button", { name: "finances" }));
+    fireEvent.change(screen.getByLabelText("Report month"), { target: { value: "2026-06" } });
+
+    const ledgerRow = (await screen.findByText("Cake boxes")).closest(".admin-row");
+
+    expect(ledgerRow).not.toBeNull();
+    expect(within(ledgerRow as HTMLElement).getByText("2026-06-10 - Packaging - qty 12")).toBeInTheDocument();
+    expect(within(ledgerRow as HTMLElement).getByText("-$96")).toBeInTheDocument();
   });
 });
