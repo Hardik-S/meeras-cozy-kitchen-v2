@@ -419,7 +419,7 @@ export function AdminDashboard() {
               const savedEntry = {
                 ...entry,
                 id: entry.id || undefined,
-                amount: ledgerEntryTotal({ amount: entry.amount, quantity: entry.quantity }),
+                amount: entry.amount,
                 quantity: entry.quantity || 1
               };
 
