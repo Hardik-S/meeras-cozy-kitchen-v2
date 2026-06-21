@@ -358,7 +358,10 @@ function estimateInquiry(inquiry) {
   let low = base ? toNumber(base.low) : 0;
   let high = base ? toNumber(base.high) : 0;
   addOnIds.forEach(function(id) {
-    const addOn = offerings.filter(function(row) { return clean(row.id) === id; })[0];
+    const addOn = offerings.filter(function(row) {
+      const productId = clean(row.productId || "all");
+      return clean(row.id) === id && (productId === "all" || productId === productType);
+    })[0];
     if (addOn) {
       low += toNumber(addOn.low);
       high += toNumber(addOn.high);
