@@ -46,6 +46,22 @@ function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: strin
   return runInNewContext(script, { patchByIdAndReturn }) as (payload: { id: string; status?: string }) => unknown;
 }
 
+function loadUpdateSettings(setSetting: (key: string, value: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "assertSettingValue"),
+    extractFunction(source, "updateSettings"),
+    "updateSettings"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    setSetting,
+    audit: vi.fn(),
+    listAdminData: vi.fn()
+  }) as (payload: { settings?: Record<string, unknown> }) => unknown;
+}
+
 function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<string, unknown>) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
@@ -196,6 +212,17 @@ describe("Apps Script Code.gs updateOrderStatus", () => {
 
     expect(() => updateOrderStatus({ id: "ord_123", status: "refunded" })).toThrow("Unsupported order status.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs updateSettings", () => {
+  it("rejects non-string setting values before patching the sheet", () => {
+    const setSetting = vi.fn();
+    const updateSettings = loadUpdateSettings(setSetting);
+
+    expect(() => updateSettings({ settings: { defaultReceiver: { email: "chef@example.com" } } }))
+      .toThrow("Unsupported settings value.");
+    expect(setSetting).not.toHaveBeenCalled();
   });
 });
 
