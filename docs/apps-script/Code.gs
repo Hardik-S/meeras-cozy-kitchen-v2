@@ -204,11 +204,18 @@ function updateSettings(payload) {
   const allowed = ["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"];
   allowed.forEach(function(key) {
     if (Object.prototype.hasOwnProperty.call(settings, key)) {
+      assertSettingValue(settings[key]);
       setSetting(key, clean(settings[key]));
     }
   });
   audit("updateSettings", JSON.stringify(settings));
   return listAdminData();
+}
+
+function assertSettingValue(value) {
+  if (typeof value !== "string") {
+    throw new Error("Unsupported settings value.");
+  }
 }
 
 function upsertProduct(payload) {

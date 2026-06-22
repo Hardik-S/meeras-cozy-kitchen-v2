@@ -17,6 +17,7 @@ const allowedMutations = new Set([
 
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
+const allowedSettingKeys = new Set(["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
 const catalogToggleMutations = new Set(["toggleProduct", "toggleOffering"]);
 const catalogUpsertPayloadKeys: Record<string, "product" | "offering"> = {
   upsertProduct: "product",
@@ -59,6 +60,10 @@ function normalizeOptionalCatalogEnabled(record: Record<string, unknown>) {
   }
 
   return normalizeCatalogToggle(record.enabled);
+}
+
+function hasUnsupportedSettingValue(settings: Record<string, unknown>) {
+  return Object.entries(settings).some(([key, value]) => allowedSettingKeys.has(key) && typeof value !== "string");
 }
 
 function sessionTokenFromRequest(request: Request) {
@@ -115,6 +120,16 @@ export async function POST(request: Request) {
   }
 
   const payload = recordFromJson(body.payload);
+
+  if (action === "updateSettings") {
+    const settings = recordFromJson(payload.settings);
+
+    if (hasUnsupportedSettingValue(settings)) {
+      return NextResponse.json({ ok: false, error: "Unsupported settings value." }, { status: 400 });
+    }
+
+    payload.settings = settings;
+  }
 
   if (action === "updateOrderStatus") {
     const status = normalizeOrderStatus(payload.status);

@@ -40,6 +40,28 @@ describe("POST /api/admin/data", () => {
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported admin action." });
   });
 
+  it("rejects non-string settings before reaching Apps Script", async () => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "updateSettings",
+        payload: {
+          settings: {
+            defaultReceiver: { email: "chef@example.com" }
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported settings value." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid order statuses before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
