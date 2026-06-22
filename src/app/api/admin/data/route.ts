@@ -19,6 +19,14 @@ const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed"
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
 const allowedSettingKeys = new Set(["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
 const catalogToggleMutations = new Set(["toggleProduct", "toggleOffering"]);
+const idRequiredMutations = new Set([
+  "toggleProduct",
+  "deleteProduct",
+  "toggleOffering",
+  "deleteOffering",
+  "updateOrderFlags",
+  "updateOrderStatus"
+]);
 const catalogUpsertPayloadKeys: Record<string, "product" | "offering"> = {
   upsertProduct: "product",
   upsertOffering: "offering"
@@ -52,6 +60,15 @@ function normalizeOrderFlag(value: unknown) {
 
 function normalizeCatalogToggle(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function normalizeMutationId(value: unknown) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const id = value.trim();
+  return id ? id : undefined;
 }
 
 function normalizeOptionalCatalogEnabled(record: Record<string, unknown>) {
@@ -120,6 +137,16 @@ export async function POST(request: Request) {
   }
 
   const payload = recordFromJson(body.payload);
+
+  if (idRequiredMutations.has(action)) {
+    const id = normalizeMutationId(payload.id);
+
+    if (!id) {
+      return NextResponse.json({ ok: false, error: "Unsupported admin target id." }, { status: 400 });
+    }
+
+    payload.id = id;
+  }
 
   if (action === "updateSettings") {
     const settings = recordFromJson(payload.settings);
