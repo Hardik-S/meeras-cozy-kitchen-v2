@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { runInNewContext } from "node:vm";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 function extractFunction(source: string, name: string) {
   const start = source.indexOf(`function ${name}`);
@@ -32,6 +32,18 @@ function loadEstimateInquiry(readObjects: (sheetName: string) => Array<Record<st
     cakeSizeId?: string;
     addOnIds?: string[];
   }) => { low: number; high: number };
+}
+
+function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "isOrderStatus"),
+    extractFunction(source, "updateOrderStatus"),
+    "updateOrderStatus"
+  ].join("\n");
+
+  return runInNewContext(script, { patchByIdAndReturn }) as (payload: { id: string; status?: string }) => unknown;
 }
 
 describe("Apps Script Code.gs estimateInquiry", () => {
@@ -70,5 +82,15 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       productType: "cupcakes",
       addOnIds: ["cake-topper", "sprinkle-pack"]
     })).toEqual({ low: 38, high: 50 });
+  });
+});
+
+describe("Apps Script Code.gs updateOrderStatus", () => {
+  it("rejects unsupported order statuses before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
+
+    expect(() => updateOrderStatus({ id: "ord_123", status: "refunded" })).toThrow("Unsupported order status.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
 });

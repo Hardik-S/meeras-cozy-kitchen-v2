@@ -288,8 +288,21 @@ function updateOrderFlags(payload) {
   }, "updateOrderFlags");
 }
 
+function isOrderStatus(value) {
+  const status = clean(value);
+  return status === "new"
+    || status === "replied"
+    || status === "confirmed"
+    || status === "completed"
+    || status === "cancelled";
+}
+
 function updateOrderStatus(payload) {
-  return patchByIdAndReturn("Orders", payload.id, { status: clean(payload.status || "new") }, "updateOrderStatus");
+  const status = clean(payload.status || "new");
+  if (!isOrderStatus(status)) {
+    throw new Error("Unsupported order status.");
+  }
+  return patchByIdAndReturn("Orders", payload.id, { status: status }, "updateOrderStatus");
 }
 
 function patchByIdAndReturn(sheetName, id, patch, action) {
