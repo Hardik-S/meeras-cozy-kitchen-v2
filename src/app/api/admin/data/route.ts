@@ -15,8 +15,19 @@ const allowedMutations = new Set([
   "updateOrderStatus"
 ]);
 
+const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
+
 function recordFromJson(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function normalizeOrderStatus(value: unknown) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const status = value.trim();
+  return allowedOrderStatuses.has(status) ? status : undefined;
 }
 
 function sessionTokenFromRequest(request: Request) {
@@ -72,8 +83,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Unsupported admin action." }, { status: 400 });
   }
 
+  const payload = recordFromJson(body.payload);
+
+  if (action === "updateOrderStatus") {
+    const status = normalizeOrderStatus(payload.status);
+
+    if (!status) {
+      return NextResponse.json({ ok: false, error: "Unsupported order status." }, { status: 400 });
+    }
+
+    payload.status = status;
+  }
+
   try {
-    const result = await mutateAdminDataInAppsScript(action, recordFromJson(body.payload));
+    const result = await mutateAdminDataInAppsScript(action, payload);
 
     if ("status" in result && result.status === "skipped") {
       return NextResponse.json(
