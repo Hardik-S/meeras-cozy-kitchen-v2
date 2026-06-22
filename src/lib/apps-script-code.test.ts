@@ -82,6 +82,34 @@ function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string
   }) => unknown;
 }
 
+function loadToggleProduct(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "isCatalogToggleValue"),
+    extractFunction(source, "toggleProduct"),
+    "toggleProduct"
+  ].join("\n");
+
+  return runInNewContext(script, { patchByIdAndReturn, nowIso: vi.fn(() => "2026-06-22T00:00:00.000Z") }) as (payload: {
+    id: string;
+    enabled?: unknown;
+  }) => unknown;
+}
+
+function loadToggleOffering(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "isCatalogToggleValue"),
+    extractFunction(source, "toggleOffering"),
+    "toggleOffering"
+  ].join("\n");
+
+  return runInNewContext(script, { patchByIdAndReturn, nowIso: vi.fn(() => "2026-06-22T00:00:00.000Z") }) as (payload: {
+    id: string;
+    enabled?: unknown;
+  }) => unknown;
+}
+
 describe("Apps Script Code.gs estimateInquiry", () => {
   it("matches copied Sheet catalog ids after trimming them", () => {
     const estimateInquiry = loadEstimateInquiry((sheetName) => {
@@ -149,6 +177,26 @@ describe("Apps Script Code.gs updateOrderFlags", () => {
 
     expect(() => updateOrderFlags({ id: "ord_123", hearted: "false", pinned: false }))
       .toThrow("Unsupported order flag value.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs catalog toggles", () => {
+  it("rejects non-boolean product toggles before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const toggleProduct = loadToggleProduct(patchByIdAndReturn);
+
+    expect(() => toggleProduct({ id: "cake", enabled: "false" }))
+      .toThrow("Unsupported catalog toggle value.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-boolean offering toggles before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const toggleOffering = loadToggleOffering(patchByIdAndReturn);
+
+    expect(() => toggleOffering({ id: "floral-piping", enabled: "false" }))
+      .toThrow("Unsupported catalog toggle value.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
 });

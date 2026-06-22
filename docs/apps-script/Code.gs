@@ -227,7 +227,11 @@ function upsertProduct(payload) {
 }
 
 function toggleProduct(payload) {
-  return patchByIdAndReturn("Products", payload.id, { enabled: Boolean(payload.enabled), updatedAt: nowIso() }, "toggleProduct");
+  if (!isCatalogToggleValue(payload.enabled)) {
+    throw new Error("Unsupported catalog toggle value.");
+  }
+
+  return patchByIdAndReturn("Products", payload.id, { enabled: payload.enabled, updatedAt: nowIso() }, "toggleProduct");
 }
 
 function deleteProduct(payload) {
@@ -255,7 +259,15 @@ function upsertOffering(payload) {
 }
 
 function toggleOffering(payload) {
-  return patchByIdAndReturn("Offerings", payload.id, { enabled: Boolean(payload.enabled), updatedAt: nowIso() }, "toggleOffering");
+  if (!isCatalogToggleValue(payload.enabled)) {
+    throw new Error("Unsupported catalog toggle value.");
+  }
+
+  return patchByIdAndReturn("Offerings", payload.id, { enabled: payload.enabled, updatedAt: nowIso() }, "toggleOffering");
+}
+
+function isCatalogToggleValue(value) {
+  return value === true || value === false;
 }
 
 function deleteOffering(payload) {
