@@ -40,6 +40,10 @@ function normalizeLedgerEntryType(value: unknown) {
   return allowedLedgerEntryTypes.has(type) ? type : undefined;
 }
 
+function normalizeOrderFlag(value: unknown) {
+  return typeof value === "boolean" ? value : undefined;
+}
+
 function sessionTokenFromRequest(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)meera_admin_session=([^;]+)/);
@@ -119,6 +123,18 @@ export async function POST(request: Request) {
     }
 
     payload.entry = entry;
+  }
+
+  if (action === "updateOrderFlags") {
+    const hearted = normalizeOrderFlag(payload.hearted);
+    const pinned = normalizeOrderFlag(payload.pinned);
+
+    if (hearted === undefined || pinned === undefined) {
+      return NextResponse.json({ ok: false, error: "Unsupported order flag value." }, { status: 400 });
+    }
+
+    payload.hearted = hearted;
+    payload.pinned = pinned;
   }
 
   try {

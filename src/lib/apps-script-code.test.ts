@@ -67,6 +67,21 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
   }) as (payload: { entry?: Record<string, unknown> }) => unknown;
 }
 
+function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "isOrderFlag"),
+    extractFunction(source, "updateOrderFlags"),
+    "updateOrderFlags"
+  ].join("\n");
+
+  return runInNewContext(script, { patchByIdAndReturn }) as (payload: {
+    id: string;
+    hearted?: unknown;
+    pinned?: unknown;
+  }) => unknown;
+}
+
 describe("Apps Script Code.gs estimateInquiry", () => {
   it("matches copied Sheet catalog ids after trimming them", () => {
     const estimateInquiry = loadEstimateInquiry((sheetName) => {
@@ -124,5 +139,16 @@ describe("Apps Script Code.gs upsertLedgerEntry", () => {
     expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "refund", amount: 12 } }))
       .toThrow("Unsupported ledger entry type.");
     expect(upsertById).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs updateOrderFlags", () => {
+  it("rejects non-boolean order flags before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderFlags = loadUpdateOrderFlags(patchByIdAndReturn);
+
+    expect(() => updateOrderFlags({ id: "ord_123", hearted: "false", pinned: false }))
+      .toThrow("Unsupported order flag value.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
 });

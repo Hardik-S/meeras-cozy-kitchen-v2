@@ -292,10 +292,18 @@ function isLedgerEntryType(value) {
 }
 
 function updateOrderFlags(payload) {
+  if (!isOrderFlag(payload.hearted) || !isOrderFlag(payload.pinned)) {
+    throw new Error("Unsupported order flag value.");
+  }
+
   return patchByIdAndReturn("Orders", payload.id, {
-    hearted: Boolean(payload.hearted),
-    pinned: Boolean(payload.pinned)
+    hearted: payload.hearted,
+    pinned: payload.pinned
   }, "updateOrderFlags");
+}
+
+function isOrderFlag(value) {
+  return value === true || value === false;
 }
 
 function isOrderStatus(value) {
