@@ -38,6 +38,7 @@ function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: strin
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
+    extractFunction(source, "requireMutationId"),
     extractFunction(source, "isOrderStatus"),
     extractFunction(source, "updateOrderStatus"),
     "updateOrderStatus"
@@ -86,6 +87,8 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
 function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "requireMutationId"),
     extractFunction(source, "isOrderFlag"),
     extractFunction(source, "updateOrderFlags"),
     "updateOrderFlags"
@@ -101,6 +104,8 @@ function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string
 function loadToggleProduct(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "requireMutationId"),
     extractFunction(source, "isCatalogToggleValue"),
     extractFunction(source, "toggleProduct"),
     "toggleProduct"
@@ -155,6 +160,8 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
 function loadToggleOffering(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "requireMutationId"),
     extractFunction(source, "isCatalogToggleValue"),
     extractFunction(source, "toggleOffering"),
     "toggleOffering"
@@ -164,6 +171,38 @@ function loadToggleOffering(patchByIdAndReturn: (sheetName: string, id: string, 
     id: string;
     enabled?: unknown;
   }) => unknown;
+}
+
+function loadDeleteProduct(deleteById: (sheetName: string, id: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "requireMutationId"),
+    extractFunction(source, "deleteProduct"),
+    "deleteProduct"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    deleteById,
+    audit: vi.fn(),
+    listAdminData: vi.fn()
+  }) as (payload: { id: string }) => unknown;
+}
+
+function loadDeleteOffering(deleteById: (sheetName: string, id: string) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "requireMutationId"),
+    extractFunction(source, "deleteOffering"),
+    "deleteOffering"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    deleteById,
+    audit: vi.fn(),
+    listAdminData: vi.fn()
+  }) as (payload: { id: string }) => unknown;
 }
 
 describe("Apps Script Code.gs estimateInquiry", () => {
@@ -213,6 +252,14 @@ describe("Apps Script Code.gs updateOrderStatus", () => {
     expect(() => updateOrderStatus({ id: "ord_123", status: "refunded" })).toThrow("Unsupported order status.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
+
+  it("rejects blank order ids before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
+
+    expect(() => updateOrderStatus({ id: "   ", status: "confirmed" })).toThrow("Unsupported admin target id.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
 });
 
 describe("Apps Script Code.gs updateSettings", () => {
@@ -246,6 +293,15 @@ describe("Apps Script Code.gs updateOrderFlags", () => {
       .toThrow("Unsupported order flag value.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
+
+  it("rejects blank order ids before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderFlags = loadUpdateOrderFlags(patchByIdAndReturn);
+
+    expect(() => updateOrderFlags({ id: "   ", hearted: false, pinned: false }))
+      .toThrow("Unsupported admin target id.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
 });
 
 describe("Apps Script Code.gs catalog toggles", () => {
@@ -276,6 +332,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
 
+  it("rejects blank product toggle ids before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const toggleProduct = loadToggleProduct(patchByIdAndReturn);
+
+    expect(() => toggleProduct({ id: "   ", enabled: false }))
+      .toThrow("Unsupported admin target id.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+
   it("rejects non-boolean offering toggles before patching the sheet", () => {
     const patchByIdAndReturn = vi.fn();
     const toggleOffering = loadToggleOffering(patchByIdAndReturn);
@@ -283,5 +348,32 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(() => toggleOffering({ id: "floral-piping", enabled: "false" }))
       .toThrow("Unsupported catalog toggle value.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+
+  it("rejects blank offering toggle ids before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const toggleOffering = loadToggleOffering(patchByIdAndReturn);
+
+    expect(() => toggleOffering({ id: "   ", enabled: false }))
+      .toThrow("Unsupported admin target id.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs catalog deletes", () => {
+  it("rejects blank product delete ids before deleting the sheet row", () => {
+    const deleteById = vi.fn();
+    const deleteProduct = loadDeleteProduct(deleteById);
+
+    expect(() => deleteProduct({ id: "   " })).toThrow("Unsupported admin target id.");
+    expect(deleteById).not.toHaveBeenCalled();
+  });
+
+  it("rejects blank offering delete ids before deleting the sheet row", () => {
+    const deleteById = vi.fn();
+    const deleteOffering = loadDeleteOffering(deleteById);
+
+    expect(() => deleteOffering({ id: "   " })).toThrow("Unsupported admin target id.");
+    expect(deleteById).not.toHaveBeenCalled();
   });
 });

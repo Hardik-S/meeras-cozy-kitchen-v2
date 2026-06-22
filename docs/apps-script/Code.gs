@@ -235,16 +235,18 @@ function upsertProduct(payload) {
 }
 
 function toggleProduct(payload) {
+  const id = requireMutationId(payload.id);
   if (!isCatalogToggleValue(payload.enabled)) {
     throw new Error("Unsupported catalog toggle value.");
   }
 
-  return patchByIdAndReturn("Products", payload.id, { enabled: payload.enabled, updatedAt: nowIso() }, "toggleProduct");
+  return patchByIdAndReturn("Products", id, { enabled: payload.enabled, updatedAt: nowIso() }, "toggleProduct");
 }
 
 function deleteProduct(payload) {
-  deleteById("Products", payload.id);
-  audit("deleteProduct", payload.id);
+  const id = requireMutationId(payload.id);
+  deleteById("Products", id);
+  audit("deleteProduct", id);
   return listAdminData();
 }
 
@@ -268,11 +270,12 @@ function upsertOffering(payload) {
 }
 
 function toggleOffering(payload) {
+  const id = requireMutationId(payload.id);
   if (!isCatalogToggleValue(payload.enabled)) {
     throw new Error("Unsupported catalog toggle value.");
   }
 
-  return patchByIdAndReturn("Offerings", payload.id, { enabled: payload.enabled, updatedAt: nowIso() }, "toggleOffering");
+  return patchByIdAndReturn("Offerings", id, { enabled: payload.enabled, updatedAt: nowIso() }, "toggleOffering");
 }
 
 function isCatalogToggleValue(value) {
@@ -290,8 +293,9 @@ function catalogEnabledOrDefault(row, fallback) {
 }
 
 function deleteOffering(payload) {
-  deleteById("Offerings", payload.id);
-  audit("deleteOffering", payload.id);
+  const id = requireMutationId(payload.id);
+  deleteById("Offerings", id);
+  audit("deleteOffering", id);
   return listAdminData();
 }
 
@@ -323,11 +327,12 @@ function isLedgerEntryType(value) {
 }
 
 function updateOrderFlags(payload) {
+  const id = requireMutationId(payload.id);
   if (!isOrderFlag(payload.hearted) || !isOrderFlag(payload.pinned)) {
     throw new Error("Unsupported order flag value.");
   }
 
-  return patchByIdAndReturn("Orders", payload.id, {
+  return patchByIdAndReturn("Orders", id, {
     hearted: payload.hearted,
     pinned: payload.pinned
   }, "updateOrderFlags");
@@ -347,17 +352,26 @@ function isOrderStatus(value) {
 }
 
 function updateOrderStatus(payload) {
+  const id = requireMutationId(payload.id);
   const status = clean(payload.status || "new");
   if (!isOrderStatus(status)) {
     throw new Error("Unsupported order status.");
   }
-  return patchByIdAndReturn("Orders", payload.id, { status: status }, "updateOrderStatus");
+  return patchByIdAndReturn("Orders", id, { status: status }, "updateOrderStatus");
 }
 
 function patchByIdAndReturn(sheetName, id, patch, action) {
   patchById(sheetName, id, patch);
   audit(action, id);
   return listAdminData();
+}
+
+function requireMutationId(value) {
+  const id = clean(value);
+  if (!id) {
+    throw new Error("Unsupported admin target id.");
+  }
+  return id;
 }
 
 function seedSettings() {

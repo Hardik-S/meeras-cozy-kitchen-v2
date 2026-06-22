@@ -173,4 +173,29 @@ describe("POST /api/admin/data", () => {
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog enabled value." });
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["deleteProduct", { id: "   " }],
+    ["toggleProduct", { id: "   ", enabled: false }],
+    ["deleteOffering", { id: "   " }],
+    ["toggleOffering", { id: "   ", enabled: false }],
+    ["updateOrderFlags", { id: "   ", hearted: false, pinned: false }],
+    ["updateOrderStatus", { id: "   ", status: "confirmed" }]
+  ])("rejects blank %s ids before reaching Apps Script", async (action, payload) => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported admin target id." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
 });
