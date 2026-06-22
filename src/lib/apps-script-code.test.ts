@@ -46,6 +46,27 @@ function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: strin
   return runInNewContext(script, { patchByIdAndReturn }) as (payload: { id: string; status?: string }) => unknown;
 }
 
+function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<string, unknown>) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "toNumber"),
+    extractFunction(source, "toPositiveNumber"),
+    extractFunction(source, "isLedgerEntryType"),
+    extractFunction(source, "upsertLedgerEntry"),
+    "upsertLedgerEntry"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    upsertById,
+    audit: vi.fn(),
+    listAdminData: vi.fn(),
+    makeId: vi.fn(() => "led_generated"),
+    nowIso: vi.fn(() => "2026-06-22T00:00:00.000Z"),
+    todayIso: vi.fn(() => "2026-06-22")
+  }) as (payload: { entry?: Record<string, unknown> }) => unknown;
+}
+
 describe("Apps Script Code.gs estimateInquiry", () => {
   it("matches copied Sheet catalog ids after trimming them", () => {
     const estimateInquiry = loadEstimateInquiry((sheetName) => {
@@ -92,5 +113,16 @@ describe("Apps Script Code.gs updateOrderStatus", () => {
 
     expect(() => updateOrderStatus({ id: "ord_123", status: "refunded" })).toThrow("Unsupported order status.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs upsertLedgerEntry", () => {
+  it("rejects unsupported ledger entry types before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
+
+    expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "refund", amount: 12 } }))
+      .toThrow("Unsupported ledger entry type.");
+    expect(upsertById).not.toHaveBeenCalled();
   });
 });
