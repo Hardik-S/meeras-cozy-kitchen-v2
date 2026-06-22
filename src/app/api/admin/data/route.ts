@@ -17,6 +17,7 @@ const allowedMutations = new Set([
 
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
+const catalogToggleMutations = new Set(["toggleProduct", "toggleOffering"]);
 
 function recordFromJson(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -41,6 +42,10 @@ function normalizeLedgerEntryType(value: unknown) {
 }
 
 function normalizeOrderFlag(value: unknown) {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+function normalizeCatalogToggle(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
 }
 
@@ -135,6 +140,16 @@ export async function POST(request: Request) {
 
     payload.hearted = hearted;
     payload.pinned = pinned;
+  }
+
+  if (catalogToggleMutations.has(action)) {
+    const enabled = normalizeCatalogToggle(payload.enabled);
+
+    if (enabled === undefined) {
+      return NextResponse.json({ ok: false, error: "Unsupported catalog toggle value." }, { status: 400 });
+    }
+
+    payload.enabled = enabled;
   }
 
   try {

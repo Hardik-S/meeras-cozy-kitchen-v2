@@ -28,6 +28,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Respect product-scoped Apps Script add-ons when estimating submitted orders, so stale direct submissions cannot price hidden options.
 - Reject unsupported order statuses before Sheet mutations run, so admin writes cannot poison finance/order summaries.
 - Reject non-boolean order flags before Sheet mutations run, so copied direct writes cannot pin or heart orders accidentally.
+- Reject non-boolean catalog toggles before Sheet mutations run, so copied direct writes cannot enable hidden menu rows accidentally.
 - Reject unsupported ledger entry types before Sheet mutations run, so finance totals cannot silently drop malformed rows.
 - Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
 - Normalize live Sheet ledger text before finance reports and CSV exports use it, so copied dates and order IDs stay visible in monthly totals.
