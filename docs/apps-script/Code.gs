@@ -266,10 +266,15 @@ function deleteOffering(payload) {
 
 function upsertLedgerEntry(payload) {
   const entry = payload.entry || {};
+  const type = clean(entry.type || "income");
+  if (!isLedgerEntryType(type)) {
+    throw new Error("Unsupported ledger entry type.");
+  }
+
   upsertById("Ledger", {
     id: entry.id || makeId("led"),
     date: clean(entry.date || todayIso()),
-    type: clean(entry.type || "income"),
+    type: type,
     category: clean(entry.category || "General"),
     description: clean(entry.description),
     amount: toNumber(entry.amount),
@@ -279,6 +284,11 @@ function upsertLedgerEntry(payload) {
   });
   audit("upsertLedgerEntry", entry.id || entry.description);
   return listAdminData();
+}
+
+function isLedgerEntryType(value) {
+  const type = clean(value);
+  return type === "income" || type === "expense";
 }
 
 function updateOrderFlags(payload) {

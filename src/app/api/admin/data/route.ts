@@ -16,6 +16,7 @@ const allowedMutations = new Set([
 ]);
 
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
+const allowedLedgerEntryTypes = new Set(["income", "expense"]);
 
 function recordFromJson(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -28,6 +29,15 @@ function normalizeOrderStatus(value: unknown) {
 
   const status = value.trim();
   return allowedOrderStatuses.has(status) ? status : undefined;
+}
+
+function normalizeLedgerEntryType(value: unknown) {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const type = value.trim();
+  return allowedLedgerEntryTypes.has(type) ? type : undefined;
 }
 
 function sessionTokenFromRequest(request: Request) {
@@ -93,6 +103,22 @@ export async function POST(request: Request) {
     }
 
     payload.status = status;
+  }
+
+  if (action === "upsertLedgerEntry") {
+    const entry = recordFromJson(payload.entry);
+
+    if ("type" in entry) {
+      const type = normalizeLedgerEntryType(entry.type);
+
+      if (!type) {
+        return NextResponse.json({ ok: false, error: "Unsupported ledger entry type." }, { status: 400 });
+      }
+
+      entry.type = type;
+    }
+
+    payload.entry = entry;
   }
 
   try {
