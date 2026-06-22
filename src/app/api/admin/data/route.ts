@@ -18,6 +18,10 @@ const allowedMutations = new Set([
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
 const catalogToggleMutations = new Set(["toggleProduct", "toggleOffering"]);
+const catalogUpsertPayloadKeys: Record<string, "product" | "offering"> = {
+  upsertProduct: "product",
+  upsertOffering: "offering"
+};
 
 function recordFromJson(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -47,6 +51,14 @@ function normalizeOrderFlag(value: unknown) {
 
 function normalizeCatalogToggle(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
+}
+
+function normalizeOptionalCatalogEnabled(record: Record<string, unknown>) {
+  if (!("enabled" in record)) {
+    return undefined;
+  }
+
+  return normalizeCatalogToggle(record.enabled);
 }
 
 function sessionTokenFromRequest(request: Request) {
@@ -150,6 +162,22 @@ export async function POST(request: Request) {
     }
 
     payload.enabled = enabled;
+  }
+
+  const catalogUpsertPayloadKey = catalogUpsertPayloadKeys[action];
+  if (catalogUpsertPayloadKey) {
+    const catalogRow = recordFromJson(payload[catalogUpsertPayloadKey]);
+    const enabled = normalizeOptionalCatalogEnabled(catalogRow);
+
+    if ("enabled" in catalogRow && enabled === undefined) {
+      return NextResponse.json({ ok: false, error: "Unsupported catalog enabled value." }, { status: 400 });
+    }
+
+    if (enabled !== undefined) {
+      catalogRow.enabled = enabled;
+    }
+
+    payload[catalogUpsertPayloadKey] = catalogRow;
   }
 
   try {

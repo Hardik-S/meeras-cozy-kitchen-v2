@@ -213,12 +213,13 @@ function updateSettings(payload) {
 
 function upsertProduct(payload) {
   const product = payload.product || {};
+  const enabled = catalogEnabledOrDefault(product, true);
   upsertById("Products", {
     id: slug(product.id || product.label || "product"),
     label: clean(product.label),
     low: toNumber(product.low),
     high: toNumber(product.high),
-    enabled: product.enabled !== false,
+    enabled: enabled,
     sortOrder: toNumber(product.sortOrder || 99),
     updatedAt: nowIso()
   });
@@ -242,6 +243,7 @@ function deleteProduct(payload) {
 
 function upsertOffering(payload) {
   const offering = payload.offering || {};
+  const enabled = catalogEnabledOrDefault(offering, true);
   upsertById("Offerings", {
     id: slug(offering.id || offering.label || "offering"),
     productId: clean(offering.productId || "all"),
@@ -250,7 +252,7 @@ function upsertOffering(payload) {
     low: toNumber(offering.low),
     high: toNumber(offering.high),
     servings: clean(offering.servings),
-    enabled: offering.enabled !== false,
+    enabled: enabled,
     sortOrder: toNumber(offering.sortOrder || 99),
     updatedAt: nowIso()
   });
@@ -268,6 +270,16 @@ function toggleOffering(payload) {
 
 function isCatalogToggleValue(value) {
   return value === true || value === false;
+}
+
+function catalogEnabledOrDefault(row, fallback) {
+  if (!Object.prototype.hasOwnProperty.call(row, "enabled")) {
+    return fallback;
+  }
+  if (!isCatalogToggleValue(row.enabled)) {
+    throw new Error("Unsupported catalog enabled value.");
+  }
+  return row.enabled;
 }
 
 function deleteOffering(payload) {
