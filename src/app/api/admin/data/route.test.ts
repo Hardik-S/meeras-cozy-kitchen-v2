@@ -124,4 +124,31 @@ describe("POST /api/admin/data", () => {
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog toggle value." });
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["upsertProduct", "product"],
+    ["upsertOffering", "offering"]
+  ])("rejects non-boolean %s enabled values before reaching Apps Script", async (action, payloadKey) => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload: {
+          [payloadKey]: {
+            id: "cake",
+            label: "Cake",
+            enabled: "false"
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog enabled value." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
 });

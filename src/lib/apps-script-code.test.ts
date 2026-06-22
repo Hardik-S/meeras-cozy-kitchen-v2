@@ -96,6 +96,46 @@ function loadToggleProduct(patchByIdAndReturn: (sheetName: string, id: string, p
   }) => unknown;
 }
 
+function loadUpsertProduct(upsertById: (sheetName: string, product: Record<string, unknown>) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "slug"),
+    extractFunction(source, "toNumber"),
+    extractFunction(source, "isCatalogToggleValue"),
+    extractFunction(source, "catalogEnabledOrDefault"),
+    extractFunction(source, "upsertProduct"),
+    "upsertProduct"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    upsertById,
+    audit: vi.fn(),
+    listAdminData: vi.fn(),
+    nowIso: vi.fn(() => "2026-06-22T00:00:00.000Z")
+  }) as (payload: { product?: Record<string, unknown> }) => unknown;
+}
+
+function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<string, unknown>) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "slug"),
+    extractFunction(source, "toNumber"),
+    extractFunction(source, "isCatalogToggleValue"),
+    extractFunction(source, "catalogEnabledOrDefault"),
+    extractFunction(source, "upsertOffering"),
+    "upsertOffering"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    upsertById,
+    audit: vi.fn(),
+    listAdminData: vi.fn(),
+    nowIso: vi.fn(() => "2026-06-22T00:00:00.000Z")
+  }) as (payload: { offering?: Record<string, unknown> }) => unknown;
+}
+
 function loadToggleOffering(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
@@ -182,6 +222,24 @@ describe("Apps Script Code.gs updateOrderFlags", () => {
 });
 
 describe("Apps Script Code.gs catalog toggles", () => {
+  it("rejects non-boolean product upsert enabled values before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    expect(() => upsertProduct({ product: { id: "cake", label: "Cake", enabled: "false" } }))
+      .toThrow("Unsupported catalog enabled value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-boolean offering upsert enabled values before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", enabled: "false" } }))
+      .toThrow("Unsupported catalog enabled value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("rejects non-boolean product toggles before patching the sheet", () => {
     const patchByIdAndReturn = vi.fn();
     const toggleProduct = loadToggleProduct(patchByIdAndReturn);
