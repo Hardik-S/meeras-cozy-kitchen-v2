@@ -224,8 +224,8 @@ function upsertProduct(payload) {
   upsertById("Products", {
     id: slug(product.id || product.label || "product"),
     label: clean(product.label),
-    low: toNumber(product.low),
-    high: toNumber(product.high),
+    low: assertCatalogPrice(product.low),
+    high: assertCatalogPrice(product.high),
     enabled: enabled,
     sortOrder: toNumber(product.sortOrder || 99),
     updatedAt: nowIso()
@@ -258,8 +258,8 @@ function upsertOffering(payload) {
     productId: clean(offering.productId || "all"),
     category: clean(offering.category || "add-on"),
     label: clean(offering.label),
-    low: toNumber(offering.low),
-    high: toNumber(offering.high),
+    low: assertCatalogPrice(offering.low),
+    high: assertCatalogPrice(offering.high),
     servings: clean(offering.servings),
     enabled: enabled,
     sortOrder: toNumber(offering.sortOrder || 99),
@@ -280,6 +280,13 @@ function toggleOffering(payload) {
 
 function isCatalogToggleValue(value) {
   return value === true || value === false;
+}
+
+function assertCatalogPrice(value) {
+  if (typeof value !== "number" || !isFinite(value)) {
+    throw new Error("Unsupported catalog price value.");
+  }
+  return value;
 }
 
 function catalogEnabledOrDefault(row, fallback) {
