@@ -31,6 +31,7 @@ const catalogUpsertPayloadKeys: Record<string, "product" | "offering"> = {
   upsertProduct: "product",
   upsertOffering: "offering"
 };
+const optionalLedgerTextKeys = ["id", "date", "category", "description", "orderId"];
 
 function recordFromJson(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -60,6 +61,10 @@ function normalizeLedgerAmount(value: unknown) {
 
 function normalizeLedgerQuantity(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+function normalizeLedgerText(value: unknown) {
+  return typeof value === "string" ? value.trim() : undefined;
 }
 
 function normalizeOrderFlag(value: unknown) {
@@ -212,6 +217,19 @@ export async function POST(request: Request) {
       }
 
       entry.quantity = quantity;
+    }
+
+    for (const key of optionalLedgerTextKeys) {
+      if (!(key in entry)) {
+        continue;
+      }
+
+      const text = normalizeLedgerText(entry[key]);
+      if (text === undefined) {
+        return NextResponse.json({ ok: false, error: "Unsupported ledger text value." }, { status: 400 });
+      }
+
+      entry[key] = text;
     }
 
     payload.entry = entry;

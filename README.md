@@ -34,6 +34,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject non-number catalog sort orders before Sheet mutations run, so copied editor payloads cannot reorder menu rows accidentally.
 - Reject unsupported ledger entry types before Sheet mutations run, so finance totals cannot silently drop malformed rows.
 - Reject non-number ledger amounts and quantities before Sheet mutations run, so copied finance payloads cannot save zeroed or fallback totals.
+- Reject non-string ledger text values before Sheet mutations run, so copied finance payloads cannot save object-shaped dates or order links.
 - Reject blank admin mutation IDs before Sheet mutations run, so direct deletes and patches cannot silently no-op or target stringified copied values.
 - Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
 - Normalize live Sheet ledger text before finance reports and CSV exports use it, so copied dates and order IDs stay visible in monthly totals.
