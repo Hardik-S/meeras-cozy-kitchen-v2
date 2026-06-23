@@ -126,6 +126,7 @@ function loadUpsertProduct(upsertById: (sheetName: string, product: Record<strin
     extractFunction(source, "clean"),
     extractFunction(source, "slug"),
     extractFunction(source, "toNumber"),
+    extractFunction(source, "catalogTextOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "catalogSortOrderOrDefault"),
     extractFunction(source, "isCatalogToggleValue"),
@@ -148,6 +149,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
     extractFunction(source, "clean"),
     extractFunction(source, "slug"),
     extractFunction(source, "toNumber"),
+    extractFunction(source, "catalogTextOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "catalogSortOrderOrDefault"),
     extractFunction(source, "isCatalogToggleValue"),
@@ -376,6 +378,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
+  it("rejects non-string product upsert text values before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    expect(() => upsertProduct({ product: { id: "cake", label: { copied: true }, low: 58, high: 68 } }))
+      .toThrow("Unsupported catalog text value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("rejects non-boolean offering upsert enabled values before patching the sheet", () => {
     const upsertById = vi.fn();
     const upsertOffering = loadUpsertOffering(upsertById);
@@ -400,6 +411,16 @@ describe("Apps Script Code.gs catalog toggles", () => {
 
     expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: 12, high: 18, sortOrder: "1" } }))
       .toThrow("Unsupported catalog sort order value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-string offering upsert text values before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({
+      offering: { id: "floral-piping", label: "Floral piping", category: { copied: true }, low: 12, high: 18 }
+    })).toThrow("Unsupported catalog text value.");
     expect(upsertById).not.toHaveBeenCalled();
   });
 
