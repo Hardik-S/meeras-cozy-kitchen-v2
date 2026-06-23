@@ -227,7 +227,7 @@ function upsertProduct(payload) {
     low: assertCatalogPrice(product.low),
     high: assertCatalogPrice(product.high),
     enabled: enabled,
-    sortOrder: toNumber(product.sortOrder || 99),
+    sortOrder: catalogSortOrderOrDefault(product, 99),
     updatedAt: nowIso()
   });
   audit("upsertProduct", product.id || product.label);
@@ -262,7 +262,7 @@ function upsertOffering(payload) {
     high: assertCatalogPrice(offering.high),
     servings: clean(offering.servings),
     enabled: enabled,
-    sortOrder: toNumber(offering.sortOrder || 99),
+    sortOrder: catalogSortOrderOrDefault(offering, 99),
     updatedAt: nowIso()
   });
   audit("upsertOffering", offering.id || offering.label);
@@ -287,6 +287,16 @@ function assertCatalogPrice(value) {
     throw new Error("Unsupported catalog price value.");
   }
   return value;
+}
+
+function catalogSortOrderOrDefault(row, fallback) {
+  if (!Object.prototype.hasOwnProperty.call(row, "sortOrder")) {
+    return fallback;
+  }
+  if (typeof row.sortOrder !== "number" || !isFinite(row.sortOrder)) {
+    throw new Error("Unsupported catalog sort order value.");
+  }
+  return row.sortOrder;
 }
 
 function catalogEnabledOrDefault(row, fallback) {
