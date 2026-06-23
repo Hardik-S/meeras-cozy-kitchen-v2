@@ -69,6 +69,8 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
     extractFunction(source, "clean"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "toPositiveNumber"),
+    extractFunction(source, "assertLedgerAmount"),
+    extractFunction(source, "ledgerQuantityOrDefault"),
     extractFunction(source, "isLedgerEntryType"),
     extractFunction(source, "upsertLedgerEntry"),
     "upsertLedgerEntry"
@@ -280,6 +282,24 @@ describe("Apps Script Code.gs upsertLedgerEntry", () => {
 
     expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "refund", amount: 12 } }))
       .toThrow("Unsupported ledger entry type.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-number ledger amounts before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
+
+    expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "expense", amount: "12" } }))
+      .toThrow("Unsupported ledger amount.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid ledger quantities before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
+
+    expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "expense", amount: 12, quantity: "2" } }))
+      .toThrow("Unsupported ledger quantity.");
     expect(upsertById).not.toHaveBeenCalled();
   });
 });
