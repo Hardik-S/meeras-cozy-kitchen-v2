@@ -328,14 +328,14 @@ function upsertLedgerEntry(payload) {
     : 1;
 
   upsertById("Ledger", {
-    id: entry.id || makeId("led"),
-    date: clean(entry.date || todayIso()),
+    id: ledgerTextOrDefault(entry.id, makeId("led")),
+    date: ledgerTextOrDefault(entry.date, todayIso()),
     type: type,
-    category: clean(entry.category || "General"),
-    description: clean(entry.description),
+    category: ledgerTextOrDefault(entry.category, "General"),
+    description: ledgerTextOrDefault(entry.description, ""),
     amount: amount,
     quantity: quantity,
-    orderId: clean(entry.orderId),
+    orderId: ledgerTextOrDefault(entry.orderId, ""),
     updatedAt: nowIso()
   });
   audit("upsertLedgerEntry", entry.id || entry.description);
@@ -354,6 +354,16 @@ function ledgerQuantityOrDefault(value) {
     throw new Error("Unsupported ledger quantity.");
   }
   return value;
+}
+
+function ledgerTextOrDefault(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  if (typeof value !== "string") {
+    throw new Error("Unsupported ledger text value.");
+  }
+  return clean(value);
 }
 
 function isLedgerEntryType(value) {

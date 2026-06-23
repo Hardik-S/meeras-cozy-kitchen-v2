@@ -71,6 +71,7 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
     extractFunction(source, "toPositiveNumber"),
     extractFunction(source, "assertLedgerAmount"),
     extractFunction(source, "ledgerQuantityOrDefault"),
+    extractFunction(source, "ledgerTextOrDefault"),
     extractFunction(source, "isLedgerEntryType"),
     extractFunction(source, "upsertLedgerEntry"),
     "upsertLedgerEntry"
@@ -306,6 +307,25 @@ describe("Apps Script Code.gs upsertLedgerEntry", () => {
       .toThrow("Unsupported ledger quantity.");
     expect(upsertById).not.toHaveBeenCalled();
   });
+
+  it.each(["date", "category", "description", "orderId"])(
+    "rejects non-string ledger %s values before patching the sheet",
+    (field) => {
+      const upsertById = vi.fn();
+      const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
+
+      expect(() => upsertLedgerEntry({
+        entry: {
+          id: "led_123",
+          type: "expense",
+          amount: 12,
+          quantity: 1,
+          [field]: { copied: true }
+        }
+      })).toThrow("Unsupported ledger text value.");
+      expect(upsertById).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("Apps Script Code.gs updateOrderFlags", () => {
