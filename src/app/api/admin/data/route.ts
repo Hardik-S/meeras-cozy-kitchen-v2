@@ -54,6 +54,14 @@ function normalizeLedgerEntryType(value: unknown) {
   return allowedLedgerEntryTypes.has(type) ? type : undefined;
 }
 
+function normalizeLedgerAmount(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function normalizeLedgerQuantity(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
 function normalizeOrderFlag(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
 }
@@ -179,6 +187,23 @@ export async function POST(request: Request) {
       }
 
       entry.type = type;
+    }
+
+    const amount = normalizeLedgerAmount(entry.amount);
+    if (amount === undefined) {
+      return NextResponse.json({ ok: false, error: "Unsupported ledger amount." }, { status: 400 });
+    }
+
+    entry.amount = amount;
+
+    if ("quantity" in entry) {
+      const quantity = normalizeLedgerQuantity(entry.quantity);
+
+      if (quantity === undefined) {
+        return NextResponse.json({ ok: false, error: "Unsupported ledger quantity." }, { status: 400 });
+      }
+
+      entry.quantity = quantity;
     }
 
     payload.entry = entry;

@@ -305,6 +305,10 @@ function upsertLedgerEntry(payload) {
   if (!isLedgerEntryType(type)) {
     throw new Error("Unsupported ledger entry type.");
   }
+  const amount = assertLedgerAmount(entry.amount);
+  const quantity = Object.prototype.hasOwnProperty.call(entry, "quantity")
+    ? ledgerQuantityOrDefault(entry.quantity)
+    : 1;
 
   upsertById("Ledger", {
     id: entry.id || makeId("led"),
@@ -312,13 +316,27 @@ function upsertLedgerEntry(payload) {
     type: type,
     category: clean(entry.category || "General"),
     description: clean(entry.description),
-    amount: toNumber(entry.amount),
-    quantity: toPositiveNumber(entry.quantity, 1),
+    amount: amount,
+    quantity: quantity,
     orderId: clean(entry.orderId),
     updatedAt: nowIso()
   });
   audit("upsertLedgerEntry", entry.id || entry.description);
   return listAdminData();
+}
+
+function assertLedgerAmount(value) {
+  if (typeof value !== "number" || !isFinite(value)) {
+    throw new Error("Unsupported ledger amount.");
+  }
+  return value;
+}
+
+function ledgerQuantityOrDefault(value) {
+  if (typeof value !== "number" || !isFinite(value) || value <= 0) {
+    throw new Error("Unsupported ledger quantity.");
+  }
+  return value;
 }
 
 function isLedgerEntryType(value) {

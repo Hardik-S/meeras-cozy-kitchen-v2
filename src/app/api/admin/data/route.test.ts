@@ -104,6 +104,56 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
+  it("rejects non-number ledger amounts before reaching Apps Script", async () => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertLedgerEntry",
+        payload: {
+          entry: {
+            id: "led_123",
+            type: "expense",
+            amount: "12",
+            quantity: 1
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported ledger amount." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid ledger quantities before reaching Apps Script", async () => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertLedgerEntry",
+        payload: {
+          entry: {
+            id: "led_123",
+            type: "expense",
+            amount: 12,
+            quantity: "2"
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported ledger quantity." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
   it("rejects non-boolean order flags before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
