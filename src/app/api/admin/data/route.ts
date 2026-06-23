@@ -70,6 +70,10 @@ function normalizeCatalogToggle(value: unknown) {
   return typeof value === "boolean" ? value : undefined;
 }
 
+function normalizeCatalogPrice(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function normalizeMutationId(value: unknown) {
   if (typeof value !== "string") {
     return undefined;
@@ -235,10 +239,19 @@ export async function POST(request: Request) {
   if (catalogUpsertPayloadKey) {
     const catalogRow = recordFromJson(payload[catalogUpsertPayloadKey]);
     const enabled = normalizeOptionalCatalogEnabled(catalogRow);
+    const low = normalizeCatalogPrice(catalogRow.low);
+    const high = normalizeCatalogPrice(catalogRow.high);
 
     if ("enabled" in catalogRow && enabled === undefined) {
       return NextResponse.json({ ok: false, error: "Unsupported catalog enabled value." }, { status: 400 });
     }
+
+    if (low === undefined || high === undefined) {
+      return NextResponse.json({ ok: false, error: "Unsupported catalog price value." }, { status: 400 });
+    }
+
+    catalogRow.low = low;
+    catalogRow.high = high;
 
     if (enabled !== undefined) {
       catalogRow.enabled = enabled;
