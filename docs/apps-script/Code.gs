@@ -220,17 +220,19 @@ function assertSettingValue(value) {
 
 function upsertProduct(payload) {
   const product = payload.product || {};
+  const label = catalogTextOrDefault(product, "label", "");
+  const id = catalogTextOrDefault(product, "id", label || "product");
   const enabled = catalogEnabledOrDefault(product, true);
   upsertById("Products", {
-    id: slug(product.id || product.label || "product"),
-    label: clean(product.label),
+    id: slug(id),
+    label: label,
     low: assertCatalogPrice(product.low),
     high: assertCatalogPrice(product.high),
     enabled: enabled,
     sortOrder: catalogSortOrderOrDefault(product, 99),
     updatedAt: nowIso()
   });
-  audit("upsertProduct", product.id || product.label);
+  audit("upsertProduct", id || label);
   return listAdminData();
 }
 
@@ -252,20 +254,22 @@ function deleteProduct(payload) {
 
 function upsertOffering(payload) {
   const offering = payload.offering || {};
+  const id = catalogTextOrDefault(offering, "id", catalogTextOrDefault(offering, "label", "offering"));
+  const label = catalogTextOrDefault(offering, "label", "");
   const enabled = catalogEnabledOrDefault(offering, true);
   upsertById("Offerings", {
-    id: slug(offering.id || offering.label || "offering"),
-    productId: clean(offering.productId || "all"),
-    category: clean(offering.category || "add-on"),
-    label: clean(offering.label),
+    id: slug(id),
+    productId: catalogTextOrDefault(offering, "productId", "all"),
+    category: catalogTextOrDefault(offering, "category", "add-on"),
+    label: label,
     low: assertCatalogPrice(offering.low),
     high: assertCatalogPrice(offering.high),
-    servings: clean(offering.servings),
+    servings: catalogTextOrDefault(offering, "servings", ""),
     enabled: enabled,
     sortOrder: catalogSortOrderOrDefault(offering, 99),
     updatedAt: nowIso()
   });
-  audit("upsertOffering", offering.id || offering.label);
+  audit("upsertOffering", id || label);
   return listAdminData();
 }
 
@@ -287,6 +291,16 @@ function assertCatalogPrice(value) {
     throw new Error("Unsupported catalog price value.");
   }
   return value;
+}
+
+function catalogTextOrDefault(row, key, fallback) {
+  if (!Object.prototype.hasOwnProperty.call(row, key) || row[key] === undefined || row[key] === null || row[key] === "") {
+    return fallback;
+  }
+  if (typeof row[key] !== "string") {
+    throw new Error("Unsupported catalog text value.");
+  }
+  return clean(row[key]);
 }
 
 function catalogSortOrderOrDefault(row, fallback) {

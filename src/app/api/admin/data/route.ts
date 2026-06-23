@@ -31,6 +31,10 @@ const catalogUpsertPayloadKeys: Record<string, "product" | "offering"> = {
   upsertProduct: "product",
   upsertOffering: "offering"
 };
+const catalogUpsertTextKeys: Record<string, string[]> = {
+  upsertProduct: ["id", "label"],
+  upsertOffering: ["id", "productId", "category", "label", "servings"]
+};
 const optionalLedgerTextKeys = ["id", "date", "category", "description", "orderId"];
 
 function recordFromJson(value: unknown): Record<string, unknown> {
@@ -81,6 +85,10 @@ function normalizeCatalogPrice(value: unknown) {
 
 function normalizeCatalogSortOrder(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function normalizeCatalogText(value: unknown) {
+  return typeof value === "string" ? value.trim() : undefined;
 }
 
 function normalizeMutationId(value: unknown) {
@@ -260,6 +268,7 @@ export async function POST(request: Request) {
   const catalogUpsertPayloadKey = catalogUpsertPayloadKeys[action];
   if (catalogUpsertPayloadKey) {
     const catalogRow = recordFromJson(payload[catalogUpsertPayloadKey]);
+    const textKeys = catalogUpsertTextKeys[action] || [];
     const enabled = normalizeOptionalCatalogEnabled(catalogRow);
     const low = normalizeCatalogPrice(catalogRow.low);
     const high = normalizeCatalogPrice(catalogRow.high);
@@ -282,6 +291,19 @@ export async function POST(request: Request) {
 
     if (sortOrder !== undefined) {
       catalogRow.sortOrder = sortOrder;
+    }
+
+    for (const key of textKeys) {
+      if (!(key in catalogRow)) {
+        continue;
+      }
+
+      const text = normalizeCatalogText(catalogRow[key]);
+      if (text === undefined) {
+        return NextResponse.json({ ok: false, error: "Unsupported catalog text value." }, { status: 400 });
+      }
+
+      catalogRow[key] = text;
     }
 
     if (enabled !== undefined) {
