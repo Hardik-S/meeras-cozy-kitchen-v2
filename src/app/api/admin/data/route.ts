@@ -74,6 +74,10 @@ function normalizeCatalogPrice(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function normalizeCatalogSortOrder(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function normalizeMutationId(value: unknown) {
   if (typeof value !== "string") {
     return undefined;
@@ -241,6 +245,7 @@ export async function POST(request: Request) {
     const enabled = normalizeOptionalCatalogEnabled(catalogRow);
     const low = normalizeCatalogPrice(catalogRow.low);
     const high = normalizeCatalogPrice(catalogRow.high);
+    const sortOrder = normalizeCatalogSortOrder(catalogRow.sortOrder);
 
     if ("enabled" in catalogRow && enabled === undefined) {
       return NextResponse.json({ ok: false, error: "Unsupported catalog enabled value." }, { status: 400 });
@@ -252,6 +257,14 @@ export async function POST(request: Request) {
 
     catalogRow.low = low;
     catalogRow.high = high;
+
+    if ("sortOrder" in catalogRow && sortOrder === undefined) {
+      return NextResponse.json({ ok: false, error: "Unsupported catalog sort order value." }, { status: 400 });
+    }
+
+    if (sortOrder !== undefined) {
+      catalogRow.sortOrder = sortOrder;
+    }
 
     if (enabled !== undefined) {
       catalogRow.enabled = enabled;

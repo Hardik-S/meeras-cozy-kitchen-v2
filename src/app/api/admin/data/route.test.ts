@@ -253,6 +253,35 @@ describe("POST /api/admin/data", () => {
   });
 
   it.each([
+    ["upsertProduct", "product"],
+    ["upsertOffering", "offering"]
+  ])("rejects non-number %s sort orders before reaching Apps Script", async (action, payloadKey) => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload: {
+          [payloadKey]: {
+            id: "cake",
+            label: "Cake",
+            low: 58,
+            high: 68,
+            sortOrder: "1"
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog sort order value." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
+  it.each([
     ["deleteProduct", { id: "   " }],
     ["toggleProduct", { id: "   ", enabled: false }],
     ["deleteOffering", { id: "   " }],
