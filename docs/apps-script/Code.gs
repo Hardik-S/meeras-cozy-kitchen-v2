@@ -223,11 +223,14 @@ function upsertProduct(payload) {
   const label = catalogTextOrDefault(product, "label", "");
   const id = catalogTextOrDefault(product, "id", label || "product");
   const enabled = catalogEnabledOrDefault(product, true);
+  const low = assertCatalogPrice(product.low);
+  const high = assertCatalogPrice(product.high);
+  assertCatalogPriceRange(low, high);
   upsertById("Products", {
     id: slug(id),
     label: label,
-    low: assertCatalogPrice(product.low),
-    high: assertCatalogPrice(product.high),
+    low: low,
+    high: high,
     enabled: enabled,
     sortOrder: catalogSortOrderOrDefault(product, 99),
     updatedAt: nowIso()
@@ -257,13 +260,16 @@ function upsertOffering(payload) {
   const id = catalogTextOrDefault(offering, "id", catalogTextOrDefault(offering, "label", "offering"));
   const label = catalogTextOrDefault(offering, "label", "");
   const enabled = catalogEnabledOrDefault(offering, true);
+  const low = assertCatalogPrice(offering.low);
+  const high = assertCatalogPrice(offering.high);
+  assertCatalogPriceRange(low, high);
   upsertById("Offerings", {
     id: slug(id),
     productId: catalogTextOrDefault(offering, "productId", "all"),
     category: catalogTextOrDefault(offering, "category", "add-on"),
     label: label,
-    low: assertCatalogPrice(offering.low),
-    high: assertCatalogPrice(offering.high),
+    low: low,
+    high: high,
     servings: catalogTextOrDefault(offering, "servings", ""),
     enabled: enabled,
     sortOrder: catalogSortOrderOrDefault(offering, 99),
@@ -291,6 +297,12 @@ function assertCatalogPrice(value) {
     throw new Error("Unsupported catalog price value.");
   }
   return value;
+}
+
+function assertCatalogPriceRange(low, high) {
+  if (high < low) {
+    throw new Error("Unsupported catalog price range.");
+  }
 }
 
 function catalogTextOrDefault(row, key, fallback) {
