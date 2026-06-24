@@ -309,6 +309,15 @@ describe("Apps Script Code.gs updateSettings", () => {
       .toThrow("Unsupported settings key.");
     expect(setSetting).not.toHaveBeenCalled();
   });
+
+  it("rejects malformed settings payloads before patching the sheet", () => {
+    const setSetting = vi.fn();
+    const updateSettings = loadUpdateSettings(setSetting);
+
+    expect(() => updateSettings({ settings: ["defaultReceiver"] as unknown as Record<string, unknown> }))
+      .toThrow("Unsupported settings payload.");
+    expect(setSetting).not.toHaveBeenCalled();
+  });
 });
 
 describe("Apps Script Code.gs upsertLedgerEntry", () => {

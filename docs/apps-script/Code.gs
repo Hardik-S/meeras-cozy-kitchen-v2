@@ -200,7 +200,11 @@ function listAdminData() {
 }
 
 function updateSettings(payload) {
-  const settings = payload.settings || {};
+  const settings = payload.settings;
+  if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+    throw new Error("Unsupported settings payload.");
+  }
+
   const allowed = ["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"];
   assertSettingKeys(settings, allowed);
   allowed.forEach(function(key) {
