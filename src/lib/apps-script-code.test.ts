@@ -272,6 +272,15 @@ describe("Apps Script Code.gs updateOrderStatus", () => {
     expect(() => updateOrderStatus({ id: "   ", status: "confirmed" })).toThrow("Unsupported admin target id.");
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
+
+  it("rejects non-string order ids before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
+
+    expect(() => updateOrderStatus({ id: { copied: true } as unknown as string, status: "confirmed" }))
+      .toThrow("Unsupported admin target id.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
 });
 
 describe("Apps Script Code.gs updateSettings", () => {

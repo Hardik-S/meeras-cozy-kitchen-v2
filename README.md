@@ -78,6 +78,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Trim copied Apps Script deployment env values before proxying, so pasted secrets and URLs do not disable Sheet writes.
 - Reject non-string admin setting values before Sheet mutations run, so copied direct writes cannot save object-shaped email settings.
 - Reject unknown admin setting keys before Sheet mutations run, so typos cannot pretend notification routing was saved.
+- Reject non-string admin target IDs before Sheet mutations run, so copied direct writes cannot patch or delete object-shaped row keys.
 - Clear malformed public catalog cache entries when the live catalog is unavailable, so stale browser storage does not keep slowing fallback page loads.
 - Clear future-dated public catalog cache entries too, so clock-skewed browser storage cannot pin stale menu data.
 - Catch rejected browser clipboard writes, so customers can fall back to email or manual selection instead of hitting an unhandled copy action.
