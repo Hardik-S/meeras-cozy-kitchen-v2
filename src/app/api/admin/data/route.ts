@@ -38,7 +38,11 @@ const catalogUpsertTextKeys: Record<string, string[]> = {
 const optionalLedgerTextKeys = ["id", "date", "category", "description", "orderId"];
 
 function recordFromJson(value: unknown): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  return isJsonRecord(value) ? value : {};
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function normalizeOrderStatus(value: unknown) {
@@ -186,7 +190,11 @@ export async function POST(request: Request) {
   }
 
   if (action === "updateSettings") {
-    const settings = recordFromJson(payload.settings);
+    if (!isJsonRecord(payload.settings)) {
+      return NextResponse.json({ ok: false, error: "Unsupported settings payload." }, { status: 400 });
+    }
+
+    const settings = payload.settings;
 
     if (hasUnsupportedSettingKey(settings)) {
       return NextResponse.json({ ok: false, error: "Unsupported settings key." }, { status: 400 });
