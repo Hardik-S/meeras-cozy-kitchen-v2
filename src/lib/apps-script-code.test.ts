@@ -128,6 +128,7 @@ function loadUpsertProduct(upsertById: (sheetName: string, product: Record<strin
     extractFunction(source, "toNumber"),
     extractFunction(source, "catalogTextOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
+    extractFunction(source, "assertCatalogPriceRange"),
     extractFunction(source, "catalogSortOrderOrDefault"),
     extractFunction(source, "isCatalogToggleValue"),
     extractFunction(source, "catalogEnabledOrDefault"),
@@ -151,6 +152,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
     extractFunction(source, "toNumber"),
     extractFunction(source, "catalogTextOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
+    extractFunction(source, "assertCatalogPriceRange"),
     extractFunction(source, "catalogSortOrderOrDefault"),
     extractFunction(source, "isCatalogToggleValue"),
     extractFunction(source, "catalogEnabledOrDefault"),
@@ -369,6 +371,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
+  it("rejects inverted product upsert price ranges before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    expect(() => upsertProduct({ product: { id: "cake", label: "Cake", low: 88, high: 58 } }))
+      .toThrow("Unsupported catalog price range.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("rejects non-number product upsert sort orders before patching the sheet", () => {
     const upsertById = vi.fn();
     const upsertProduct = loadUpsertProduct(upsertById);
@@ -402,6 +413,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
 
     expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: 12, high: "18" } }))
       .toThrow("Unsupported catalog price value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects inverted offering upsert price ranges before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: 22, high: 18 } }))
+      .toThrow("Unsupported catalog price range.");
     expect(upsertById).not.toHaveBeenCalled();
   });
 

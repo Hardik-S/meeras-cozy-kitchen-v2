@@ -83,6 +83,10 @@ function normalizeCatalogPrice(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
+function hasUnsupportedCatalogPriceRange(low: number, high: number) {
+  return high < low;
+}
+
 function normalizeCatalogSortOrder(value: unknown) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
@@ -280,6 +284,10 @@ export async function POST(request: Request) {
 
     if (low === undefined || high === undefined) {
       return NextResponse.json({ ok: false, error: "Unsupported catalog price value." }, { status: 400 });
+    }
+
+    if (hasUnsupportedCatalogPriceRange(low, high)) {
+      return NextResponse.json({ ok: false, error: "Unsupported catalog price range." }, { status: 400 });
     }
 
     catalogRow.low = low;

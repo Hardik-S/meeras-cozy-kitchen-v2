@@ -31,6 +31,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject non-boolean catalog toggles before Sheet mutations run, so copied direct writes cannot enable hidden menu rows accidentally.
 - Reject non-boolean catalog upsert enabled values before Sheet mutations run, so copied editor payloads cannot enable hidden menu rows accidentally.
 - Reject non-number catalog upsert prices before Sheet mutations run, so copied editor payloads cannot zero menu pricing accidentally.
+- Reject inverted catalog price ranges before Sheet mutations run, so public quotes do not show impossible low/high totals.
 - Reject non-number catalog sort orders before Sheet mutations run, so copied editor payloads cannot reorder menu rows accidentally.
 - Reject non-string catalog text values before Sheet mutations run, so copied editor payloads cannot save object-shaped menu labels.
 - Reject unsupported ledger entry types before Sheet mutations run, so finance totals cannot silently drop malformed rows.
