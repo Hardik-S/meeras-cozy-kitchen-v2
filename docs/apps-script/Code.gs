@@ -202,6 +202,7 @@ function listAdminData() {
 function updateSettings(payload) {
   const settings = payload.settings || {};
   const allowed = ["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"];
+  assertSettingKeys(settings, allowed);
   allowed.forEach(function(key) {
     if (Object.prototype.hasOwnProperty.call(settings, key)) {
       assertSettingValue(settings[key]);
@@ -216,6 +217,14 @@ function assertSettingValue(value) {
   if (typeof value !== "string") {
     throw new Error("Unsupported settings value.");
   }
+}
+
+function assertSettingKeys(settings, allowed) {
+  Object.keys(settings).forEach(function(key) {
+    if (allowed.indexOf(key) < 0) {
+      throw new Error("Unsupported settings key.");
+    }
+  });
 }
 
 function upsertProduct(payload) {

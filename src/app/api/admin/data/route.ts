@@ -116,6 +116,10 @@ function hasUnsupportedSettingValue(settings: Record<string, unknown>) {
   return Object.entries(settings).some(([key, value]) => allowedSettingKeys.has(key) && typeof value !== "string");
 }
 
+function hasUnsupportedSettingKey(settings: Record<string, unknown>) {
+  return Object.keys(settings).some((key) => !allowedSettingKeys.has(key));
+}
+
 function sessionTokenFromRequest(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)meera_admin_session=([^;]+)/);
@@ -183,6 +187,10 @@ export async function POST(request: Request) {
 
   if (action === "updateSettings") {
     const settings = recordFromJson(payload.settings);
+
+    if (hasUnsupportedSettingKey(settings)) {
+      return NextResponse.json({ ok: false, error: "Unsupported settings key." }, { status: 400 });
+    }
 
     if (hasUnsupportedSettingValue(settings)) {
       return NextResponse.json({ ok: false, error: "Unsupported settings value." }, { status: 400 });
