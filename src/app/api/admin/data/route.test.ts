@@ -417,4 +417,29 @@ describe("POST /api/admin/data", () => {
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported admin target id." });
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["deleteProduct", { id: { copied: true } }],
+    ["toggleProduct", { id: { copied: true }, enabled: false }],
+    ["deleteOffering", { id: { copied: true } }],
+    ["toggleOffering", { id: { copied: true }, enabled: false }],
+    ["updateOrderFlags", { id: { copied: true }, hearted: false, pinned: false }],
+    ["updateOrderStatus", { id: { copied: true }, status: "confirmed" }]
+  ])("rejects non-string %s ids before reaching Apps Script", async (action, payload) => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported admin target id." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
 });

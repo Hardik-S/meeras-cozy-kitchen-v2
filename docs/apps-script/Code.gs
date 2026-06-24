@@ -447,6 +447,9 @@ function patchByIdAndReturn(sheetName, id, patch, action) {
 }
 
 function requireMutationId(value) {
+  if (typeof value !== "string") {
+    throw new Error("Unsupported admin target id.");
+  }
   const id = clean(value);
   if (!id) {
     throw new Error("Unsupported admin target id.");
