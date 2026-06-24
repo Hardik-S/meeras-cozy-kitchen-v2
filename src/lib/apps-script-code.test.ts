@@ -52,6 +52,7 @@ function loadUpdateSettings(setSetting: (key: string, value: string) => unknown)
   const script = [
     extractFunction(source, "clean"),
     extractFunction(source, "assertSettingValue"),
+    extractFunction(source, "assertSettingKeys"),
     extractFunction(source, "updateSettings"),
     "updateSettings"
   ].join("\n");
@@ -280,6 +281,15 @@ describe("Apps Script Code.gs updateSettings", () => {
 
     expect(() => updateSettings({ settings: { defaultReceiver: { email: "chef@example.com" } } }))
       .toThrow("Unsupported settings value.");
+    expect(setSetting).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown setting keys before patching the sheet", () => {
+    const setSetting = vi.fn();
+    const updateSettings = loadUpdateSettings(setSetting);
+
+    expect(() => updateSettings({ settings: { defaultReciever: "chef@example.com" } }))
+      .toThrow("Unsupported settings key.");
     expect(setSetting).not.toHaveBeenCalled();
   });
 });

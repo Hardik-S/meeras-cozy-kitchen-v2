@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createAdminSessionToken } from "@/lib/admin-auth";
 import { mutateAdminDataInAppsScript } from "@/lib/apps-script";
 import { GET, POST } from "./route";
@@ -27,6 +27,10 @@ describe("GET /api/admin/data", () => {
 });
 
 describe("POST /api/admin/data", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("rejects a null mutation body without throwing", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
@@ -59,6 +63,28 @@ describe("POST /api/admin/data", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported settings value." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown settings keys before reaching Apps Script", async () => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "updateSettings",
+        payload: {
+          settings: {
+            defaultReciever: "chef@example.com"
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported settings key." });
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
