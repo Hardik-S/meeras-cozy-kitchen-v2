@@ -79,6 +79,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject non-string admin setting values before Sheet mutations run, so copied direct writes cannot save object-shaped email settings.
 - Reject unknown admin setting keys before Sheet mutations run, so typos cannot pretend notification routing was saved.
 - Reject non-string admin target IDs before Sheet mutations run, so copied direct writes cannot patch or delete object-shaped row keys.
+- Reject missing order statuses before Sheet mutations run, so copied direct writes cannot reset an order to `new` accidentally.
 - Clear malformed public catalog cache entries when the live catalog is unavailable, so stale browser storage does not keep slowing fallback page loads.
 - Clear future-dated public catalog cache entries too, so clock-skewed browser storage cannot pin stale menu data.
 - Catch rejected browser clipboard writes, so customers can fall back to email or manual selection instead of hitting an unhandled copy action.

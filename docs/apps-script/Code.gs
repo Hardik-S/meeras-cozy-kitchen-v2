@@ -433,7 +433,7 @@ function isOrderStatus(value) {
 
 function updateOrderStatus(payload) {
   const id = requireMutationId(payload.id);
-  const status = clean(payload.status || "new");
+  const status = clean(payload.status);
   if (!isOrderStatus(status)) {
     throw new Error("Unsupported order status.");
   }
