@@ -103,7 +103,9 @@ function setupMeeraCozyKitchen() {
 }
 
 function submitOrder(payload) {
-  const inquiry = payload.inquiry || {};
+  const inquiry = requireInquiryPayload(payload.inquiry);
+  assertInquiryTextFields(inquiry);
+
   const id = makeId("ord");
   const now = nowIso();
   const estimate = estimateInquiry(inquiry);
@@ -132,6 +134,54 @@ function submitOrder(payload) {
   audit("submitOrder", id);
 
   return { ok: true, orderId: id };
+}
+
+function requireInquiryPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unsupported inquiry payload.");
+  }
+  return value;
+}
+
+function assertInquiryTextFields(inquiry) {
+  [
+    "name",
+    "email",
+    "phone",
+    "eventDate",
+    "productType",
+    "cakeSizeId",
+    "flavourId",
+    "budget",
+    "message"
+  ].forEach(function(key) {
+    inquiryTextOrDefault(inquiry[key], "");
+  });
+  assertInquiryAddOns(inquiry.addOnIds);
+}
+
+function inquiryTextOrDefault(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  if (typeof value !== "string") {
+    throw new Error("Unsupported inquiry text value.");
+  }
+  return clean(value);
+}
+
+function assertInquiryAddOns(value) {
+  if (value === undefined || value === null) {
+    return;
+  }
+  if (!Array.isArray(value)) {
+    throw new Error("Unsupported inquiry add-ons.");
+  }
+  value.forEach(function(id) {
+    if (typeof id !== "string") {
+      throw new Error("Unsupported inquiry add-on value.");
+    }
+  });
 }
 
 function listAdminData() {
