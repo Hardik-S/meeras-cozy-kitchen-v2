@@ -47,6 +47,31 @@ function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: strin
   return runInNewContext(script, { patchByIdAndReturn }) as (payload: { id: string; status?: string }) => unknown;
 }
 
+function loadSubmitOrder(appendObject: (sheetName: string, object: Record<string, unknown>) => unknown) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "toNumber"),
+    extractFunction(source, "inquiryTextOrDefault"),
+    extractFunction(source, "assertInquiryAddOns"),
+    extractFunction(source, "requireInquiryPayload"),
+    extractFunction(source, "assertInquiryTextFields"),
+    extractFunction(source, "estimateInquiry"),
+    extractFunction(source, "buildSummary"),
+    extractFunction(source, "submitOrder"),
+    "submitOrder"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    appendObject,
+    audit: vi.fn(),
+    makeId: vi.fn(() => "ord_generated"),
+    nowIso: vi.fn(() => "2026-06-24T00:00:00.000Z"),
+    readObjects: vi.fn(() => []),
+    sendInquiryEmails: vi.fn()
+  }) as (payload: { inquiry?: Record<string, unknown>; summary?: string }) => unknown;
+}
+
 function loadUpdateSettings(setSetting: (key: string, value: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
@@ -253,6 +278,35 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       productType: "cupcakes",
       addOnIds: ["cake-topper", "sprinkle-pack"]
     })).toEqual({ low: 38, high: 50 });
+  });
+});
+
+describe("Apps Script Code.gs submitOrder", () => {
+  it("rejects malformed inquiry payloads before appending order rows", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject);
+
+    expect(() => submitOrder({ inquiry: ["Amina"] as unknown as Record<string, unknown> }))
+      .toThrow("Unsupported inquiry payload.");
+    expect(appendObject).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-string inquiry text before appending order rows", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject);
+
+    expect(() => submitOrder({ inquiry: { name: { copied: true } } }))
+      .toThrow("Unsupported inquiry text value.");
+    expect(appendObject).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-string add-on ids before appending order rows", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject);
+
+    expect(() => submitOrder({ inquiry: { addOnIds: [{ copied: true }] } }))
+      .toThrow("Unsupported inquiry add-on value.");
+    expect(appendObject).not.toHaveBeenCalled();
   });
 });
 
