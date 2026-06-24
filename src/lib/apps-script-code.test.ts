@@ -265,6 +265,14 @@ describe("Apps Script Code.gs updateOrderStatus", () => {
     expect(patchByIdAndReturn).not.toHaveBeenCalled();
   });
 
+  it("rejects missing order statuses before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
+
+    expect(() => updateOrderStatus({ id: "ord_123" })).toThrow("Unsupported order status.");
+    expect(patchByIdAndReturn).not.toHaveBeenCalled();
+  });
+
   it("rejects blank order ids before patching the sheet", () => {
     const patchByIdAndReturn = vi.fn();
     const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
