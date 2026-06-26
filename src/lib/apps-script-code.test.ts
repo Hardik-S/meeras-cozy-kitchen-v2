@@ -52,6 +52,7 @@ function loadSubmitOrder(appendObject: (sheetName: string, object: Record<string
   const script = [
     extractFunction(source, "clean"),
     extractFunction(source, "toNumber"),
+    extractFunction(source, "summaryTextOrDefault"),
     extractFunction(source, "inquiryTextOrDefault"),
     extractFunction(source, "assertInquiryAddOns"),
     extractFunction(source, "requireInquiryPayload"),
@@ -69,7 +70,7 @@ function loadSubmitOrder(appendObject: (sheetName: string, object: Record<string
     nowIso: vi.fn(() => "2026-06-24T00:00:00.000Z"),
     readObjects: vi.fn(() => []),
     sendInquiryEmails: vi.fn()
-  }) as (payload: { inquiry?: Record<string, unknown>; summary?: string }) => unknown;
+  }) as (payload: { inquiry?: Record<string, unknown>; summary?: unknown }) => unknown;
 }
 
 function loadUpdateSettings(setSetting: (key: string, value: string) => unknown) {
@@ -306,6 +307,17 @@ describe("Apps Script Code.gs submitOrder", () => {
 
     expect(() => submitOrder({ inquiry: { addOnIds: [{ copied: true }] } }))
       .toThrow("Unsupported inquiry add-on value.");
+    expect(appendObject).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-string inquiry summaries before appending order rows", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject);
+
+    expect(() => submitOrder({
+      inquiry: { name: "Amina", productType: "dessert-box" },
+      summary: { copied: true }
+    })).toThrow("Unsupported inquiry summary.");
     expect(appendObject).not.toHaveBeenCalled();
   });
 });
