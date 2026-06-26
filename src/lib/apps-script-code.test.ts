@@ -96,6 +96,7 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
     extractFunction(source, "clean"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "toPositiveNumber"),
+    extractFunction(source, "requireLedgerEntryPayload"),
     extractFunction(source, "assertLedgerAmount"),
     extractFunction(source, "ledgerQuantityOrDefault"),
     extractFunction(source, "ledgerTextOrDefault"),
@@ -153,6 +154,7 @@ function loadUpsertProduct(upsertById: (sheetName: string, product: Record<strin
     extractFunction(source, "clean"),
     extractFunction(source, "slug"),
     extractFunction(source, "toNumber"),
+    extractFunction(source, "requireCatalogPayload"),
     extractFunction(source, "catalogTextOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "assertCatalogPriceRange"),
@@ -177,6 +179,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
     extractFunction(source, "clean"),
     extractFunction(source, "slug"),
     extractFunction(source, "toNumber"),
+    extractFunction(source, "requireCatalogPayload"),
     extractFunction(source, "catalogTextOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "assertCatalogPriceRange"),
@@ -387,6 +390,15 @@ describe("Apps Script Code.gs updateSettings", () => {
 });
 
 describe("Apps Script Code.gs upsertLedgerEntry", () => {
+  it("rejects malformed ledger entry payloads before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
+
+    expect(() => upsertLedgerEntry({ entry: ["income", 12] as unknown as Record<string, unknown> }))
+      .toThrow("Unsupported ledger entry payload.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("rejects unsupported ledger entry types before patching the sheet", () => {
     const upsertById = vi.fn();
     const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
@@ -455,6 +467,24 @@ describe("Apps Script Code.gs updateOrderFlags", () => {
 });
 
 describe("Apps Script Code.gs catalog toggles", () => {
+  it("rejects malformed product upsert payloads before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    expect(() => upsertProduct({ product: ["cake"] as unknown as Record<string, unknown> }))
+      .toThrow("Unsupported catalog payload.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects malformed offering upsert payloads before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({ offering: ["floral-piping"] as unknown as Record<string, unknown> }))
+      .toThrow("Unsupported catalog payload.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("rejects non-boolean product upsert enabled values before patching the sheet", () => {
     const upsertById = vi.fn();
     const upsertProduct = loadUpsertProduct(upsertById);

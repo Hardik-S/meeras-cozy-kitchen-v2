@@ -218,7 +218,11 @@ export async function POST(request: Request) {
   }
 
   if (action === "upsertLedgerEntry") {
-    const entry = recordFromJson(payload.entry);
+    if (!isJsonRecord(payload.entry)) {
+      return NextResponse.json({ ok: false, error: "Unsupported ledger entry payload." }, { status: 400 });
+    }
+
+    const entry = payload.entry;
 
     if ("type" in entry) {
       const type = normalizeLedgerEntryType(entry.type);
@@ -287,7 +291,11 @@ export async function POST(request: Request) {
 
   const catalogUpsertPayloadKey = catalogUpsertPayloadKeys[action];
   if (catalogUpsertPayloadKey) {
-    const catalogRow = recordFromJson(payload[catalogUpsertPayloadKey]);
+    if (!isJsonRecord(payload[catalogUpsertPayloadKey])) {
+      return NextResponse.json({ ok: false, error: "Unsupported catalog payload." }, { status: 400 });
+    }
+
+    const catalogRow = payload[catalogUpsertPayloadKey];
     const textKeys = catalogUpsertTextKeys[action] || [];
     const enabled = normalizeOptionalCatalogEnabled(catalogRow);
     const low = normalizeCatalogPrice(catalogRow.low);
