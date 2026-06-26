@@ -292,7 +292,7 @@ function assertSettingKeys(settings, allowed) {
 }
 
 function upsertProduct(payload) {
-  const product = payload.product || {};
+  const product = requireCatalogPayload(payload.product);
   const label = catalogTextOrDefault(product, "label", "");
   const id = catalogTextOrDefault(product, "id", label || "product");
   const enabled = catalogEnabledOrDefault(product, true);
@@ -329,7 +329,7 @@ function deleteProduct(payload) {
 }
 
 function upsertOffering(payload) {
-  const offering = payload.offering || {};
+  const offering = requireCatalogPayload(payload.offering);
   const id = catalogTextOrDefault(offering, "id", catalogTextOrDefault(offering, "label", "offering"));
   const label = catalogTextOrDefault(offering, "label", "");
   const enabled = catalogEnabledOrDefault(offering, true);
@@ -408,6 +408,13 @@ function catalogEnabledOrDefault(row, fallback) {
   return row.enabled;
 }
 
+function requireCatalogPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unsupported catalog payload.");
+  }
+  return value;
+}
+
 function deleteOffering(payload) {
   const id = requireMutationId(payload.id);
   deleteById("Offerings", id);
@@ -416,7 +423,7 @@ function deleteOffering(payload) {
 }
 
 function upsertLedgerEntry(payload) {
-  const entry = payload.entry || {};
+  const entry = requireLedgerEntryPayload(payload.entry);
   const type = clean(entry.type || "income");
   if (!isLedgerEntryType(type)) {
     throw new Error("Unsupported ledger entry type.");
@@ -439,6 +446,13 @@ function upsertLedgerEntry(payload) {
   });
   audit("upsertLedgerEntry", entry.id || entry.description);
   return listAdminData();
+}
+
+function requireLedgerEntryPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unsupported ledger entry payload.");
+  }
+  return value;
 }
 
 function assertLedgerAmount(value) {
