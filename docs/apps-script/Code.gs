@@ -109,7 +109,7 @@ function submitOrder(payload) {
   const id = makeId("ord");
   const now = nowIso();
   const estimate = estimateInquiry(inquiry);
-  const summary = payload.summary || buildSummary(inquiry, estimate);
+  const summary = summaryTextOrDefault(payload.summary, buildSummary(inquiry, estimate));
 
   appendObject("Orders", {
     id,
@@ -141,6 +141,16 @@ function requireInquiryPayload(value) {
     throw new Error("Unsupported inquiry payload.");
   }
   return value;
+}
+
+function summaryTextOrDefault(value, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  if (typeof value !== "string") {
+    throw new Error("Unsupported inquiry summary.");
+  }
+  return clean(value);
 }
 
 function assertInquiryTextFields(inquiry) {

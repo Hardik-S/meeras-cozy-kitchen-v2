@@ -60,6 +60,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Drop selected add-ons that disappear after a live catalog refresh, so stale Sheet options are not submitted silently.
 - Reject unavailable catalog IDs at the inquiry API boundary too, so stale direct submissions cannot save hidden menu options.
 - Reject malformed direct Apps Script inquiry payloads before Sheet appends, so copied customer fields cannot save object-shaped order text.
+- Reject malformed direct Apps Script inquiry summaries before Sheet appends, so copied fallback summaries cannot save object-shaped email text.
 - Respect product-scoped Sheet offerings at the inquiry API boundary, so add-ons and flavours tied to one product cannot be saved against another.
 - Respect product-scoped Sheet offerings in the order form too, so customers do not see add-ons, flavours, or cake sizes that the selected product cannot submit.
 - Roll back optimistic admin edits when the Apps Script save request fails, so Meera sees the existing save-failure notice instead of a stale local status change.
