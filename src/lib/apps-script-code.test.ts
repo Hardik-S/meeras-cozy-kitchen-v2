@@ -34,6 +34,16 @@ function loadEstimateInquiry(readObjects: (sheetName: string) => Array<Record<st
   }) => { low: number; high: number };
 }
 
+function loadRequirePostPayload() {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "requirePostPayload"),
+    "requirePostPayload"
+  ].join("\n");
+
+  return runInNewContext(script) as (payload: unknown) => Record<string, unknown>;
+}
+
 function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
@@ -322,6 +332,14 @@ describe("Apps Script Code.gs submitOrder", () => {
       summary: { copied: true }
     })).toThrow("Unsupported inquiry summary.");
     expect(appendObject).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs request payloads", () => {
+  it.each([null, ["submitOrder"]])("rejects malformed top-level POST payloads", (payload) => {
+    const requirePostPayload = loadRequirePostPayload();
+
+    expect(() => requirePostPayload(payload)).toThrow("Unsupported request payload.");
   });
 });
 

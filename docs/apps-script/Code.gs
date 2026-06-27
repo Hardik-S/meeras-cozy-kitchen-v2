@@ -62,7 +62,7 @@ function doGet() {
 
 function doPost(e) {
   try {
-    const payload = JSON.parse((e.postData && e.postData.contents) || "{}");
+    const payload = requirePostPayload(JSON.parse((e.postData && e.postData.contents) || "{}"));
     requireSecret(payload.secret);
     setupMeeraCozyKitchen();
 
@@ -90,6 +90,13 @@ function doPost(e) {
   } catch (error) {
     return jsonResponse({ ok: false, error: String(error && error.message ? error.message : error) }, 400);
   }
+}
+
+function requirePostPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unsupported request payload.");
+  }
+  return value;
 }
 
 function setupMeeraCozyKitchen() {
