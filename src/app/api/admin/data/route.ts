@@ -85,7 +85,7 @@ function normalizeCatalogToggle(value: unknown) {
 }
 
 function normalizeCatalogPrice(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
 function hasUnsupportedCatalogPriceRange(low: number, high: number) {
