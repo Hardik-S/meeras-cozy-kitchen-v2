@@ -168,7 +168,7 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
-  it("rejects non-number ledger amounts before reaching Apps Script", async () => {
+  it.each(["12", -12])("rejects invalid ledger amount %s before reaching Apps Script", async (amount) => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
       headers: {
@@ -181,7 +181,7 @@ describe("POST /api/admin/data", () => {
           entry: {
             id: "led_123",
             type: "expense",
-            amount: "12",
+            amount,
             quantity: 1
           }
         }
