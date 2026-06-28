@@ -113,6 +113,26 @@ describe("public catalog sync", () => {
     expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
   });
 
+  it("clears cached catalog rows with impossible price ranges", async () => {
+    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
+      savedAt: Date.now(),
+      catalog: {
+        ...defaultPublicCatalog,
+        products: [
+          { ...defaultPublicCatalog.products[0], low: -1 }
+        ]
+      }
+    }));
+    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
+      catalog: defaultPublicCatalog,
+      source: "default"
+    });
+    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+  });
+
   it("clears future-dated cached catalog data before falling back", async () => {
     sessionStorage.setItem("meera:public-catalog", JSON.stringify({
       savedAt: Date.now() + 60 * 60 * 1000,
