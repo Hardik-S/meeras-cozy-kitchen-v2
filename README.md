@@ -62,6 +62,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Treat malformed public catalog responses or cached browser catalog data as a local-default fallback, so an incomplete refresh cannot poison the customer menu cache.
 - Validate cached and live public catalog row shapes before using them in the browser, so malformed Sheet snapshots cannot break customer menu rendering.
 - Reject cached and live public catalog rows with impossible price ranges, so negative Sheet prices cannot reach customer menus.
+- Reject cached and live public catalog rows with fractional sort orders, so copied Sheet snapshots cannot reorder menu rows ambiguously.
 - Normalize cached and live public catalog text before browser consumers use it, so old Sheet snapshots with copied whitespace do not break menu selection.
 - Cache only live Sheet-backed public catalog responses, so temporary server fallbacks do not pin stale customer menus.
 - Drop selected add-ons that disappear after a live catalog refresh, so stale Sheet options are not submitted silently.

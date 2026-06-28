@@ -37,6 +37,10 @@ function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+function isIntegerNumber(value: unknown): value is number {
+  return isFiniteNumber(value) && Number.isInteger(value);
+}
+
 function isValidPriceRange(low: unknown, high: unknown) {
   return isFiniteNumber(low)
     && isFiniteNumber(high)
@@ -60,7 +64,7 @@ function isPublicProduct(value: unknown) {
     && isNonEmptyString(value.label)
     && isValidPriceRange(value.low, value.high)
     && typeof value.enabled === "boolean"
-    && isFiniteNumber(value.sortOrder);
+    && isIntegerNumber(value.sortOrder);
 }
 
 function isPublicOffering(value: unknown) {
@@ -73,7 +77,7 @@ function isPublicOffering(value: unknown) {
     && isValidPriceRange(value.low, value.high)
     && typeof value.servings === "string"
     && typeof value.enabled === "boolean"
-    && isFiniteNumber(value.sortOrder);
+    && isIntegerNumber(value.sortOrder);
 }
 
 function hasPublicOfferingCategory(value: unknown, category: OfferingCategory) {
