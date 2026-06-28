@@ -99,6 +99,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Normalize Apps Script order ids before building payment instructions, so malformed success responses fall back to a pending local id.
 - Ignore malformed order metadata returned to the browser after a successful inquiry, so customers land on a valid pending payment page instead of storing an unusable order.
 - Normalize returned order metadata before browser storage and payment-page routing, so copied response text cannot create padded summary links.
+- Drop impossible returned serving counts before browser storage, so payment metadata cannot retain malformed internal response numbers.
 - Treat null inquiry response envelopes as submit failures, so customers see the retry notice instead of an unhandled browser error.
 - Create the inquiry validation schema per API request so the seven-day pickup notice window cannot freeze on a long-lived server process.
 - Create the browser form validation schema at submit time too, so an already-open order tab uses the current pickup notice window before calling the API.
