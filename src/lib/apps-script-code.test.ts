@@ -191,6 +191,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
     extractFunction(source, "toNumber"),
     extractFunction(source, "requireCatalogPayload"),
     extractFunction(source, "catalogTextOrDefault"),
+    extractFunction(source, "catalogCategoryOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "assertCatalogPriceRange"),
     extractFunction(source, "catalogSortOrderOrDefault"),
@@ -591,6 +592,23 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(() => upsertOffering({
       offering: { id: "floral-piping", label: "Floral piping", category: { copied: true }, low: 12, high: 18 }
     })).toThrow("Unsupported catalog text value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects unsupported offering categories before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({
+      offering: {
+        id: "custom-topper",
+        productId: "cake",
+        category: "topping",
+        label: "Custom topper",
+        low: 12,
+        high: 18
+      }
+    })).toThrow("Unsupported catalog category.");
     expect(upsertById).not.toHaveBeenCalled();
   });
 

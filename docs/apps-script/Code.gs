@@ -346,7 +346,7 @@ function upsertOffering(payload) {
   upsertById("Offerings", {
     id: slug(id),
     productId: catalogTextOrDefault(offering, "productId", "all"),
-    category: catalogTextOrDefault(offering, "category", "add-on"),
+    category: catalogCategoryOrDefault(offering, "add-on"),
     label: label,
     low: low,
     high: high,
@@ -393,6 +393,14 @@ function catalogTextOrDefault(row, key, fallback) {
     throw new Error("Unsupported catalog text value.");
   }
   return clean(row[key]);
+}
+
+function catalogCategoryOrDefault(row, fallback) {
+  const category = catalogTextOrDefault(row, "category", fallback);
+  if (category !== "cake-size" && category !== "flavour" && category !== "add-on") {
+    throw new Error("Unsupported catalog category.");
+  }
+  return category;
 }
 
 function catalogSortOrderOrDefault(row, fallback) {
