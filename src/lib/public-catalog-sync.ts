@@ -33,8 +33,15 @@ function isNonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function isFiniteNumber(value: unknown) {
+function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isValidPriceRange(low: unknown, high: unknown) {
+  return isFiniteNumber(low)
+    && isFiniteNumber(high)
+    && low >= 0
+    && high >= low;
 }
 
 function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined {
@@ -51,8 +58,7 @@ function isPublicProduct(value: unknown) {
 
   return isNonEmptyString(value.id)
     && isNonEmptyString(value.label)
-    && isFiniteNumber(value.low)
-    && isFiniteNumber(value.high)
+    && isValidPriceRange(value.low, value.high)
     && typeof value.enabled === "boolean"
     && isFiniteNumber(value.sortOrder);
 }
@@ -64,8 +70,7 @@ function isPublicOffering(value: unknown) {
     && isNonEmptyString(value.productId)
     && normalizeOfferingCategory(value.category) !== undefined
     && isNonEmptyString(value.label)
-    && isFiniteNumber(value.low)
-    && isFiniteNumber(value.high)
+    && isValidPriceRange(value.low, value.high)
     && typeof value.servings === "string"
     && typeof value.enabled === "boolean"
     && isFiniteNumber(value.sortOrder);
