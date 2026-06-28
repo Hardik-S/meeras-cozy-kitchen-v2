@@ -478,7 +478,7 @@ function assertLedgerAmount(value) {
 }
 
 function ledgerQuantityOrDefault(value) {
-  if (typeof value !== "number" || !isFinite(value) || value <= 0) {
+  if (typeof value !== "number" || !isFinite(value) || value % 1 !== 0 || value <= 0) {
     throw new Error("Unsupported ledger quantity.");
   }
   return value;

@@ -69,7 +69,7 @@ function normalizeLedgerAmount(value: unknown) {
 }
 
 function normalizeLedgerQuantity(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) && value > 0 ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value > 0 ? value : undefined;
 }
 
 function normalizeLedgerText(value: unknown) {
