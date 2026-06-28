@@ -427,11 +427,11 @@ describe("Apps Script Code.gs upsertLedgerEntry", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
-  it("rejects non-number ledger amounts before patching the sheet", () => {
+  it.each(["12", -12])("rejects invalid ledger amount %s before patching the sheet", (amount) => {
     const upsertById = vi.fn();
     const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
 
-    expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "expense", amount: "12" } }))
+    expect(() => upsertLedgerEntry({ entry: { id: "led_123", type: "expense", amount } }))
       .toThrow("Unsupported ledger amount.");
     expect(upsertById).not.toHaveBeenCalled();
   });

@@ -471,7 +471,7 @@ function requireLedgerEntryPayload(value) {
 }
 
 function assertLedgerAmount(value) {
-  if (typeof value !== "number" || !isFinite(value)) {
+  if (typeof value !== "number" || !isFinite(value) || value < 0) {
     throw new Error("Unsupported ledger amount.");
   }
   return value;

@@ -65,7 +65,7 @@ function normalizeLedgerEntryType(value: unknown) {
 }
 
 function normalizeLedgerAmount(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : undefined;
 }
 
 function normalizeLedgerQuantity(value: unknown) {
