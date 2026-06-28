@@ -126,6 +126,12 @@ function isSubmittedOrder(value: unknown): value is SubmittedOrder {
     && isNonEmptyString(order.summary);
 }
 
+function normalizeSubmittedServings(value: SubmittedOrder["servings"]) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 120
+    ? value
+    : undefined;
+}
+
 function normalizeSubmittedOrder(order: SubmittedOrder): SubmittedOrder {
   return {
     ...order,
@@ -137,6 +143,7 @@ function normalizeSubmittedOrder(order: SubmittedOrder): SubmittedOrder {
     productType: order.productType?.trim(),
     cakeSizeId: order.cakeSizeId?.trim(),
     flavourId: order.flavourId?.trim(),
+    servings: normalizeSubmittedServings(order.servings),
     budget: order.budget?.trim(),
     message: order.message?.trim(),
     paymentEmail: order.paymentEmail.trim(),

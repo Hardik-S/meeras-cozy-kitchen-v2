@@ -108,6 +108,32 @@ describe("OrderForm v2 submit flow", () => {
     });
   });
 
+  it("drops impossible returned serving counts before storing payment metadata", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "ord_bad_servings",
+          name: "Amina",
+          email: "amina@example.com",
+          servings: -3,
+          paymentEmail: "m.ssethi1123@gmail.com",
+          summary: "Name: Amina"
+        }
+      }), { status: 200 })
+    ));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_bad_servings");
+    });
+
+    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).not.toHaveProperty("servings");
+  });
+
   it("shows an error when inquiry submission cannot reach the API", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => {
       throw new Error("network unavailable");
