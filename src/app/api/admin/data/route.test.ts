@@ -391,6 +391,34 @@ describe("POST /api/admin/data", () => {
   it.each([
     ["upsertProduct", "product"],
     ["upsertOffering", "offering"]
+  ])("rejects negative %s prices before reaching Apps Script", async (action, payloadKey) => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload: {
+          [payloadKey]: {
+            id: "cake",
+            label: "Cake",
+            low: -1,
+            high: 68
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog price value." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["upsertProduct", "product"],
+    ["upsertOffering", "offering"]
   ])("rejects inverted %s price ranges before reaching Apps Script", async (action, payloadKey) => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",

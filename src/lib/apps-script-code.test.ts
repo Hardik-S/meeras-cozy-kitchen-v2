@@ -522,6 +522,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
+  it("rejects negative product upsert prices before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    expect(() => upsertProduct({ product: { id: "cake", label: "Cake", low: -1, high: 68 } }))
+      .toThrow("Unsupported catalog price value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("rejects inverted product upsert price ranges before patching the sheet", () => {
     const upsertById = vi.fn();
     const upsertProduct = loadUpsertProduct(upsertById);
@@ -563,6 +572,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
     const upsertOffering = loadUpsertOffering(upsertById);
 
     expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: 12, high: "18" } }))
+      .toThrow("Unsupported catalog price value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects negative offering upsert prices before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: -1, high: 18 } }))
       .toThrow("Unsupported catalog price value.");
     expect(upsertById).not.toHaveBeenCalled();
   });

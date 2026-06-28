@@ -373,7 +373,7 @@ function isCatalogToggleValue(value) {
 }
 
 function assertCatalogPrice(value) {
-  if (typeof value !== "number" || !isFinite(value)) {
+  if (typeof value !== "number" || !isFinite(value) || value < 0) {
     throw new Error("Unsupported catalog price value.");
   }
   return value;
