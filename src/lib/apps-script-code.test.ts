@@ -540,11 +540,11 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
-  it("rejects non-number product upsert sort orders before patching the sheet", () => {
+  it.each(["1", 1.5])("rejects invalid product upsert sort order %s before patching the sheet", (sortOrder) => {
     const upsertById = vi.fn();
     const upsertProduct = loadUpsertProduct(upsertById);
 
-    expect(() => upsertProduct({ product: { id: "cake", label: "Cake", low: 58, high: 68, sortOrder: "1" } }))
+    expect(() => upsertProduct({ product: { id: "cake", label: "Cake", low: 58, high: 68, sortOrder } }))
       .toThrow("Unsupported catalog sort order value.");
     expect(upsertById).not.toHaveBeenCalled();
   });
@@ -594,11 +594,11 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
-  it("rejects non-number offering upsert sort orders before patching the sheet", () => {
+  it.each(["1", 1.5])("rejects invalid offering upsert sort order %s before patching the sheet", (sortOrder) => {
     const upsertById = vi.fn();
     const upsertOffering = loadUpsertOffering(upsertById);
 
-    expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: 12, high: 18, sortOrder: "1" } }))
+    expect(() => upsertOffering({ offering: { id: "floral-piping", label: "Floral piping", low: 12, high: 18, sortOrder } }))
       .toThrow("Unsupported catalog sort order value.");
     expect(upsertById).not.toHaveBeenCalled();
   });
