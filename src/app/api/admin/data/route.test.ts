@@ -474,6 +474,33 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
+  it("rejects unsupported offering categories before reaching Apps Script", async () => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertOffering",
+        payload: {
+          offering: {
+            id: "custom-topper",
+            productId: "cake",
+            category: "topping",
+            label: "Custom topper",
+            low: 12,
+            high: 18
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog category." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
   it.each([
     ["deleteProduct", { id: "   " }],
     ["toggleProduct", { id: "   ", enabled: false }],

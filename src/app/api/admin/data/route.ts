@@ -17,6 +17,7 @@ const allowedMutations = new Set([
 
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
+const allowedOfferingCategories = new Set(["cake-size", "flavour", "add-on"]);
 const allowedSettingKeys = new Set(["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
 const catalogToggleMutations = new Set(["toggleProduct", "toggleOffering"]);
 const idRequiredMutations = new Set([
@@ -97,6 +98,11 @@ function normalizeCatalogSortOrder(value: unknown) {
 
 function normalizeCatalogText(value: unknown) {
   return typeof value === "string" ? value.trim() : undefined;
+}
+
+function normalizeOfferingCategory(value: unknown) {
+  const category = normalizeCatalogText(value);
+  return category && allowedOfferingCategories.has(category) ? category : undefined;
 }
 
 function normalizeMutationId(value: unknown) {
@@ -336,6 +342,16 @@ export async function POST(request: Request) {
       }
 
       catalogRow[key] = text;
+    }
+
+    if (action === "upsertOffering" && "category" in catalogRow) {
+      const category = normalizeOfferingCategory(catalogRow.category);
+
+      if (!category) {
+        return NextResponse.json({ ok: false, error: "Unsupported catalog category." }, { status: 400 });
+      }
+
+      catalogRow.category = category;
     }
 
     if (enabled !== undefined) {
