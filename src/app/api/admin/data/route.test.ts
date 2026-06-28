@@ -445,9 +445,11 @@ describe("POST /api/admin/data", () => {
   });
 
   it.each([
-    ["upsertProduct", "product"],
-    ["upsertOffering", "offering"]
-  ])("rejects non-number %s sort orders before reaching Apps Script", async (action, payloadKey) => {
+    ["upsertProduct", "product", "1"],
+    ["upsertOffering", "offering", "1"],
+    ["upsertProduct", "product", 1.5],
+    ["upsertOffering", "offering", 1.5]
+  ])("rejects invalid %s sort orders before reaching Apps Script", async (action, payloadKey, sortOrder) => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
       headers: {
@@ -462,7 +464,7 @@ describe("POST /api/admin/data", () => {
             label: "Cake",
             low: 58,
             high: 68,
-            sortOrder: "1"
+            sortOrder
           }
         }
       })
