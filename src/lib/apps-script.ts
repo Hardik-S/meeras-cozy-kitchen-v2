@@ -64,6 +64,14 @@ function hasIntegerFields(value: Record<string, unknown>, fields: string[]) {
   return fields.every((field) => isIntegerNumber(value[field]));
 }
 
+function hasCatalogPriceRange(value: Record<string, unknown>) {
+  return isFiniteNumber(value.low)
+    && isFiniteNumber(value.high)
+    && value.low >= 0
+    && value.high >= 0
+    && value.high >= value.low;
+}
+
 function isAdminSettings(value: unknown) {
   return isRecord(value)
     && hasStringFields(value, ["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
@@ -72,7 +80,7 @@ function isAdminSettings(value: unknown) {
 function isAdminProduct(value: unknown) {
   return isRecord(value)
     && hasNonEmptyStringFields(value, ["id", "label"])
-    && hasNumberFields(value, ["low", "high"])
+    && hasCatalogPriceRange(value)
     && hasIntegerFields(value, ["sortOrder"])
     && isBoolean(value.enabled);
 }
@@ -106,7 +114,7 @@ function isAdminOffering(value: unknown) {
     && hasNonEmptyStringFields(value, ["id", "productId", "label"])
     && hasStringFields(value, ["servings"])
     && isOfferingCategory(value.category)
-    && hasNumberFields(value, ["low", "high"])
+    && hasCatalogPriceRange(value)
     && hasIntegerFields(value, ["sortOrder"])
     && isBoolean(value.enabled);
 }
