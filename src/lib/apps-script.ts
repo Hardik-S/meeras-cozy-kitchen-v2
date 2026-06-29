@@ -216,7 +216,19 @@ function normalizeAdminSettings(settings: AdminData["settings"]): AdminData["set
   };
 }
 
+function normalizeEstimateRange(low: number, high: number) {
+  const safeLow = low >= 0 ? low : 0;
+  const safeHigh = high >= 0 ? high : 0;
+
+  return {
+    estimateLow: Math.min(safeLow, safeHigh),
+    estimateHigh: Math.max(safeLow, safeHigh)
+  };
+}
+
 function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["orders"][number] {
+  const estimates = normalizeEstimateRange(order.estimateLow, order.estimateHigh);
+
   return {
     ...order,
     id: order.id.trim(),
@@ -230,6 +242,7 @@ function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["ord
     flavourId: order.flavourId.trim(),
     budget: order.budget.trim(),
     message: order.message.trim(),
+    ...estimates,
     status: normalizeOrderStatus(order.status) ?? order.status,
     summary: order.summary.trim()
   };

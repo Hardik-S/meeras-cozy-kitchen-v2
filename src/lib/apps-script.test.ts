@@ -394,6 +394,49 @@ describe("Apps Script integration", () => {
     expect(calculateMonthlyFinanceReport([], result.data.orders, "2026-06").confirmedPotential).toBe(125);
   });
 
+  it("normalizes copied live order estimate ranges before finance summaries use them", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          orders: [{
+            id: "ord_copied_estimate",
+            createdAt: "2026-06-20T10:00:00.000Z",
+            name: "Amina",
+            email: "amina@example.com",
+            phone: "4165550101",
+            eventDate: "2026-06-28",
+            productType: "cake",
+            cakeSizeId: "eight-inch",
+            flavourId: "vanilla-rose",
+            budget: "100-150",
+            message: "Birthday cake with soft florals.",
+            estimateLow: 160,
+            estimateHigh: -20,
+            status: "confirmed",
+            hearted: false,
+            pinned: false,
+            summary: "Custom cake inquiry"
+          }]
+        }
+      }), { status: 200 })
+    ));
+
+    const result = await listAdminDataFromAppsScript();
+
+    expect(result.status).toBe("live");
+    if (result.status !== "live") return;
+
+    expect(result.data.orders[0]).toMatchObject({
+      estimateLow: 0,
+      estimateHigh: 160
+    });
+    expect(calculateMonthlyFinanceReport([], result.data.orders, "2026-06").confirmedPotential).toBe(160);
+  });
+
   it("normalizes copied live ledger strings before finance summaries use them", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
