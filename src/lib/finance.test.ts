@@ -200,6 +200,34 @@ describe("finance helpers", () => {
     ]);
   });
 
+  it("normalizes copied negative ledger amounts before reports and exports use them", () => {
+    const copiedRows: LedgerEntry[] = [{
+      id: "led_negative_amount",
+      date: "2026-05-11",
+      type: "expense",
+      category: "Packaging",
+      description: "Copied bank export",
+      amount: -8,
+      quantity: 3,
+      orderId: ""
+    }];
+
+    const report = calculateMonthlyFinanceReport(copiedRows, [], "2026-05");
+
+    expect(report.entries[0].amount).toBe(0);
+    expect(report.expenses).toBe(0);
+    expect(report.net).toBe(0);
+    expect(buildLedgerCsvRows(copiedRows, "2026-05")[1]).toEqual([
+      "2026-05-11",
+      "expense",
+      "Packaging",
+      "Copied bank export",
+      3,
+      0,
+      ""
+    ]);
+  });
+
   it("formats the current month key from a date", () => {
     expect(currentMonthKey(new Date("2026-05-07T12:00:00"))).toBe("2026-05");
   });
