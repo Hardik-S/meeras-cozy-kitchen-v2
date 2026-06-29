@@ -140,6 +140,18 @@ describe("finance helpers", () => {
     expect(report.confirmedPotential).toBe(160);
   });
 
+  it("normalizes copied order dates before finance summaries use them", () => {
+    const copiedOrders: AdminOrder[] = [{
+      ...orders[0],
+      id: "ord_copied_date",
+      eventDate: " 2026-05-20 "
+    }];
+
+    const report = calculateMonthlyFinanceReport([], copiedOrders, "2026-05");
+
+    expect(report.confirmedPotential).toBe(150);
+  });
+
   it("uses unit amount and quantity when calculating ledger totals", () => {
     const report = calculateMonthlyFinanceReport([
       {

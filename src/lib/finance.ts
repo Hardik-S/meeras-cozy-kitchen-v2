@@ -19,7 +19,9 @@ export function currentMonthKey(date = new Date()) {
 }
 
 function monthKey(value: string) {
-  return /^\d{4}-\d{2}/.test(value) ? value.slice(0, 7) : "";
+  const normalized = value.trim();
+
+  return /^\d{4}-\d{2}/.test(normalized) ? normalized.slice(0, 7) : "";
 }
 
 function normalizeLedgerType(value: LedgerEntry["type"]): LedgerEntryType {
