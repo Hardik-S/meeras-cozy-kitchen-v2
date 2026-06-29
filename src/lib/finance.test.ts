@@ -114,6 +114,32 @@ describe("finance helpers", () => {
     expect(report.confirmedPotential).toBe(150);
   });
 
+  it("normalizes copied order estimates before finance summaries use them", () => {
+    const copiedOrders: AdminOrder[] = [{
+      id: "ord_copied_estimate",
+      createdAt: "2026-05-01T12:00:00.000Z",
+      name: "Amina",
+      email: "amina@example.com",
+      phone: "4165550101",
+      eventDate: "2026-05-20",
+      productType: "cake",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla-rose",
+      budget: "100-150",
+      message: "Birthday cake",
+      estimateLow: 160,
+      estimateHigh: -20,
+      status: "confirmed",
+      hearted: false,
+      pinned: false,
+      summary: "summary"
+    }];
+
+    const report = calculateMonthlyFinanceReport([], copiedOrders, "2026-05");
+
+    expect(report.confirmedPotential).toBe(160);
+  });
+
   it("uses unit amount and quantity when calculating ledger totals", () => {
     const report = calculateMonthlyFinanceReport([
       {

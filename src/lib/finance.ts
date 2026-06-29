@@ -54,6 +54,15 @@ export function ledgerEntryTotal(input: { amount: number; quantity?: number }) {
   return safeAmount * safeQuantity;
 }
 
+function orderEstimateHigh(order: AdminOrder) {
+  const low = Number(order.estimateLow);
+  const high = Number(order.estimateHigh);
+  const safeLow = Number.isFinite(low) && low >= 0 ? low : 0;
+  const safeHigh = Number.isFinite(high) && high >= 0 ? high : 0;
+
+  return Math.max(safeLow, safeHigh);
+}
+
 export function calculateMonthlyFinanceReport(
   entries: LedgerEntryLike[],
   orders: AdminOrder[],
@@ -71,7 +80,7 @@ export function calculateMonthlyFinanceReport(
   const confirmedPotential = orders
     .filter((order) => monthKey(order.eventDate) === month)
     .filter((order) => order.status === "confirmed" || order.status === "completed")
-    .reduce((total, order) => total + order.estimateHigh, 0);
+    .reduce((total, order) => total + orderEstimateHigh(order), 0);
 
   return {
     month,
