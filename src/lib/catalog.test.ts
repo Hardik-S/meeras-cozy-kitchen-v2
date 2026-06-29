@@ -91,4 +91,59 @@ describe("catalog mappers", () => {
       servings: ""
     });
   });
+
+  it("filters copied catalog rows with impossible price ranges or ambiguous sort orders", () => {
+    const catalog = getPublicCatalogFromAdminData({
+      ...defaultAdminData,
+      products: [
+        ...defaultAdminData.products,
+        {
+          id: "bad-product",
+          label: "Impossible product",
+          low: -4,
+          high: 12,
+          enabled: true,
+          sortOrder: 99
+        },
+        {
+          id: "fractional-product",
+          label: "Fractional product",
+          low: 24,
+          high: 30,
+          enabled: true,
+          sortOrder: 1.5
+        }
+      ],
+      offerings: [
+        ...defaultAdminData.offerings,
+        {
+          id: "bad-offering",
+          productId: "all",
+          category: "add-on",
+          label: "Impossible add-on",
+          low: 18,
+          high: 8,
+          servings: "",
+          enabled: true,
+          sortOrder: 99
+        },
+        {
+          id: "fractional-offering",
+          productId: "all",
+          category: "add-on",
+          label: "Fractional add-on",
+          low: 8,
+          high: 10,
+          servings: "",
+          enabled: true,
+          sortOrder: 2.5
+        }
+      ]
+    });
+
+    expect(catalog.products.map((product) => product.id)).not.toContain("bad-product");
+    expect(catalog.products.map((product) => product.id)).not.toContain("fractional-product");
+    expect(catalog.addOns.map((offering) => offering.id)).not.toContain("bad-offering");
+    expect(catalog.addOns.map((offering) => offering.id)).not.toContain("fractional-offering");
+  });
 });

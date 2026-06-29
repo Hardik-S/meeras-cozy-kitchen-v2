@@ -140,6 +140,21 @@ export function sortByOrder<T extends { sortOrder: number; label: string }>(item
   return [...items].sort((left, right) => left.sortOrder - right.sortOrder || left.label.localeCompare(right.label));
 }
 
+function hasPublicPriceRange(item: { low: number; high: number }) {
+  return Number.isFinite(item.low)
+    && Number.isFinite(item.high)
+    && item.low >= 0
+    && item.high >= item.low;
+}
+
+function hasPublicSortOrder(item: { sortOrder: number }) {
+  return Number.isInteger(item.sortOrder);
+}
+
+function isOfferingCategory(value: string): value is OfferingCategory {
+  return value === "cake-size" || value === "flavour" || value === "add-on";
+}
+
 function normalizeProduct(product: AdminProduct): AdminProduct {
   return {
     ...product,
@@ -162,7 +177,13 @@ function normalizeOffering(offering: AdminOffering): AdminOffering {
 export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
   const products = sortByOrder(data.products
     .map(normalizeProduct)
-    .filter((product) => product.enabled && product.id.length > 0 && product.label.length > 0));
+    .filter((product) =>
+      product.enabled
+      && product.id.length > 0
+      && product.label.length > 0
+      && hasPublicPriceRange(product)
+      && hasPublicSortOrder(product)
+    ));
   const enabledProductIds = new Set<ProductType>(products.map((product) => product.id));
   const offerings = sortByOrder(data.offerings
     .map(normalizeOffering)
@@ -170,6 +191,9 @@ export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
       offering.enabled
       && offering.id.length > 0
       && offering.label.length > 0
+      && isOfferingCategory(offering.category)
+      && hasPublicPriceRange(offering)
+      && hasPublicSortOrder(offering)
       && (offering.productId === "all" || enabledProductIds.has(offering.productId))
     ));
 

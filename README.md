@@ -55,6 +55,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reuse that live-catalog inquiry summary when Apps Script falls back to Resend, so failed sheet writes do not send stale default product labels.
 - Build the browser's pre-submit copyable summary from the same live catalog as the estimate, so customers do not copy stale default menu labels after a Sheet refresh.
 - Hide offerings attached to disabled products in the public catalog, so retired Sheet products do not leave stray add-ons or options on customer-facing pages.
+- Filter impossible public catalog price ranges and fractional sort orders during server catalog mapping too, so fallback API output stays aligned with live/cache validation.
 - Treat malformed live Apps Script admin data as a fallback condition, so public catalog refreshes do not crash when a sheet or script response is incomplete.
 - Validate live Apps Script row shapes before accepting admin data, so malformed product labels cannot crash public catalog mapping.
 - Reject blank live catalog row IDs and labels too, so Sheet whitespace cannot publish empty customer-facing menu options.
