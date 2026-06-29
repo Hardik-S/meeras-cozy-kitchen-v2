@@ -45,6 +45,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject blank admin mutation IDs before Sheet mutations run, so direct deletes and patches cannot silently no-op or target stringified copied values.
 - Reject malformed top-level Apps Script POST payloads before secret checks or setup run, so copied containers fail at the request boundary.
 - Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
+- Normalize copied fractional ledger quantities to `1`, so manual Sheet edits cannot create partial-count finance totals.
 - Normalize live Sheet ledger text before finance reports and CSV exports use it, so copied dates and order IDs stay visible in monthly totals.
 - Default finance reports to the selected month, initially the current month.
 - Validate inquiry pickup dates as real calendar days before applying the seven-day notice rule, so impossible `YYYY-MM-DD` strings cannot pass as future dates.

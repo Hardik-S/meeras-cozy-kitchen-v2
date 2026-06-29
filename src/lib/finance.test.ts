@@ -100,6 +100,7 @@ describe("finance helpers", () => {
   it("stores expense totals from unit amount and quantity", () => {
     expect(ledgerEntryTotal({ amount: 15, quantity: 4 })).toBe(60);
     expect(ledgerEntryTotal({ amount: 15, quantity: 0 })).toBe(15);
+    expect(ledgerEntryTotal({ amount: 15, quantity: 1.5 })).toBe(15);
   });
 
   it("calculates reports for the selected month only", () => {
@@ -169,6 +170,33 @@ describe("finance helpers", () => {
       2,
       75,
       "ord_1"
+    ]);
+  });
+
+  it("normalizes copied fractional ledger quantities before reports and exports use them", () => {
+    const copiedRows: LedgerEntry[] = [{
+      id: "led_fractional_quantity",
+      date: "2026-05-09",
+      type: "expense",
+      category: "Packaging",
+      description: "Box sleeves",
+      amount: 8,
+      quantity: 1.5,
+      orderId: ""
+    }];
+
+    const report = calculateMonthlyFinanceReport(copiedRows, [], "2026-05");
+
+    expect(report.entries[0].quantity).toBe(1);
+    expect(report.expenses).toBe(8);
+    expect(buildLedgerCsvRows(copiedRows, "2026-05")[1]).toEqual([
+      "2026-05-09",
+      "expense",
+      "Packaging",
+      "Box sleeves",
+      1,
+      8,
+      ""
     ]);
   });
 

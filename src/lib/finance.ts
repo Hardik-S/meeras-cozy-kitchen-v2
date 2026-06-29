@@ -28,6 +28,7 @@ function normalizeLedgerType(value: LedgerEntry["type"]): LedgerEntryType {
 
 export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {
   const quantity = Number(entry.quantity);
+  const safeQuantity = Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
 
   return {
     ...entry,
@@ -36,7 +37,7 @@ export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {
     type: normalizeLedgerType(entry.type),
     category: entry.category.trim(),
     description: entry.description.trim(),
-    quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1,
+    quantity: safeQuantity,
     orderId: entry.orderId.trim()
   };
 }
@@ -45,7 +46,7 @@ export function ledgerEntryTotal(input: { amount: number; quantity?: number }) {
   const amount = Number(input.amount);
   const quantity = Number(input.quantity);
   const safeAmount = Number.isFinite(amount) ? amount : 0;
-  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1;
+  const safeQuantity = Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
 
   return safeAmount * safeQuantity;
 }
