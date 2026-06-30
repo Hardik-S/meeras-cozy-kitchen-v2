@@ -516,7 +516,7 @@ function isOrderFlag(value) {
 }
 
 function isOrderStatus(value) {
-  const status = clean(value);
+  const status = normalizeOrderStatus(value);
   return status === "new"
     || status === "replied"
     || status === "confirmed"
@@ -524,9 +524,13 @@ function isOrderStatus(value) {
     || status === "cancelled";
 }
 
+function normalizeOrderStatus(value) {
+  return clean(value).toLowerCase();
+}
+
 function updateOrderStatus(payload) {
   const id = requireMutationId(payload.id);
-  const status = clean(payload.status);
+  const status = normalizeOrderStatus(payload.status);
   if (!isOrderStatus(status)) {
     throw new Error("Unsupported order status.");
   }
