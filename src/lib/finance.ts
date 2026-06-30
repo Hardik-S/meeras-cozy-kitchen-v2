@@ -66,7 +66,7 @@ function orderEstimateHigh(order: AdminOrder) {
 }
 
 function orderStatus(value: AdminOrder["status"]) {
-  return value.trim();
+  return value.trim().toLowerCase();
 }
 
 export function calculateMonthlyFinanceReport(

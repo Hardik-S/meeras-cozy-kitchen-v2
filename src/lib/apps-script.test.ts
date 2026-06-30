@@ -371,7 +371,7 @@ describe("Apps Script integration", () => {
             message: " Birthday cake with soft florals. ",
             estimateLow: 95,
             estimateHigh: 125,
-            status: " confirmed ",
+            status: " Confirmed ",
             hearted: false,
             pinned: false,
             summary: " Custom cake inquiry "

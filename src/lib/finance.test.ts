@@ -156,7 +156,7 @@ describe("finance helpers", () => {
     const copiedOrders: AdminOrder[] = [{
       ...orders[0],
       id: "ord_copied_status",
-      status: " completed " as AdminOrder["status"]
+      status: " Completed " as AdminOrder["status"]
     }];
 
     const report = calculateMonthlyFinanceReport([], copiedOrders, "2026-05");
