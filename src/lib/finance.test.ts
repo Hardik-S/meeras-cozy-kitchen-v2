@@ -152,6 +152,18 @@ describe("finance helpers", () => {
     expect(report.confirmedPotential).toBe(150);
   });
 
+  it("normalizes copied order statuses before finance summaries use them", () => {
+    const copiedOrders: AdminOrder[] = [{
+      ...orders[0],
+      id: "ord_copied_status",
+      status: " completed " as AdminOrder["status"]
+    }];
+
+    const report = calculateMonthlyFinanceReport([], copiedOrders, "2026-05");
+
+    expect(report.confirmedPotential).toBe(150);
+  });
+
   it("uses unit amount and quantity when calculating ledger totals", () => {
     const report = calculateMonthlyFinanceReport([
       {

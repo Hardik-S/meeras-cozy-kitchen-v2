@@ -65,6 +65,10 @@ function orderEstimateHigh(order: AdminOrder) {
   return Math.max(safeLow, safeHigh);
 }
 
+function orderStatus(value: AdminOrder["status"]) {
+  return value.trim();
+}
+
 export function calculateMonthlyFinanceReport(
   entries: LedgerEntryLike[],
   orders: AdminOrder[],
@@ -81,7 +85,7 @@ export function calculateMonthlyFinanceReport(
     .reduce((total, entry) => total + ledgerEntryTotal(entry), 0);
   const confirmedPotential = orders
     .filter((order) => monthKey(order.eventDate) === month)
-    .filter((order) => order.status === "confirmed" || order.status === "completed")
+    .filter((order) => orderStatus(order.status) === "confirmed" || orderStatus(order.status) === "completed")
     .reduce((total, order) => total + orderEstimateHigh(order), 0);
 
   return {
