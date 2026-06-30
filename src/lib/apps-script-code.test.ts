@@ -49,6 +49,7 @@ function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: strin
   const script = [
     extractFunction(source, "clean"),
     extractFunction(source, "requireMutationId"),
+    extractFunction(source, "normalizeOrderStatus"),
     extractFunction(source, "isOrderStatus"),
     extractFunction(source, "updateOrderStatus"),
     "updateOrderStatus"
@@ -345,6 +346,20 @@ describe("Apps Script Code.gs request payloads", () => {
 });
 
 describe("Apps Script Code.gs updateOrderStatus", () => {
+  it("normalizes copied order status casing before patching the sheet", () => {
+    const patchByIdAndReturn = vi.fn();
+    const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
+
+    updateOrderStatus({ id: "ord_123", status: " Confirmed " });
+
+    expect(patchByIdAndReturn).toHaveBeenCalledWith(
+      "Orders",
+      "ord_123",
+      { status: "confirmed" },
+      "updateOrderStatus"
+    );
+  });
+
   it("rejects unsupported order statuses before patching the sheet", () => {
     const patchByIdAndReturn = vi.fn();
     const updateOrderStatus = loadUpdateOrderStatus(patchByIdAndReturn);
