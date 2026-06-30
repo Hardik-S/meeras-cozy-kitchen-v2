@@ -122,7 +122,7 @@ function isAdminOffering(value: unknown) {
 function normalizeOrderStatus(value: unknown): OrderStatus | undefined {
   if (!isString(value)) return undefined;
 
-  const status = value.trim();
+  const status = value.trim().toLowerCase();
   return status === "new"
     || status === "replied"
     || status === "confirmed"
