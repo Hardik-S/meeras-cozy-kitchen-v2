@@ -151,8 +151,12 @@ function hasPublicSortOrder(item: { sortOrder: number }) {
   return Number.isInteger(item.sortOrder);
 }
 
-function isOfferingCategory(value: string): value is OfferingCategory {
-  return value === "cake-size" || value === "flavour" || value === "add-on";
+function normalizeOfferingCategory(value: string): OfferingCategory | undefined {
+  const category = value.trim().toLowerCase();
+
+  return category === "cake-size" || category === "flavour" || category === "add-on"
+    ? category
+    : undefined;
 }
 
 function normalizeProduct(product: AdminProduct): AdminProduct {
@@ -168,7 +172,7 @@ function normalizeOffering(offering: AdminOffering): AdminOffering {
     ...offering,
     id: offering.id.trim(),
     productId: offering.productId.trim(),
-    category: offering.category.trim() as OfferingCategory,
+    category: normalizeOfferingCategory(offering.category) ?? offering.category,
     label: offering.label.trim(),
     servings: offering.servings.trim()
   };
@@ -191,7 +195,7 @@ export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
       offering.enabled
       && offering.id.length > 0
       && offering.label.length > 0
-      && isOfferingCategory(offering.category)
+      && normalizeOfferingCategory(offering.category) !== undefined
       && hasPublicPriceRange(offering)
       && hasPublicSortOrder(offering)
       && (offering.productId === "all" || enabledProductIds.has(offering.productId))

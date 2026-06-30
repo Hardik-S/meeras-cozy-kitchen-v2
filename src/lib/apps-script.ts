@@ -88,7 +88,7 @@ function isAdminProduct(value: unknown) {
 function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined {
   if (!isString(value)) return undefined;
 
-  const category = value.trim();
+  const category = value.trim().toLowerCase();
   return category === "cake-size" || category === "flavour" || category === "add-on"
     ? category
     : undefined;

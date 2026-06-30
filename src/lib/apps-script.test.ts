@@ -293,7 +293,7 @@ describe("Apps Script integration", () => {
           offerings: [{
             id: " eight-inch ",
             productId: " cake ",
-            category: " cake-size ",
+            category: " Cake-Size " as "cake-size",
             label: " 8 inch round cake ",
             low: 88,
             high: 110,
