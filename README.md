@@ -47,6 +47,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
 - Normalize copied fractional ledger quantities to `1`, so manual Sheet edits cannot create partial-count finance totals.
 - Normalize copied negative ledger amounts to `0`, so manual Sheet edits cannot invert finance totals after write-side validation.
+- Normalize copied ledger type casing, so manual Sheet edits cannot hide valid income or expense rows.
 - Normalize live Sheet ledger text before finance reports and CSV exports use it, so copied dates and order IDs stay visible in monthly totals.
 - Normalize copied live order estimate ranges, so manual Sheet edits cannot invert confirmed-order finance totals.
 - Normalize copied order estimates inside finance summaries too, so direct report inputs cannot invert confirmed potential.
