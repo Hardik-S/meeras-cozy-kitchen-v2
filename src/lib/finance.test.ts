@@ -194,7 +194,7 @@ describe("finance helpers", () => {
     const copiedRows: LedgerEntry[] = [{
       id: " led_copied ",
       date: " 2026-05-09 ",
-      type: "income",
+      type: " Income " as LedgerEntry["type"],
       category: " Order ",
       description: " Cake balance ",
       amount: 75,

@@ -448,7 +448,7 @@ describe("Apps Script integration", () => {
           ledger: [{
             id: " led_copied ",
             date: " 2026-06-10 ",
-            type: " income ",
+            type: " Income ",
             category: " Order ",
             description: " Cake balance ",
             amount: 80,

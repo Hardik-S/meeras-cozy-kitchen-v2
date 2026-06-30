@@ -101,7 +101,7 @@ function isOfferingCategory(value: unknown) {
 function normalizeLedgerEntryType(value: unknown): LedgerEntryType | undefined {
   if (!isString(value)) return undefined;
 
-  const type = value.trim();
+  const type = value.trim().toLowerCase();
   return type === "income" || type === "expense" ? type : undefined;
 }
 

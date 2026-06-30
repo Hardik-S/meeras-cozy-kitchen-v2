@@ -25,7 +25,7 @@ function monthKey(value: string) {
 }
 
 function normalizeLedgerType(value: LedgerEntry["type"]): LedgerEntryType {
-  return value.trim() as LedgerEntryType;
+  return value.trim().toLowerCase() as LedgerEntryType;
 }
 
 export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {
