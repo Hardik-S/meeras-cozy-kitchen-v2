@@ -345,7 +345,7 @@ function upsertOffering(payload) {
   assertCatalogPriceRange(low, high);
   upsertById("Offerings", {
     id: slug(id),
-    productId: catalogTextOrDefault(offering, "productId", "all"),
+    productId: catalogProductIdOrDefault(offering, "productId", "all"),
     category: catalogCategoryOrDefault(offering, "add-on"),
     label: label,
     low: low,
@@ -401,6 +401,10 @@ function catalogCategoryOrDefault(row, fallback) {
     throw new Error("Unsupported catalog category.");
   }
   return category;
+}
+
+function catalogProductIdOrDefault(row, key, fallback) {
+  return catalogTextOrDefault(row, key, fallback).toLowerCase();
 }
 
 function catalogSortOrderOrDefault(row, fallback) {
@@ -609,17 +613,17 @@ function sendMail(settings, to, subject, body, replyTo) {
 function estimateInquiry(inquiry) {
   const products = readObjects("Products");
   const offerings = readObjects("Offerings");
-  const productType = clean(inquiry.productType);
+  const productType = clean(inquiry.productType).toLowerCase();
   const cakeSizeId = clean(inquiry.cakeSizeId);
   const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id); });
   const cakeSize = offerings.filter(function(row) { return clean(row.id) === cakeSizeId; })[0];
-  const product = products.filter(function(row) { return clean(row.id) === productType; })[0];
+  const product = products.filter(function(row) { return clean(row.id).toLowerCase() === productType; })[0];
   const base = productType === "cake" && cakeSize ? cakeSize : product;
   let low = base ? toNumber(base.low) : 0;
   let high = base ? toNumber(base.high) : 0;
   addOnIds.forEach(function(id) {
     const addOn = offerings.filter(function(row) {
-      const productId = clean(row.productId || "all");
+      const productId = clean(row.productId || "all").toLowerCase();
       return clean(row.id) === id && (productId === "all" || productId === productType);
     })[0];
     if (addOn) {

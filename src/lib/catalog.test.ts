@@ -72,7 +72,7 @@ describe("catalog mappers", () => {
         ...defaultAdminData.offerings,
         {
           id: " cookie-topper ",
-          productId: " mini-cheesecake-box ",
+          productId: " Mini-Cheesecake-Box ",
           category: " Add-On " as "add-on",
           label: " Cookie topper ",
           low: 8,
