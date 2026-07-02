@@ -587,6 +587,18 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
+  it("uses the product label when copied product ids are blank", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    upsertProduct({ product: { id: "   ", label: "Custom Cake", low: 58, high: 68 } });
+
+    expect(upsertById).toHaveBeenCalledWith("Products", expect.objectContaining({
+      id: "custom-cake",
+      label: "Custom Cake"
+    }));
+  });
+
   it("rejects non-boolean offering upsert enabled values before patching the sheet", () => {
     const upsertById = vi.fn();
     const upsertOffering = loadUpsertOffering(upsertById);
@@ -677,6 +689,28 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
       id: "custom-topper",
       category: "add-on",
+      label: "Custom topper"
+    }));
+  });
+
+  it("uses all products when copied offering product ids are blank", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    upsertOffering({
+      offering: {
+        id: "custom-topper",
+        productId: "   ",
+        category: "add-on",
+        label: "Custom topper",
+        low: 12,
+        high: 18
+      }
+    });
+
+    expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
+      id: "custom-topper",
+      productId: "all",
       label: "Custom topper"
     }));
   });

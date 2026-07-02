@@ -392,7 +392,7 @@ function catalogTextOrDefault(row, key, fallback) {
   if (typeof row[key] !== "string") {
     throw new Error("Unsupported catalog text value.");
   }
-  return clean(row[key]);
+  return clean(row[key]) || fallback;
 }
 
 function catalogCategoryOrDefault(row, fallback) {
