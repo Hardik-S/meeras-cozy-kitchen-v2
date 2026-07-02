@@ -396,7 +396,7 @@ function catalogTextOrDefault(row, key, fallback) {
 }
 
 function catalogCategoryOrDefault(row, fallback) {
-  const category = catalogTextOrDefault(row, "category", fallback);
+  const category = catalogTextOrDefault(row, "category", fallback).toLowerCase();
   if (category !== "cake-size" && category !== "flavour" && category !== "add-on") {
     throw new Error("Unsupported catalog category.");
   }
@@ -439,7 +439,7 @@ function deleteOffering(payload) {
 
 function upsertLedgerEntry(payload) {
   const entry = requireLedgerEntryPayload(payload.entry);
-  const type = clean(entry.type || "income");
+  const type = normalizeLedgerEntryType(entry.type || "income");
   if (!isLedgerEntryType(type)) {
     throw new Error("Unsupported ledger entry type.");
   }
@@ -494,8 +494,12 @@ function ledgerTextOrDefault(value, fallback) {
   return clean(value);
 }
 
+function normalizeLedgerEntryType(value) {
+  return clean(value).toLowerCase();
+}
+
 function isLedgerEntryType(value) {
-  const type = clean(value);
+  const type = normalizeLedgerEntryType(value);
   return type === "income" || type === "expense";
 }
 
