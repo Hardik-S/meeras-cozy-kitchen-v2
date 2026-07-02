@@ -51,7 +51,7 @@ function normalizeOrderStatus(value: unknown) {
     return undefined;
   }
 
-  const status = value.trim();
+  const status = value.trim().toLowerCase();
   return allowedOrderStatuses.has(status) ? status : undefined;
 }
 
@@ -60,7 +60,7 @@ function normalizeLedgerEntryType(value: unknown) {
     return undefined;
   }
 
-  const type = value.trim();
+  const type = value.trim().toLowerCase();
   return allowedLedgerEntryTypes.has(type) ? type : undefined;
 }
 
@@ -102,7 +102,8 @@ function normalizeCatalogText(value: unknown) {
 
 function normalizeOfferingCategory(value: unknown) {
   const category = normalizeCatalogText(value);
-  return category && allowedOfferingCategories.has(category) ? category : undefined;
+  const normalized = category?.toLowerCase();
+  return normalized && allowedOfferingCategories.has(normalized) ? normalized : undefined;
 }
 
 function normalizeMutationId(value: unknown) {
