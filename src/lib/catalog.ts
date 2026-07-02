@@ -159,10 +159,14 @@ function normalizeOfferingCategory(value: string): OfferingCategory | undefined 
     : undefined;
 }
 
+function normalizeCatalogProductId(value: string) {
+  return value.trim().toLowerCase();
+}
+
 function normalizeProduct(product: AdminProduct): AdminProduct {
   return {
     ...product,
-    id: product.id.trim(),
+    id: normalizeCatalogProductId(product.id),
     label: product.label.trim()
   };
 }
@@ -171,7 +175,7 @@ function normalizeOffering(offering: AdminOffering): AdminOffering {
   return {
     ...offering,
     id: offering.id.trim(),
-    productId: offering.productId.trim(),
+    productId: normalizeCatalogProductId(offering.productId),
     category: normalizeOfferingCategory(offering.category) ?? offering.category,
     label: offering.label.trim(),
     servings: offering.servings.trim()

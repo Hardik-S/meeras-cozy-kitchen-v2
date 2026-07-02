@@ -247,7 +247,7 @@ describe("Apps Script integration", () => {
             ...defaultAdminData.offerings,
             {
               id: " cookie-topper ",
-              productId: " cake ",
+              productId: " Cake ",
               category: " add-on ",
               label: " Cookie topper ",
               low: 8,

@@ -57,6 +57,10 @@ function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined
     : undefined;
 }
 
+function normalizeCatalogProductId(value: string) {
+  return value.trim().toLowerCase();
+}
+
 function isPublicProduct(value: unknown) {
   if (!isRecord(value)) return false;
 
@@ -89,7 +93,7 @@ function hasPublicOfferingCategory(value: unknown, category: OfferingCategory) {
 function normalizePublicProduct(product: PublicCatalog["products"][number]): PublicCatalog["products"][number] {
   return {
     ...product,
-    id: product.id.trim(),
+    id: normalizeCatalogProductId(product.id),
     label: product.label.trim()
   };
 }
@@ -98,7 +102,7 @@ function normalizePublicOffering(offering: PublicCatalog["offerings"][number]): 
   return {
     ...offering,
     id: offering.id.trim(),
-    productId: offering.productId.trim(),
+    productId: normalizeCatalogProductId(offering.productId),
     category: normalizeOfferingCategory(offering.category) ?? offering.category,
     label: offering.label.trim(),
     servings: offering.servings.trim()

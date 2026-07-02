@@ -193,6 +193,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
     extractFunction(source, "toNumber"),
     extractFunction(source, "requireCatalogPayload"),
     extractFunction(source, "catalogTextOrDefault"),
+    extractFunction(source, "catalogProductIdOrDefault"),
     extractFunction(source, "catalogCategoryOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "assertCatalogPriceRange"),
@@ -285,7 +286,7 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       if (sheetName === "Offerings") {
         return [
           { id: " cake-topper ", productId: " cake ", low: 10, high: 14 },
-          { id: " sprinkle-pack ", productId: " cupcakes ", low: 4, high: 6 }
+          { id: " sprinkle-pack ", productId: " Cupcakes ", low: 4, high: 6 }
         ];
       }
       return [];
@@ -689,6 +690,28 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
       id: "custom-topper",
       category: "add-on",
+      label: "Custom topper"
+    }));
+  });
+
+  it("normalizes copied offering product id casing before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    upsertOffering({
+      offering: {
+        id: "custom-topper",
+        productId: " Cupcakes ",
+        category: "add-on",
+        label: "Custom topper",
+        low: 12,
+        high: 18
+      }
+    });
+
+    expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
+      id: "custom-topper",
+      productId: "cupcakes",
       label: "Custom topper"
     }));
   });
