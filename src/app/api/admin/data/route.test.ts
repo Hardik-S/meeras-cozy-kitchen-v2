@@ -144,6 +144,28 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
+  it("normalizes copied order status casing before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "updateOrderStatus",
+        payload: { id: "ord_123", status: " Confirmed " }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("updateOrderStatus", {
+      id: "ord_123",
+      status: "confirmed"
+    });
+  });
+
   it("rejects invalid ledger entry types before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
@@ -166,6 +188,37 @@ describe("POST /api/admin/data", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported ledger entry type." });
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
+  it("normalizes copied ledger entry type casing before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertLedgerEntry",
+        payload: {
+          entry: {
+            id: "led_123",
+            type: " Income ",
+            amount: 12
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("upsertLedgerEntry", {
+      entry: {
+        id: "led_123",
+        type: "income",
+        amount: 12
+      }
+    });
   });
 
   it.each(["12", -12])("rejects invalid ledger amount %s before reaching Apps Script", async (amount) => {
@@ -529,6 +582,45 @@ describe("POST /api/admin/data", () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog category." });
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
+  it("normalizes copied offering category casing before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertOffering",
+        payload: {
+          offering: {
+            id: "custom-topper",
+            productId: "cake",
+            category: " Add-On ",
+            label: "Custom topper",
+            servings: "",
+            low: 12,
+            high: 18
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("upsertOffering", {
+      offering: {
+        id: "custom-topper",
+        productId: "cake",
+        category: "add-on",
+        label: "Custom topper",
+        servings: "",
+        low: 12,
+        high: 18
+      }
+    });
   });
 
   it.each([
