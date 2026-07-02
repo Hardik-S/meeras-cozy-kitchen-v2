@@ -29,6 +29,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject unsupported order statuses before Sheet mutations run, so admin writes cannot poison finance/order summaries.
 - Normalize copied order status casing before Sheet mutations run, so admin write payloads stay aligned with live read normalization.
 - Normalize copied admin API enum casing before Sheet mutations run, so direct status, ledger type, and offering category writes stay canonical.
+- Normalize copied Apps Script ledger type and offering category casing before Sheet writes, so direct deployed mutations stay aligned with the app boundary.
 - Reject non-boolean order flags before Sheet mutations run, so copied direct writes cannot pin or heart orders accidentally.
 - Reject non-boolean catalog toggles before Sheet mutations run, so copied direct writes cannot enable hidden menu rows accidentally.
 - Reject non-boolean catalog upsert enabled values before Sheet mutations run, so copied editor payloads cannot enable hidden menu rows accidentally.

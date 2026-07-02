@@ -111,6 +111,7 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
     extractFunction(source, "assertLedgerAmount"),
     extractFunction(source, "ledgerQuantityOrDefault"),
     extractFunction(source, "ledgerTextOrDefault"),
+    extractFunction(source, "normalizeLedgerEntryType"),
     extractFunction(source, "isLedgerEntryType"),
     extractFunction(source, "upsertLedgerEntry"),
     "upsertLedgerEntry"
@@ -442,6 +443,19 @@ describe("Apps Script Code.gs upsertLedgerEntry", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
+  it("normalizes copied ledger entry type casing before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
+
+    upsertLedgerEntry({ entry: { id: "led_123", type: " Income ", amount: 12 } });
+
+    expect(upsertById).toHaveBeenCalledWith("Ledger", expect.objectContaining({
+      id: "led_123",
+      type: "income",
+      amount: 12
+    }));
+  });
+
   it.each(["12", -12])("rejects invalid ledger amount %s before patching the sheet", (amount) => {
     const upsertById = vi.fn();
     const upsertLedgerEntry = loadUpsertLedgerEntry(upsertById);
@@ -643,6 +657,28 @@ describe("Apps Script Code.gs catalog toggles", () => {
       }
     })).toThrow("Unsupported catalog category.");
     expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("normalizes copied offering category casing before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    upsertOffering({
+      offering: {
+        id: "custom-topper",
+        productId: "cake",
+        category: " Add-On ",
+        label: "Custom topper",
+        low: 12,
+        high: 18
+      }
+    });
+
+    expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
+      id: "custom-topper",
+      category: "add-on",
+      label: "Custom topper"
+    }));
   });
 
   it("rejects non-boolean product toggles before patching the sheet", () => {
