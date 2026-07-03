@@ -62,6 +62,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Default finance reports to the selected month, initially the current month.
 - Validate inquiry pickup dates as real calendar days before applying the seven-day notice rule, so impossible `YYYY-MM-DD` strings cannot pass as future dates.
 - Build inquiry summaries from the live public catalog when it is available, so Sheet-managed products and flavours keep their customer-facing labels and quote ranges in emails, Apps Script rows, and the payment-instructions page.
+- Include selected add-ons in inquiry summaries, so Sheet-backed quote extras stay visible in emails, Apps Script rows, and payment instructions.
 - Omit cake-size copy from non-cake inquiry summaries, so Sheet-managed dessert products do not show irrelevant `Not selected` rows.
 - Reuse that live-catalog inquiry summary when Apps Script falls back to Resend, so failed sheet writes do not send stale default product labels.
 - Build the browser's pre-submit copyable summary from the same live catalog as the estimate, so customers do not copy stale default menu labels after a Sheet refresh.
