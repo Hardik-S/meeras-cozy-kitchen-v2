@@ -58,7 +58,10 @@ function loadUpdateOrderStatus(patchByIdAndReturn: (sheetName: string, id: strin
   return runInNewContext(script, { patchByIdAndReturn }) as (payload: { id: string; status?: string }) => unknown;
 }
 
-function loadSubmitOrder(appendObject: (sheetName: string, object: Record<string, unknown>) => unknown) {
+function loadSubmitOrder(
+  appendObject: (sheetName: string, object: Record<string, unknown>) => unknown,
+  readObjects: (sheetName: string) => Array<Record<string, unknown>> = () => []
+) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
@@ -69,6 +72,7 @@ function loadSubmitOrder(appendObject: (sheetName: string, object: Record<string
     extractFunction(source, "requireInquiryPayload"),
     extractFunction(source, "assertInquiryTextFields"),
     extractFunction(source, "estimateInquiry"),
+    extractFunction(source, "selectedAddOnLabels"),
     extractFunction(source, "buildSummary"),
     extractFunction(source, "submitOrder"),
     "submitOrder"
@@ -79,7 +83,7 @@ function loadSubmitOrder(appendObject: (sheetName: string, object: Record<string
     audit: vi.fn(),
     makeId: vi.fn(() => "ord_generated"),
     nowIso: vi.fn(() => "2026-06-24T00:00:00.000Z"),
-    readObjects: vi.fn(() => []),
+    readObjects,
     sendInquiryEmails: vi.fn()
   }) as (payload: { inquiry?: Record<string, unknown>; summary?: unknown }) => unknown;
 }
@@ -336,6 +340,43 @@ describe("Apps Script Code.gs submitOrder", () => {
       summary: { copied: true }
     })).toThrow("Unsupported inquiry summary.");
     expect(appendObject).not.toHaveBeenCalled();
+  });
+
+  it("includes selected Sheet-backed add-ons in fallback summaries", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: "dessert-box", low: 38, high: 48 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: "gold-leaf", productId: "all", label: "Gold leaf finish", low: 18, high: 24 },
+          { id: "cake-topper", productId: "cake", label: "Cake topper", low: 12, high: 16 }
+        ];
+      }
+      return [];
+    });
+
+    submitOrder({
+      inquiry: {
+        name: "Amina",
+        email: "amina@example.com",
+        phone: "4165550101",
+        eventDate: "2099-05-20",
+        productType: "dessert-box",
+        addOnIds: ["gold-leaf", "cake-topper"],
+        budget: "100-150",
+        message: "Birthday dessert box with soft florals."
+      }
+    });
+
+    expect(appendObject).toHaveBeenCalledWith(
+      "Orders",
+      expect.objectContaining({
+        summary: expect.stringContaining("Add-ons: Gold leaf finish")
+      })
+    );
+    expect(appendObject.mock.calls[0][1].summary).not.toContain("Cake topper");
   });
 });
 
