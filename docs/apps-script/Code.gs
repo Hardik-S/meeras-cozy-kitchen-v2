@@ -634,8 +634,25 @@ function estimateInquiry(inquiry) {
   return { low, high };
 }
 
+function selectedAddOnLabels(inquiry) {
+  const productType = clean(inquiry.productType).toLowerCase();
+  const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id).toLowerCase(); });
+  const offerings = readObjects("Offerings");
+
+  return addOnIds.map(function(id) {
+    const addOn = offerings.filter(function(row) {
+      const productId = clean(row.productId || "all").toLowerCase();
+      return clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
+    })[0];
+    return addOn ? clean(addOn.label || id) : "";
+  }).filter(function(label) {
+    return label;
+  });
+}
+
 function buildSummary(inquiry, estimate) {
-  return [
+  const addOnLabels = selectedAddOnLabels(inquiry);
+  const lines = [
     "Meera's Cozy Kitchen inquiry",
     "Name: " + clean(inquiry.name),
     "Email: " + clean(inquiry.email),
@@ -646,7 +663,13 @@ function buildSummary(inquiry, estimate) {
     "Estimate: $" + estimate.low + "-$" + estimate.high,
     "",
     clean(inquiry.message)
-  ].join("\n");
+  ];
+
+  if (addOnLabels.length) {
+    lines.splice(6, 0, "Add-ons: " + addOnLabels.join(", "));
+  }
+
+  return lines.join("\n");
 }
 
 function spreadsheet() {
