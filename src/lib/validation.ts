@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { isAtLeastMinimumNotice, isValidDateInput } from "./dates";
 
+function catalogId(message: string) {
+  return z.string().trim().min(1, message).transform((value) => value.toLowerCase());
+}
+
 export function createInquirySchema(today = new Date()) {
   return z.object({
     name: z.string().trim().min(2, "Please enter your name."),
@@ -8,10 +12,10 @@ export function createInquirySchema(today = new Date()) {
     phone: z.string().trim().min(7, "Please include a phone number."),
     eventDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Please choose a pickup date."),
     servings: z.coerce.number().int().min(1).max(120),
-    productType: z.string().trim().min(1, "Please choose a product."),
-    cakeSizeId: z.string().trim().optional(),
-    flavourId: z.string().trim().min(1, "Please choose a flavour."),
-    addOnIds: z.array(z.string().trim().min(1)).default([]).transform((ids) => [...new Set(ids)]),
+    productType: catalogId("Please choose a product."),
+    cakeSizeId: z.string().trim().transform((value) => value.toLowerCase()).optional(),
+    flavourId: catalogId("Please choose a flavour."),
+    addOnIds: z.array(catalogId("Please choose an add-on.")).default([]).transform((ids) => [...new Set(ids)]),
     budget: z.string().trim().max(80).optional().default(""),
     message: z.string().trim().min(10, "Please share a few design details.").max(1200),
     acknowledgements: z.object({
