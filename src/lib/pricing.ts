@@ -81,6 +81,10 @@ function normalizeQuoteLine(line: QuoteLine): QuoteLine {
   };
 }
 
+function normalizeCatalogId(value: string) {
+  return value.trim().toLowerCase();
+}
+
 export function calculateQuoteEstimate(
   input: QuoteInput,
   catalog?: {
@@ -90,14 +94,16 @@ export function calculateQuoteEstimate(
   }
 ): QuoteEstimate {
   const lines: QuoteLine[] = [];
-  const selectedCakeSize = input.cakeSizeId
-    ? (catalog?.cakeSizes ?? cakeSizes).find((size) => size.id === input.cakeSizeId)
+  const productType = normalizeCatalogId(input.productType);
+  const cakeSizeId = input.cakeSizeId ? normalizeCatalogId(input.cakeSizeId) : undefined;
+  const selectedCakeSize = cakeSizeId
+    ? (catalog?.cakeSizes ?? cakeSizes).find((size) => size.id === cakeSizeId)
     : undefined;
-  const selectedProduct = (catalog?.products ?? []).find((product) => product.id === input.productType);
-  const base = input.productType === "cake" && selectedCakeSize
+  const selectedProduct = (catalog?.products ?? []).find((product) => product.id === productType);
+  const base = productType === "cake" && selectedCakeSize
     ? selectedCakeSize
-    : selectedProduct ?? productBasePrices[input.productType] ?? {
-      label: input.productType,
+    : selectedProduct ?? productBasePrices[productType] ?? {
+      label: productType,
       low: 0,
       high: 0
     };
@@ -105,7 +111,8 @@ export function calculateQuoteEstimate(
   lines.push(normalizeQuoteLine({ label: base.label, low: base.low, high: base.high }));
 
   for (const addOnId of input.addOnIds ?? []) {
-    const addOn = (catalog?.addOns ?? addOns).find((item) => item.id === addOnId);
+    const normalizedAddOnId = normalizeCatalogId(addOnId);
+    const addOn = (catalog?.addOns ?? addOns).find((item) => item.id === normalizedAddOnId);
     if (addOn) {
       lines.push(normalizeQuoteLine({ label: addOn.label, low: addOn.low, high: addOn.high }));
     }

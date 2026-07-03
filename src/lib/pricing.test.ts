@@ -28,6 +28,21 @@ describe("calculateQuoteEstimate", () => {
     expect(estimate.high).toBe(48);
   });
 
+  it("normalizes copied catalog id casing before matching prices", () => {
+    const estimate = calculateQuoteEstimate({
+      productType: " Cake ",
+      cakeSizeId: " Eight-Inch ",
+      addOnIds: [" Fresh-Berries "]
+    });
+
+    expect(estimate.low).toBe(98);
+    expect(estimate.high).toBe(112);
+    expect(estimate.lines.map((line) => line.label)).toEqual([
+      "8 inch round cake",
+      "Fresh berry finish"
+    ]);
+  });
+
   it("keeps sheet-driven price ranges ordered when low and high are swapped", () => {
     const estimate = calculateQuoteEstimate(
       {

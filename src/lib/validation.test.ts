@@ -86,6 +86,25 @@ describe("inquirySchema", () => {
     expect(parsed.data?.cakeSizeId).toBe("eight-inch");
   });
 
+  it("normalizes copied catalog id casing before catalog validation uses them", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      productType: " Cake ",
+      cakeSizeId: " Eight-Inch ",
+      flavourId: " Vanilla-Rose ",
+      addOnIds: [" Fresh-Berries ", "fresh-berries", " Floral-Piping "]
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data).toMatchObject({
+      productType: "cake",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla-rose",
+      addOnIds: ["fresh-berries", "floral-piping"]
+    });
+  });
+
   it("trims copied pickup dates before notice validation uses them", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
