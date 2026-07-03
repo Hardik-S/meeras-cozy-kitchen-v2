@@ -14,6 +14,7 @@ export type CakeSize = PriceRange & {
 export type AddOn = PriceRange & {
   id: string;
   label: string;
+  productId?: string;
 };
 
 export type QuoteInput = {
@@ -85,12 +86,22 @@ function normalizeCatalogId(value: string) {
   return value.trim().toLowerCase();
 }
 
+function isScopedToProduct(item: { productId?: string }, productType: string) {
+  if (!item.productId) {
+    return true;
+  }
+
+  const normalizedProductId = normalizeCatalogId(item.productId);
+
+  return normalizedProductId === "all" || normalizedProductId === productType;
+}
+
 export function calculateQuoteEstimate(
   input: QuoteInput,
   catalog?: {
     products?: Array<PriceRange & { id: string; label: string }>;
     cakeSizes?: Array<CakeSize | (PriceRange & { id: string; label: string; servings: string })>;
-    addOns?: Array<AddOn | (PriceRange & { id: string; label: string })>;
+    addOns?: Array<AddOn | (PriceRange & { id: string; label: string; productId?: string })>;
   }
 ): QuoteEstimate {
   const lines: QuoteLine[] = [];
@@ -112,7 +123,7 @@ export function calculateQuoteEstimate(
 
   for (const addOnId of input.addOnIds ?? []) {
     const normalizedAddOnId = normalizeCatalogId(addOnId);
-    const addOn = (catalog?.addOns ?? addOns).find((item) => item.id === normalizedAddOnId);
+    const addOn = (catalog?.addOns ?? addOns).find((item) => item.id === normalizedAddOnId && isScopedToProduct(item, productType));
     if (addOn) {
       lines.push(normalizeQuoteLine({ label: addOn.label, low: addOn.low, high: addOn.high }));
     }

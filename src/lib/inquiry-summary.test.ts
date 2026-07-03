@@ -110,6 +110,58 @@ describe("buildInquirySummary", () => {
     expect(summary).toContain("Estimated range: $72-$92");
   });
 
+  it("ignores copied Sheet-backed add-ons scoped to another product", () => {
+    const summary = buildInquirySummary(
+      {
+        ...inquiry,
+        addOnIds: ["gold-leaf", "cake-topper"]
+      },
+      {
+        ...defaultPublicCatalog,
+        products: [
+          ...defaultPublicCatalog.products,
+          {
+            id: "mini-cheesecake-box",
+            label: "Mini cheesecake box",
+            low: 42,
+            high: 52,
+            enabled: true,
+            sortOrder: 4
+          }
+        ],
+        addOns: [
+          ...defaultPublicCatalog.addOns,
+          {
+            id: "gold-leaf",
+            productId: "all",
+            category: "add-on",
+            label: "Gold leaf finish",
+            low: 18,
+            high: 24,
+            servings: "",
+            enabled: true,
+            sortOrder: 20
+          },
+          {
+            id: "cake-topper",
+            productId: "cake",
+            category: "add-on",
+            label: "Cake topper",
+            low: 12,
+            high: 16,
+            servings: "",
+            enabled: true,
+            sortOrder: 21
+          }
+        ]
+      }
+    );
+
+    expect(summary).toContain("Add-ons: Gold leaf finish");
+    expect(summary).not.toContain("Cake topper");
+    expect(summary).toContain("Estimated range: $60-$76");
+  });
+
   it("omits the cake-size line for non-cake product summaries", () => {
     const summary = buildInquirySummary(inquiry, {
       ...defaultPublicCatalog,

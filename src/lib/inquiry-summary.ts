@@ -31,9 +31,24 @@ function labelsFor<T extends { id: string; label: string }>(items: T[], ids: str
     .filter((label) => label !== "Not selected");
 }
 
+function scopedLabelsFor<T extends { id: string; label: string; productId?: string }>(items: T[], ids: string[], productType: string) {
+  const normalizedProductType = normalizeCatalogId(productType);
+  const availableItems = items.filter((item) => {
+    if (!item.productId) {
+      return true;
+    }
+
+    const normalizedProductId = normalizeCatalogId(item.productId);
+
+    return normalizedProductId === "all" || normalizedProductId === normalizedProductType;
+  });
+
+  return labelsFor(availableItems, ids);
+}
+
 export function buildInquirySummary(inquiry: InquiryInput, catalog?: PublicCatalog) {
   const estimate = calculateQuoteEstimate(inquiry, catalog);
-  const selectedAddOns = labelsFor(catalog?.addOns ?? addOns, inquiry.addOnIds);
+  const selectedAddOns = scopedLabelsFor(catalog?.addOns ?? addOns, inquiry.addOnIds, inquiry.productType);
   const lines = [
     `${business.name} inquiry`,
     `Name: ${inquiry.name}`,
