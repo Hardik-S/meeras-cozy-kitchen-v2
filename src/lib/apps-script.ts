@@ -195,7 +195,7 @@ function normalizeOrderId(value: unknown) {
 function normalizeAdminOffering(offering: AdminData["offerings"][number]): AdminData["offerings"][number] {
   return {
     ...offering,
-    id: offering.id.trim(),
+    id: normalizeCatalogProductId(offering.id),
     productId: normalizeCatalogProductId(offering.productId),
     category: normalizeOfferingCategory(offering.category) ?? offering.category,
     label: offering.label.trim(),

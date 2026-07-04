@@ -275,6 +275,55 @@ describe("POST /api/inquiry", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("accepts copied live offering id casing after schema normalization", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(init?.body as string);
+
+      if (body.action === "listAdminData") {
+        return new Response(JSON.stringify({
+          ok: true,
+          data: {
+            ...defaultAdminData,
+            offerings: [
+              ...defaultAdminData.offerings,
+              {
+                id: " Cookie-Topper ",
+                productId: " All ",
+                category: " Add-On ",
+                label: " Cookie topper ",
+                low: 8,
+                high: 10,
+                servings: "",
+                enabled: true,
+                sortOrder: 99
+              }
+            ]
+          }
+        }), { status: 200 });
+      }
+
+      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await POST(
+      new Request("http://localhost/api/inquiry", {
+        method: "POST",
+        body: JSON.stringify({
+          ...validPayload,
+          addOnIds: [" Cookie-Topper "]
+        })
+      })
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.summary).toContain("Add-ons: Cookie topper");
+    expect(body.summary).toContain("Estimated range: $96-$110");
+  });
+
   it("rejects honeypot submissions", async () => {
     const response = await POST(
       new Request("http://localhost/api/inquiry", {

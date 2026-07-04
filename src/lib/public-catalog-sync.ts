@@ -101,7 +101,7 @@ function normalizePublicProduct(product: PublicCatalog["products"][number]): Pub
 function normalizePublicOffering(offering: PublicCatalog["offerings"][number]): PublicCatalog["offerings"][number] {
   return {
     ...offering,
-    id: offering.id.trim(),
+    id: normalizeCatalogProductId(offering.id),
     productId: normalizeCatalogProductId(offering.productId),
     category: normalizeOfferingCategory(offering.category) ?? offering.category,
     label: offering.label.trim(),
