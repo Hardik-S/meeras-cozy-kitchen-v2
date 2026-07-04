@@ -174,7 +174,7 @@ function normalizeProduct(product: AdminProduct): AdminProduct {
 function normalizeOffering(offering: AdminOffering): AdminOffering {
   return {
     ...offering,
-    id: offering.id.trim(),
+    id: normalizeCatalogProductId(offering.id),
     productId: normalizeCatalogProductId(offering.productId),
     category: normalizeOfferingCategory(offering.category) ?? offering.category,
     label: offering.label.trim(),

@@ -50,12 +50,12 @@ describe("public catalog sync", () => {
           { ...defaultPublicCatalog.products[0], id: " cake ", label: " Custom cake " }
         ],
         offerings: [
-          { ...defaultPublicCatalog.addOns[0], id: " fresh-berries ", productId: " ALL ", category: " Add-On " as "add-on", label: " Fresh berry finish " }
+          { ...defaultPublicCatalog.addOns[0], id: " Fresh-Berries ", productId: " ALL ", category: " Add-On " as "add-on", label: " Fresh berry finish " }
         ],
         cakeSizes: [],
         flavours: [],
         addOns: [
-          { ...defaultPublicCatalog.addOns[0], id: " fresh-berries ", productId: " all ", category: " Add-On " as "add-on", label: " Fresh berry finish " }
+          { ...defaultPublicCatalog.addOns[0], id: " Fresh-Berries ", productId: " all ", category: " Add-On " as "add-on", label: " Fresh berry finish " }
         ]
       }
     }));
