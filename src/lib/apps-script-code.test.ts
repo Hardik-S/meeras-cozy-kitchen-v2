@@ -301,6 +301,27 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       addOnIds: ["cake-topper", "sprinkle-pack"]
     })).toEqual({ low: 38, high: 50 });
   });
+
+  it("normalizes copied estimate input casing before matching Sheet rows", () => {
+    const estimateInquiry = loadEstimateInquiry((sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: " cake ", low: 58, high: 150 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: " six-inch ", productId: " cake ", low: 58, high: 68 },
+          { id: " fresh-berries ", productId: " all ", low: 10, high: 12 }
+        ];
+      }
+      return [];
+    });
+
+    expect(estimateInquiry({
+      productType: " Cake ",
+      cakeSizeId: " Six-Inch ",
+      addOnIds: [" Fresh-Berries "]
+    })).toEqual({ low: 68, high: 80 });
+  });
 });
 
 describe("Apps Script Code.gs submitOrder", () => {

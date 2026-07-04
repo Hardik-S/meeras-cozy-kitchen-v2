@@ -614,9 +614,9 @@ function estimateInquiry(inquiry) {
   const products = readObjects("Products");
   const offerings = readObjects("Offerings");
   const productType = clean(inquiry.productType).toLowerCase();
-  const cakeSizeId = clean(inquiry.cakeSizeId);
-  const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id); });
-  const cakeSize = offerings.filter(function(row) { return clean(row.id) === cakeSizeId; })[0];
+  const cakeSizeId = clean(inquiry.cakeSizeId).toLowerCase();
+  const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id).toLowerCase(); });
+  const cakeSize = offerings.filter(function(row) { return clean(row.id).toLowerCase() === cakeSizeId; })[0];
   const product = products.filter(function(row) { return clean(row.id).toLowerCase() === productType; })[0];
   const base = productType === "cake" && cakeSize ? cakeSize : product;
   let low = base ? toNumber(base.low) : 0;
@@ -624,7 +624,7 @@ function estimateInquiry(inquiry) {
   addOnIds.forEach(function(id) {
     const addOn = offerings.filter(function(row) {
       const productId = clean(row.productId || "all").toLowerCase();
-      return clean(row.id) === id && (productId === "all" || productId === productType);
+      return clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
     })[0];
     if (addOn) {
       low += toNumber(addOn.low);
