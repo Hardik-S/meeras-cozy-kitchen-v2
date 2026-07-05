@@ -650,8 +650,26 @@ function selectedAddOnLabels(inquiry) {
   });
 }
 
+function selectedOfferingLabel(inquiry, id) {
+  const productType = clean(inquiry.productType).toLowerCase();
+  const offeringId = clean(id).toLowerCase();
+  if (!offeringId) {
+    return "";
+  }
+
+  const offering = readObjects("Offerings").filter(function(row) {
+    const productId = clean(row.productId || "all").toLowerCase();
+    return clean(row.id).toLowerCase() === offeringId && (productId === "all" || productId === productType);
+  })[0];
+
+  return offering ? clean(offering.label || offeringId) : "";
+}
+
 function buildSummary(inquiry, estimate) {
   const addOnLabels = selectedAddOnLabels(inquiry);
+  const productType = clean(inquiry.productType).toLowerCase();
+  const cakeSizeLabel = productType === "cake" ? selectedOfferingLabel(inquiry, inquiry.cakeSizeId) : "";
+  const flavourLabel = selectedOfferingLabel(inquiry, inquiry.flavourId);
   const lines = [
     "Meera's Cozy Kitchen inquiry",
     "Name: " + clean(inquiry.name),
@@ -667,6 +685,12 @@ function buildSummary(inquiry, estimate) {
 
   if (addOnLabels.length) {
     lines.splice(6, 0, "Add-ons: " + addOnLabels.join(", "));
+  }
+  if (flavourLabel) {
+    lines.splice(6, 0, "Flavour: " + flavourLabel);
+  }
+  if (cakeSizeLabel) {
+    lines.splice(6, 0, "Cake size: " + cakeSizeLabel);
   }
 
   return lines.join("\n");

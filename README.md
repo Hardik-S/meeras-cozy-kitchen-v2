@@ -67,6 +67,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Include selected add-ons in inquiry summaries, so Sheet-backed quote extras stay visible in emails, Apps Script rows, and payment instructions.
 - Ignore copied add-ons scoped to another product inside inquiry summaries, so stale direct callers cannot display or price hidden options.
 - Include selected add-ons in deployed Apps Script fallback summaries too, so direct Sheet submissions keep quote extras visible.
+- Include Sheet-backed cake size and flavour labels in deployed Apps Script fallback summaries too, so direct submissions do not save bare catalog IDs.
 - Normalize copied Apps Script estimate input casing, so direct deployed submissions still price Sheet-managed cake sizes and add-ons.
 - Omit cake-size copy from non-cake inquiry summaries, so Sheet-managed dessert products do not show irrelevant `Not selected` rows.
 - Normalize copied cake product casing before summary branching, so direct inquiry payloads still show the chosen cake size.
