@@ -119,6 +119,28 @@ describe("OrderSummaryPage", () => {
     });
   });
 
+  it("keeps copied stored customer names on one payment memo line", async () => {
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: "ord_multiline_name",
+      name: "  Amina\nMemo: redirected  ",
+      paymentEmail: "m.ssethi1123@gmail.com",
+      summary: "Name: Amina"
+    }));
+    const writeTextMock = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock }
+    });
+
+    render(<OrderSummaryPage />);
+    fireEvent.click(screen.getByRole("button", { name: /copy e-transfer details/i }));
+
+    expect(screen.getByText("Amina Memo: redirected")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_multiline_name - Amina Memo: redirected");
+    });
+  });
+
   it("falls back when stored payment metadata has a malformed email", () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_bad_payment",
