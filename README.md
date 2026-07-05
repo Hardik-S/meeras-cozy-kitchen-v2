@@ -98,6 +98,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Guard malformed admin data in the browser dashboard too, so a bad proxy response shows the load-failure notice instead of rendering incomplete arrays.
 - Guard malformed admin data after browser dashboard mutations too, so optimistic edits roll back when a proxy response is incomplete.
 - Normalize live Sheet order text before admin and finance consumers use it, so copied dates cannot hide confirmed monthly order potential.
+- Normalize live Sheet order catalog IDs before admin and finance consumers use them, so copied casing stays aligned with menu IDs.
 - Normalize live Sheet order status casing before admin and finance consumers use it, so copied statuses cannot hide valid orders.
 - Normalize live Sheet catalog text before admin consumers use it, so copied product and offering labels stay clean outside public catalog mapping.
 - Treat null admin dashboard response envelopes as save/load failures, so optimistic browser edits roll back instead of leaking client TypeErrors.
