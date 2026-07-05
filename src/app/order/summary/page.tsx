@@ -184,20 +184,24 @@ function isStoredOrder(value: unknown): value is StoredOrder {
     && (order.paymentEmail === undefined || typeof order.paymentEmail === "string");
 }
 
+function normalizeStoredText(value: string | undefined) {
+  return value?.trim().replace(/\s+/g, " ");
+}
+
 function normalizeStoredOrder(order: StoredOrder): StoredOrder {
   return {
     ...order,
     id: order.id.trim(),
-    name: order.name?.trim(),
-    email: order.email?.trim(),
-    phone: order.phone?.trim(),
-    eventDate: order.eventDate?.trim(),
-    productType: order.productType?.trim(),
-    cakeSizeId: order.cakeSizeId?.trim(),
-    flavourId: order.flavourId?.trim(),
-    budget: order.budget?.trim(),
-    message: order.message?.trim(),
-    paymentEmail: order.paymentEmail?.trim(),
+    name: normalizeStoredText(order.name),
+    email: normalizeStoredText(order.email),
+    phone: normalizeStoredText(order.phone),
+    eventDate: normalizeStoredText(order.eventDate),
+    productType: normalizeStoredText(order.productType),
+    cakeSizeId: normalizeStoredText(order.cakeSizeId),
+    flavourId: normalizeStoredText(order.flavourId),
+    budget: normalizeStoredText(order.budget),
+    message: normalizeStoredText(order.message),
+    paymentEmail: normalizeStoredText(order.paymentEmail),
     summary: order.summary.trim()
   };
 }
