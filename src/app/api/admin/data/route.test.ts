@@ -623,6 +623,98 @@ describe("POST /api/admin/data", () => {
     });
   });
 
+  it("normalizes copied catalog ids before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const productResponse = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertProduct",
+        payload: {
+          product: {
+            id: " Cake ",
+            label: "Cake",
+            low: 58,
+            high: 68
+          }
+        }
+      })
+    }));
+
+    expect(productResponse.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenLastCalledWith("upsertProduct", {
+      product: {
+        id: "cake",
+        label: "Cake",
+        low: 58,
+        high: 68
+      }
+    });
+
+    const offeringResponse = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertOffering",
+        payload: {
+          offering: {
+            id: " Fresh-Berries ",
+            productId: " Cake ",
+            category: " Add-On ",
+            label: "Fresh berries",
+            servings: "",
+            low: 10,
+            high: 14
+          }
+        }
+      })
+    }));
+
+    expect(offeringResponse.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenLastCalledWith("upsertOffering", {
+      offering: {
+        id: "fresh-berries",
+        productId: "cake",
+        category: "add-on",
+        label: "Fresh berries",
+        servings: "",
+        low: 10,
+        high: 14
+      }
+    });
+  });
+
+  it.each([
+    ["toggleProduct", { id: " Cake ", enabled: false }, { id: "cake", enabled: false }],
+    ["deleteProduct", { id: " Cake " }, { id: "cake" }],
+    ["toggleOffering", { id: " Fresh-Berries ", enabled: true }, { id: "fresh-berries", enabled: true }],
+    ["deleteOffering", { id: " Fresh-Berries " }, { id: "fresh-berries" }]
+  ])("normalizes copied catalog target ids for %s before reaching Apps Script", async (action, payload, expectedPayload) => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith(action, expectedPayload);
+  });
+
   it.each([
     ["deleteProduct", { id: "   " }],
     ["toggleProduct", { id: "   ", enabled: false }],

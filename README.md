@@ -40,6 +40,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject non-string catalog text values before Sheet mutations run, so copied editor payloads cannot save object-shaped menu labels.
 - Reject unsupported offering categories before Sheet mutations run, so copied editor payloads cannot create invisible menu rows.
 - Reject malformed catalog upsert payloads before Sheet mutations run, so copied row containers cannot fall through to field defaults.
+- Normalize copied admin catalog IDs before Sheet mutations run, so editor writes stay aligned with canonical menu IDs.
 - Reject unsupported ledger entry types before Sheet mutations run, so finance totals cannot silently drop malformed rows.
 - Reject non-number ledger amounts and quantities before Sheet mutations run, so copied finance payloads cannot save zeroed or fallback totals.
 - Reject negative ledger amounts before Sheet mutations run, so copied expense rows cannot invert finance totals.

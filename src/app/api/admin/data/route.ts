@@ -28,6 +28,12 @@ const idRequiredMutations = new Set([
   "updateOrderFlags",
   "updateOrderStatus"
 ]);
+const catalogIdRequiredMutations = new Set([
+  "toggleProduct",
+  "deleteProduct",
+  "toggleOffering",
+  "deleteOffering"
+]);
 const catalogUpsertPayloadKeys: Record<string, "product" | "offering"> = {
   upsertProduct: "product",
   upsertOffering: "offering"
@@ -98,6 +104,10 @@ function normalizeCatalogSortOrder(value: unknown) {
 
 function normalizeCatalogText(value: unknown) {
   return typeof value === "string" ? value.trim() : undefined;
+}
+
+function normalizeCatalogId(value: unknown) {
+  return normalizeCatalogText(value)?.toLowerCase();
 }
 
 function normalizeOfferingCategory(value: unknown) {
@@ -193,7 +203,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Unsupported admin target id." }, { status: 400 });
     }
 
-    payload.id = id;
+    payload.id = catalogIdRequiredMutations.has(action) ? id.toLowerCase() : id;
   }
 
   if (action === "updateSettings") {
@@ -343,6 +353,14 @@ export async function POST(request: Request) {
       }
 
       catalogRow[key] = text;
+    }
+
+    if ("id" in catalogRow) {
+      catalogRow.id = normalizeCatalogId(catalogRow.id);
+    }
+
+    if (action === "upsertOffering" && "productId" in catalogRow) {
+      catalogRow.productId = normalizeCatalogId(catalogRow.productId);
     }
 
     if (action === "upsertOffering" && "category" in catalogRow) {
