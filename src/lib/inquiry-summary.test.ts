@@ -162,6 +162,20 @@ describe("buildInquirySummary", () => {
     expect(summary).toContain("Estimated range: $60-$76");
   });
 
+  it("normalizes copied cake product casing before showing cake size copy", () => {
+    const summary = buildInquirySummary({
+      ...inquiry,
+      productType: " Cake ",
+      cakeSizeId: " six-inch ",
+      flavourId: " vanilla-rose "
+    });
+
+    expect(summary).toContain("Product: Cake");
+    expect(summary).toContain("Cake size: 6 inch round cake");
+    expect(summary).toContain("Flavour: Vanilla rose");
+    expect(summary).toContain("Estimated range: $58-$68");
+  });
+
   it("omits the cake-size line for non-cake product summaries", () => {
     const summary = buildInquirySummary(inquiry, {
       ...defaultPublicCatalog,

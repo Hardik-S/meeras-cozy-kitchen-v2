@@ -68,6 +68,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Include selected add-ons in deployed Apps Script fallback summaries too, so direct Sheet submissions keep quote extras visible.
 - Normalize copied Apps Script estimate input casing, so direct deployed submissions still price Sheet-managed cake sizes and add-ons.
 - Omit cake-size copy from non-cake inquiry summaries, so Sheet-managed dessert products do not show irrelevant `Not selected` rows.
+- Normalize copied cake product casing before summary branching, so direct inquiry payloads still show the chosen cake size.
 - Reuse that live-catalog inquiry summary when Apps Script falls back to Resend, so failed sheet writes do not send stale default product labels.
 - Build the browser's pre-submit copyable summary from the same live catalog as the estimate, so customers do not copy stale default menu labels after a Sheet refresh.
 - Hide offerings attached to disabled products in the public catalog, so retired Sheet products do not leave stray add-ons or options on customer-facing pages.
