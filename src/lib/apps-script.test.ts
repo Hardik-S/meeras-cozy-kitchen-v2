@@ -364,9 +364,9 @@ describe("Apps Script integration", () => {
             email: " amina@example.com ",
             phone: " 4165550101 ",
             eventDate: " 2026-06-28 ",
-            productType: " cake ",
-            cakeSizeId: " eight-inch ",
-            flavourId: " vanilla-rose ",
+            productType: " Cake ",
+            cakeSizeId: " Eight-Inch ",
+            flavourId: " Vanilla-Rose ",
             budget: " 100-150 ",
             message: " Birthday cake with soft florals. ",
             estimateLow: 95,
@@ -389,6 +389,9 @@ describe("Apps Script integration", () => {
       id: "ord_copied_date",
       eventDate: "2026-06-28",
       email: "amina@example.com",
+      productType: "cake",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla-rose",
       status: "confirmed"
     });
     expect(calculateMonthlyFinanceReport([], result.data.orders, "2026-06").confirmedPotential).toBe(125);
