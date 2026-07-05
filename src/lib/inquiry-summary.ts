@@ -49,6 +49,7 @@ function scopedLabelsFor<T extends { id: string; label: string; productId?: stri
 export function buildInquirySummary(inquiry: InquiryInput, catalog?: PublicCatalog) {
   const estimate = calculateQuoteEstimate(inquiry, catalog);
   const selectedAddOns = scopedLabelsFor(catalog?.addOns ?? addOns, inquiry.addOnIds, inquiry.productType);
+  const normalizedProductType = normalizeCatalogId(inquiry.productType);
   const lines = [
     `${business.name} inquiry`,
     `Name: ${inquiry.name}`,
@@ -57,7 +58,7 @@ export function buildInquirySummary(inquiry: InquiryInput, catalog?: PublicCatal
     `Pickup date: ${inquiry.eventDate}`,
     `Servings: ${inquiry.servings}`,
     `Product: ${titleCaseProduct(inquiry.productType, catalog)}`,
-    ...(inquiry.productType === "cake"
+    ...(normalizedProductType === "cake"
       ? [`Cake size: ${labelFor(catalog?.cakeSizes ?? cakeSizes, inquiry.cakeSizeId)}`]
       : []),
     `Flavour: ${labelFor(catalog?.flavours ?? flavours, inquiry.flavourId)}`,
