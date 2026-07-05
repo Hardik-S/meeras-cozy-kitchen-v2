@@ -73,6 +73,7 @@ function loadSubmitOrder(
     extractFunction(source, "assertInquiryTextFields"),
     extractFunction(source, "estimateInquiry"),
     extractFunction(source, "selectedAddOnLabels"),
+    extractFunction(source, "selectedOfferingLabel"),
     extractFunction(source, "buildSummary"),
     extractFunction(source, "submitOrder"),
     "submitOrder"
@@ -398,6 +399,44 @@ describe("Apps Script Code.gs submitOrder", () => {
       })
     );
     expect(appendObject.mock.calls[0][1].summary).not.toContain("Cake topper");
+  });
+
+  it("includes Sheet-backed cake size and flavour labels in fallback summaries", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: "cake", low: 58, high: 150 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: "tall-six", productId: "cake", label: "Tall six inch celebration cake", low: 72, high: 84 },
+          { id: "mango-saffron", productId: "all", label: "Mango saffron", low: 0, high: 0 }
+        ];
+      }
+      return [];
+    });
+
+    submitOrder({
+      inquiry: {
+        name: "Amina",
+        email: "amina@example.com",
+        phone: "4165550101",
+        eventDate: "2099-05-20",
+        productType: "cake",
+        cakeSizeId: "tall-six",
+        flavourId: "mango-saffron",
+        budget: "100-150",
+        message: "Birthday cake with mango saffron."
+      }
+    });
+
+    expect(appendObject).toHaveBeenCalledWith(
+      "Orders",
+      expect.objectContaining({
+        summary: expect.stringContaining("Cake size: Tall six inch celebration cake")
+      })
+    );
+    expect(appendObject.mock.calls[0][1].summary).toContain("Flavour: Mango saffron");
   });
 });
 
