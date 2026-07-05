@@ -86,6 +86,10 @@ function normalizeCatalogId(value: string) {
   return value.trim().toLowerCase();
 }
 
+function catalogIdEquals(value: string, expected: string) {
+  return normalizeCatalogId(value) === expected;
+}
+
 function isScopedToProduct(item: { productId?: string }, productType: string) {
   if (!item.productId) {
     return true;
@@ -108,9 +112,9 @@ export function calculateQuoteEstimate(
   const productType = normalizeCatalogId(input.productType);
   const cakeSizeId = input.cakeSizeId ? normalizeCatalogId(input.cakeSizeId) : undefined;
   const selectedCakeSize = cakeSizeId
-    ? (catalog?.cakeSizes ?? cakeSizes).find((size) => size.id === cakeSizeId)
+    ? (catalog?.cakeSizes ?? cakeSizes).find((size) => catalogIdEquals(size.id, cakeSizeId))
     : undefined;
-  const selectedProduct = (catalog?.products ?? []).find((product) => product.id === productType);
+  const selectedProduct = (catalog?.products ?? []).find((product) => catalogIdEquals(product.id, productType));
   const base = productType === "cake" && selectedCakeSize
     ? selectedCakeSize
     : selectedProduct ?? productBasePrices[productType] ?? {
@@ -123,7 +127,7 @@ export function calculateQuoteEstimate(
 
   for (const addOnId of input.addOnIds ?? []) {
     const normalizedAddOnId = normalizeCatalogId(addOnId);
-    const addOn = (catalog?.addOns ?? addOns).find((item) => item.id === normalizedAddOnId && isScopedToProduct(item, productType));
+    const addOn = (catalog?.addOns ?? addOns).find((item) => catalogIdEquals(item.id, normalizedAddOnId) && isScopedToProduct(item, productType));
     if (addOn) {
       lines.push(normalizeQuoteLine({ label: addOn.label, low: addOn.low, high: addOn.high }));
     }

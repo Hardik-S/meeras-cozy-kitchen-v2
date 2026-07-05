@@ -79,4 +79,42 @@ describe("calculateQuoteEstimate", () => {
       { label: "Rush finish", low: 10, high: 15 }
     ]);
   });
+
+  it("normalizes copied Sheet catalog ids before direct price lookups", () => {
+    const estimate = calculateQuoteEstimate(
+      {
+        productType: " Cake ",
+        cakeSizeId: " Sheet-Eight-Inch ",
+        addOnIds: [" Rush-Finish "]
+      },
+      {
+        products: [],
+        cakeSizes: [
+          {
+            id: " Sheet-Eight-Inch ",
+            label: "Sheet eight inch",
+            servings: "14-20",
+            low: 88,
+            high: 100
+          }
+        ],
+        addOns: [
+          {
+            id: " Rush-Finish ",
+            productId: " Cake ",
+            label: "Rush finish",
+            low: 15,
+            high: 20
+          }
+        ]
+      }
+    );
+
+    expect(estimate.low).toBe(103);
+    expect(estimate.high).toBe(120);
+    expect(estimate.lines.map((line) => line.label)).toEqual([
+      "Sheet eight inch",
+      "Rush finish"
+    ]);
+  });
 });
