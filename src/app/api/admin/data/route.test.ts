@@ -534,7 +534,9 @@ describe("POST /api/admin/data", () => {
     ["upsertProduct", "product", "1"],
     ["upsertOffering", "offering", "1"],
     ["upsertProduct", "product", 1.5],
-    ["upsertOffering", "offering", 1.5]
+    ["upsertOffering", "offering", 1.5],
+    ["upsertProduct", "product", -1],
+    ["upsertOffering", "offering", -1]
   ])("rejects invalid %s sort orders before reaching Apps Script", async (action, payloadKey, sortOrder) => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",

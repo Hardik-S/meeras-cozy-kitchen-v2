@@ -99,7 +99,9 @@ function hasUnsupportedCatalogPriceRange(low: number, high: number) {
 }
 
 function normalizeCatalogSortOrder(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) ? value : undefined;
+  return typeof value === "number" && Number.isFinite(value) && Number.isInteger(value) && value >= 0
+    ? value
+    : undefined;
 }
 
 function normalizeCatalogText(value: unknown) {

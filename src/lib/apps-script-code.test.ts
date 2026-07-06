@@ -671,7 +671,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
-  it.each(["1", 1.5])("rejects invalid product upsert sort order %s before patching the sheet", (sortOrder) => {
+  it.each(["1", 1.5, -1])("rejects invalid product upsert sort order %s before patching the sheet", (sortOrder) => {
     const upsertById = vi.fn();
     const upsertProduct = loadUpsertProduct(upsertById);
 
@@ -737,7 +737,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
-  it.each(["1", 1.5])("rejects invalid offering upsert sort order %s before patching the sheet", (sortOrder) => {
+  it.each(["1", 1.5, -1])("rejects invalid offering upsert sort order %s before patching the sheet", (sortOrder) => {
     const upsertById = vi.fn();
     const upsertOffering = loadUpsertOffering(upsertById);
 
