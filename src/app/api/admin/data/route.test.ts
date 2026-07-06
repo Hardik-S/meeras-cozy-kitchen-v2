@@ -108,6 +108,39 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
+  it("trims copied settings values before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "updateSettings",
+        payload: {
+          settings: {
+            defaultSender: " Meera's Cozy Kitchen <orders@example.com> ",
+            defaultReceiver: " chef@example.com ",
+            senderName: " Meera ",
+            chefNotificationCopy: " prep@example.com "
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("updateSettings", {
+      settings: {
+        defaultSender: "Meera's Cozy Kitchen <orders@example.com>",
+        defaultReceiver: "chef@example.com",
+        senderName: "Meera",
+        chefNotificationCopy: "prep@example.com"
+      }
+    });
+  });
+
   it("rejects invalid order statuses before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
