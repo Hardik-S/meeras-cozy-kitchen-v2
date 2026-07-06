@@ -618,6 +618,10 @@ function sendMail(settings, to, subject, body, replyTo) {
   MailApp.sendEmail(to, subject, body, options);
 }
 
+function isAddOnOffering(row) {
+  return clean(row.category || "add-on").toLowerCase() === "add-on";
+}
+
 function estimateInquiry(inquiry) {
   const products = readObjects("Products");
   const offerings = readObjects("Offerings");
@@ -632,7 +636,7 @@ function estimateInquiry(inquiry) {
   addOnIds.forEach(function(id) {
     const addOn = offerings.filter(function(row) {
       const productId = clean(row.productId || "all").toLowerCase();
-      return clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
+      return isAddOnOffering(row) && clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
     })[0];
     if (addOn) {
       low += toNumber(addOn.low);
@@ -650,7 +654,7 @@ function selectedAddOnLabels(inquiry) {
   return addOnIds.map(function(id) {
     const addOn = offerings.filter(function(row) {
       const productId = clean(row.productId || "all").toLowerCase();
-      return clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
+      return isAddOnOffering(row) && clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
     })[0];
     return addOn ? clean(addOn.label || id) : "";
   }).filter(function(label) {
