@@ -300,7 +300,7 @@ function assertSettingKeys(settings, allowed) {
 
 function upsertProduct(payload) {
   const product = requireCatalogPayload(payload.product);
-  const label = catalogTextOrDefault(product, "label", "");
+  const label = catalogRequiredText(product, "label");
   const id = catalogTextOrDefault(product, "id", label || "product");
   const enabled = catalogEnabledOrDefault(product, true);
   const low = assertCatalogPrice(product.low);
@@ -338,7 +338,7 @@ function deleteProduct(payload) {
 function upsertOffering(payload) {
   const offering = requireCatalogPayload(payload.offering);
   const id = catalogTextOrDefault(offering, "id", catalogTextOrDefault(offering, "label", "offering"));
-  const label = catalogTextOrDefault(offering, "label", "");
+  const label = catalogRequiredText(offering, "label");
   const enabled = catalogEnabledOrDefault(offering, true);
   const low = assertCatalogPrice(offering.low);
   const high = assertCatalogPrice(offering.high);
@@ -393,6 +393,14 @@ function catalogTextOrDefault(row, key, fallback) {
     throw new Error("Unsupported catalog text value.");
   }
   return clean(row[key]) || fallback;
+}
+
+function catalogRequiredText(row, key) {
+  const text = catalogTextOrDefault(row, key, "");
+  if (!text) {
+    throw new Error("Unsupported catalog text value.");
+  }
+  return text;
 }
 
 function catalogCategoryOrDefault(row, fallback) {

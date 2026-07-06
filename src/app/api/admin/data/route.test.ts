@@ -592,6 +592,34 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["upsertProduct", "product"],
+    ["upsertOffering", "offering"]
+  ])("rejects blank %s labels before reaching Apps Script", async (action, payloadKey) => {
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action,
+        payload: {
+          [payloadKey]: {
+            id: "custom-topper",
+            label: "   ",
+            low: 12,
+            high: 18
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ ok: false, error: "Unsupported catalog text value." });
+    expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
+  });
+
   it("rejects unsupported offering categories before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
