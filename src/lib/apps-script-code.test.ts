@@ -23,6 +23,7 @@ function loadEstimateInquiry(readObjects: (sheetName: string) => Array<Record<st
   const script = [
     extractFunction(source, "clean"),
     extractFunction(source, "toNumber"),
+    extractFunction(source, "isAddOnOffering"),
     extractFunction(source, "estimateInquiry"),
     "estimateInquiry"
   ].join("\n");
@@ -71,6 +72,7 @@ function loadSubmitOrder(
     extractFunction(source, "assertInquiryAddOns"),
     extractFunction(source, "requireInquiryPayload"),
     extractFunction(source, "assertInquiryTextFields"),
+    extractFunction(source, "isAddOnOffering"),
     extractFunction(source, "estimateInquiry"),
     extractFunction(source, "selectedAddOnLabels"),
     extractFunction(source, "selectedOfferingLabel"),
@@ -325,6 +327,28 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       addOnIds: [" Fresh-Berries "]
     })).toEqual({ low: 68, high: 80 });
   });
+
+  it("ignores copied non-add-on offering ids inside add-on selections", () => {
+    const estimateInquiry = loadEstimateInquiry((sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: "cake", low: 58, high: 150 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: "six-inch", productId: "cake", category: "cake-size", low: 58, high: 68 },
+          { id: "vanilla-rose", productId: "all", category: "flavour", low: 99, high: 99 },
+          { id: "fresh-berries", productId: "all", category: "add-on", low: 10, high: 12 }
+        ];
+      }
+      return [];
+    });
+
+    expect(estimateInquiry({
+      productType: "cake",
+      cakeSizeId: "six-inch",
+      addOnIds: ["six-inch", "vanilla-rose", "fresh-berries"]
+    })).toEqual({ low: 68, high: 80 });
+  });
 });
 
 describe("Apps Script Code.gs submitOrder", () => {
@@ -401,6 +425,44 @@ describe("Apps Script Code.gs submitOrder", () => {
       })
     );
     expect(appendObject.mock.calls[0][1].summary).not.toContain("Cake topper");
+  });
+
+  it("ignores copied non-add-on ids in fallback add-on summaries", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: "cake", low: 58, high: 150 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: "six-inch", productId: "cake", category: "cake-size", label: "6 inch round cake", low: 58, high: 68 },
+          { id: "vanilla-rose", productId: "all", category: "flavour", label: "Vanilla rose", low: 99, high: 99 },
+          { id: "fresh-berries", productId: "all", category: "add-on", label: "Fresh berry finish", low: 10, high: 12 }
+        ];
+      }
+      return [];
+    });
+
+    submitOrder({
+      inquiry: {
+        name: "Amina",
+        email: "amina@example.com",
+        phone: "4165550101",
+        eventDate: "2099-05-20",
+        productType: "cake",
+        cakeSizeId: "six-inch",
+        flavourId: "vanilla-rose",
+        addOnIds: ["six-inch", "vanilla-rose", "fresh-berries"],
+        budget: "100-150",
+        message: "Birthday cake with soft florals."
+      }
+    });
+
+    expect(appendObject.mock.calls[0][1].summary).toContain("Add-ons: Fresh berry finish");
+    expect(appendObject.mock.calls[0][1].summary).not.toContain("Add-ons: 6 inch round cake");
+    expect(appendObject.mock.calls[0][1].summary).not.toContain("Add-ons: Vanilla rose");
+    expect(appendObject.mock.calls[0][1].summary).toContain("Cake size: 6 inch round cake");
+    expect(appendObject.mock.calls[0][1].summary).toContain("Flavour: Vanilla rose");
   });
 
   it("includes Sheet-backed cake size and flavour labels in fallback summaries", () => {
