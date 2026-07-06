@@ -174,6 +174,35 @@ describe("Apps Script integration", () => {
 
   it.each([
     {
+      products: [{ ...defaultAdminData.products[0], sortOrder: -1 }],
+      offerings: defaultAdminData.offerings
+    },
+    {
+      products: defaultAdminData.products,
+      offerings: [{ ...defaultAdminData.offerings[0], sortOrder: -1 }]
+    }
+  ])("rejects negative live catalog sort orders before admin consumers use them", async ({ products, offerings }) => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          products,
+          offerings
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toEqual({
+      status: "error",
+      message: "Apps Script returned malformed admin data."
+    });
+  });
+
+  it.each([
+    {
       products: [{ ...defaultAdminData.products[0], low: -1 }],
       offerings: defaultAdminData.offerings
     },
