@@ -80,9 +80,9 @@ describe("OrderForm v2 submit flow", () => {
           email: "  amina@example.com  ",
           phone: "  4165550101  ",
           eventDate: "  2099-05-20  ",
-          productType: "  cake  ",
-          cakeSizeId: "  eight-inch  ",
-          flavourId: "  vanilla-rose  ",
+          productType: "  Cake  ",
+          cakeSizeId: "  Eight-Inch  ",
+          flavourId: "  Vanilla-Rose  ",
           budget: "  100-150  ",
           message: "  Birthday cake with soft floral piping.  ",
           paymentEmail: "  payments@example.com  ",
@@ -103,6 +103,9 @@ describe("OrderForm v2 submit flow", () => {
       id: "ord_copied_response",
       name: "Amina",
       email: "amina@example.com",
+      productType: "cake",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla-rose",
       paymentEmail: "payments@example.com",
       summary: "Name: Amina from copied response"
     });

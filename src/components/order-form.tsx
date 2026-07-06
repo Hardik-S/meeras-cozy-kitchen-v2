@@ -132,6 +132,10 @@ function normalizeSubmittedServings(value: SubmittedOrder["servings"]) {
     : undefined;
 }
 
+function normalizeOptionalCatalogId(value: string | undefined) {
+  return value?.trim().toLowerCase();
+}
+
 function normalizeSubmittedOrder(order: SubmittedOrder): SubmittedOrder {
   return {
     ...order,
@@ -140,9 +144,9 @@ function normalizeSubmittedOrder(order: SubmittedOrder): SubmittedOrder {
     email: order.email.trim(),
     phone: order.phone?.trim(),
     eventDate: order.eventDate?.trim(),
-    productType: order.productType?.trim(),
-    cakeSizeId: order.cakeSizeId?.trim(),
-    flavourId: order.flavourId?.trim(),
+    productType: normalizeOptionalCatalogId(order.productType),
+    cakeSizeId: normalizeOptionalCatalogId(order.cakeSizeId),
+    flavourId: normalizeOptionalCatalogId(order.flavourId),
     servings: normalizeSubmittedServings(order.servings),
     budget: order.budget?.trim(),
     message: order.message?.trim(),
