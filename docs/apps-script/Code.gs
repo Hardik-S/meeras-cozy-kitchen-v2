@@ -411,7 +411,7 @@ function catalogSortOrderOrDefault(row, fallback) {
   if (!Object.prototype.hasOwnProperty.call(row, "sortOrder")) {
     return fallback;
   }
-  if (typeof row.sortOrder !== "number" || !isFinite(row.sortOrder) || row.sortOrder % 1 !== 0) {
+  if (typeof row.sortOrder !== "number" || !isFinite(row.sortOrder) || row.sortOrder % 1 !== 0 || row.sortOrder < 0) {
     throw new Error("Unsupported catalog sort order value.");
   }
   return row.sortOrder;

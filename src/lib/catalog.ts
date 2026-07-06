@@ -148,7 +148,7 @@ function hasPublicPriceRange(item: { low: number; high: number }) {
 }
 
 function hasPublicSortOrder(item: { sortOrder: number }) {
-  return Number.isInteger(item.sortOrder);
+  return Number.isInteger(item.sortOrder) && item.sortOrder >= 0;
 }
 
 function normalizeOfferingCategory(value: string): OfferingCategory | undefined {

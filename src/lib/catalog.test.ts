@@ -112,6 +112,14 @@ describe("catalog mappers", () => {
           high: 30,
           enabled: true,
           sortOrder: 1.5
+        },
+        {
+          id: "negative-product",
+          label: "Negative product",
+          low: 24,
+          high: 30,
+          enabled: true,
+          sortOrder: -1
         }
       ],
       offerings: [
@@ -137,13 +145,26 @@ describe("catalog mappers", () => {
           servings: "",
           enabled: true,
           sortOrder: 2.5
+        },
+        {
+          id: "negative-offering",
+          productId: "all",
+          category: "add-on",
+          label: "Negative add-on",
+          low: 8,
+          high: 10,
+          servings: "",
+          enabled: true,
+          sortOrder: -1
         }
       ]
     });
 
     expect(catalog.products.map((product) => product.id)).not.toContain("bad-product");
     expect(catalog.products.map((product) => product.id)).not.toContain("fractional-product");
+    expect(catalog.products.map((product) => product.id)).not.toContain("negative-product");
     expect(catalog.addOns.map((offering) => offering.id)).not.toContain("bad-offering");
     expect(catalog.addOns.map((offering) => offering.id)).not.toContain("fractional-offering");
+    expect(catalog.addOns.map((offering) => offering.id)).not.toContain("negative-offering");
   });
 });
