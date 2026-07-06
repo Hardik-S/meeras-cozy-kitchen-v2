@@ -173,6 +173,7 @@ function loadUpsertProduct(upsertById: (sheetName: string, product: Record<strin
     extractFunction(source, "toNumber"),
     extractFunction(source, "requireCatalogPayload"),
     extractFunction(source, "catalogTextOrDefault"),
+    extractFunction(source, "catalogRequiredText"),
     extractFunction(source, "assertCatalogPrice"),
     extractFunction(source, "assertCatalogPriceRange"),
     extractFunction(source, "catalogSortOrderOrDefault"),
@@ -198,6 +199,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
     extractFunction(source, "toNumber"),
     extractFunction(source, "requireCatalogPayload"),
     extractFunction(source, "catalogTextOrDefault"),
+    extractFunction(source, "catalogRequiredText"),
     extractFunction(source, "catalogProductIdOrDefault"),
     extractFunction(source, "catalogCategoryOrDefault"),
     extractFunction(source, "assertCatalogPrice"),
@@ -689,6 +691,15 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).not.toHaveBeenCalled();
   });
 
+  it("rejects blank product upsert labels before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertProduct = loadUpsertProduct(upsertById);
+
+    expect(() => upsertProduct({ product: { id: "custom-cake", label: "   ", low: 58, high: 68 } }))
+      .toThrow("Unsupported catalog text value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
   it("uses the product label when copied product ids are blank", () => {
     const upsertById = vi.fn();
     const upsertProduct = loadUpsertProduct(upsertById);
@@ -752,6 +763,16 @@ describe("Apps Script Code.gs catalog toggles", () => {
 
     expect(() => upsertOffering({
       offering: { id: "floral-piping", label: "Floral piping", category: { copied: true }, low: 12, high: 18 }
+    })).toThrow("Unsupported catalog text value.");
+    expect(upsertById).not.toHaveBeenCalled();
+  });
+
+  it("rejects blank offering upsert labels before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    expect(() => upsertOffering({
+      offering: { id: "floral-piping", label: "   ", category: "add-on", low: 12, high: 18 }
     })).toThrow("Unsupported catalog text value.");
     expect(upsertById).not.toHaveBeenCalled();
   });

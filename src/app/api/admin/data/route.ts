@@ -360,6 +360,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: "Unsupported catalog text value." }, { status: 400 });
       }
 
+      if (key === "label" && text.length === 0) {
+        return NextResponse.json({ ok: false, error: "Unsupported catalog text value." }, { status: 400 });
+      }
+
       catalogRow[key] = text;
     }
 

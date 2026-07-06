@@ -38,6 +38,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject inverted catalog price ranges before Sheet mutations run, so public quotes do not show impossible low/high totals.
 - Reject non-integer catalog sort orders before Sheet mutations run, so copied editor payloads cannot reorder menu rows ambiguously.
 - Reject non-string catalog text values before Sheet mutations run, so copied editor payloads cannot save object-shaped menu labels.
+- Reject blank catalog labels before Sheet mutations run, so copied editor payloads cannot save invisible menu rows.
 - Reject unsupported offering categories before Sheet mutations run, so copied editor payloads cannot create invisible menu rows.
 - Reject malformed catalog upsert payloads before Sheet mutations run, so copied row containers cannot fall through to field defaults.
 - Normalize copied admin catalog IDs before Sheet mutations run, so editor writes stay aligned with canonical menu IDs.
