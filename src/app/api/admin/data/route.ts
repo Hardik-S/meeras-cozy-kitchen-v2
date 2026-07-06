@@ -141,6 +141,12 @@ function hasUnsupportedSettingKey(settings: Record<string, unknown>) {
   return Object.keys(settings).some((key) => !allowedSettingKeys.has(key));
 }
 
+function normalizeSettingsValues(settings: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(settings).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+  );
+}
+
 function sessionTokenFromRequest(request: Request) {
   const cookie = request.headers.get("cookie") || "";
   const match = cookie.match(/(?:^|;\s*)meera_admin_session=([^;]+)/);
@@ -221,7 +227,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Unsupported settings value." }, { status: 400 });
     }
 
-    payload.settings = settings;
+    payload.settings = normalizeSettingsValues(settings);
   }
 
   if (action === "updateOrderStatus") {
