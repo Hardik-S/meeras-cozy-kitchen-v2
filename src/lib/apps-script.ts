@@ -60,8 +60,8 @@ function hasNumberFields(value: Record<string, unknown>, fields: string[]) {
   return fields.every((field) => isFiniteNumber(value[field]));
 }
 
-function hasIntegerFields(value: Record<string, unknown>, fields: string[]) {
-  return fields.every((field) => isIntegerNumber(value[field]));
+function hasCatalogSortOrder(value: Record<string, unknown>) {
+  return isIntegerNumber(value.sortOrder) && value.sortOrder >= 0;
 }
 
 function hasCatalogPriceRange(value: Record<string, unknown>) {
@@ -81,7 +81,7 @@ function isAdminProduct(value: unknown) {
   return isRecord(value)
     && hasNonEmptyStringFields(value, ["id", "label"])
     && hasCatalogPriceRange(value)
-    && hasIntegerFields(value, ["sortOrder"])
+    && hasCatalogSortOrder(value)
     && isBoolean(value.enabled);
 }
 
@@ -119,7 +119,7 @@ function isAdminOffering(value: unknown) {
     && hasStringFields(value, ["servings"])
     && isOfferingCategory(value.category)
     && hasCatalogPriceRange(value)
-    && hasIntegerFields(value, ["sortOrder"])
+    && hasCatalogSortOrder(value)
     && isBoolean(value.enabled);
 }
 
