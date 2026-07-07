@@ -132,25 +132,29 @@ function normalizeSubmittedServings(value: SubmittedOrder["servings"]) {
     : undefined;
 }
 
+function normalizeSubmittedText(value: string | undefined) {
+  return value?.trim().replace(/\s+/g, " ");
+}
+
 function normalizeOptionalCatalogId(value: string | undefined) {
-  return value?.trim().toLowerCase();
+  return normalizeSubmittedText(value)?.toLowerCase();
 }
 
 function normalizeSubmittedOrder(order: SubmittedOrder): SubmittedOrder {
   return {
     ...order,
-    id: order.id.trim(),
-    name: order.name.trim(),
-    email: order.email.trim(),
-    phone: order.phone?.trim(),
-    eventDate: order.eventDate?.trim(),
+    id: normalizeSubmittedText(order.id) ?? "",
+    name: normalizeSubmittedText(order.name) ?? "",
+    email: normalizeSubmittedText(order.email) ?? "",
+    phone: normalizeSubmittedText(order.phone),
+    eventDate: normalizeSubmittedText(order.eventDate),
     productType: normalizeOptionalCatalogId(order.productType),
     cakeSizeId: normalizeOptionalCatalogId(order.cakeSizeId),
     flavourId: normalizeOptionalCatalogId(order.flavourId),
     servings: normalizeSubmittedServings(order.servings),
-    budget: order.budget?.trim(),
-    message: order.message?.trim(),
-    paymentEmail: order.paymentEmail.trim(),
+    budget: normalizeSubmittedText(order.budget),
+    message: normalizeSubmittedText(order.message),
+    paymentEmail: normalizeSubmittedText(order.paymentEmail) ?? "",
     summary: order.summary.trim()
   };
 }

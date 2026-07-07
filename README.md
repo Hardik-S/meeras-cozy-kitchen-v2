@@ -134,6 +134,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Normalize Apps Script order ids before building payment instructions, so malformed success responses fall back to a pending local id.
 - Ignore malformed order metadata returned to the browser after a successful inquiry, so customers land on a valid pending payment page instead of storing an unusable order.
 - Normalize returned order metadata before browser storage and payment-page routing, so copied response text cannot create padded summary links.
+- Collapse returned order IDs before browser storage and routing, so copied success responses cannot put hidden line breaks into payment links.
 - Normalize returned order catalog IDs before browser storage, so copied response casing stays aligned with payment-page metadata.
 - Drop impossible returned serving counts before browser storage, so payment metadata cannot retain malformed internal response numbers.
 - Treat null inquiry response envelopes as submit failures, so customers see the retry notice instead of an unhandled browser error.
