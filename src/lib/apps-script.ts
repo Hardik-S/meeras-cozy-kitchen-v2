@@ -189,7 +189,10 @@ function isAdminData(value: unknown): value is AdminData {
 }
 
 function normalizeOrderId(value: unknown) {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+  if (typeof value !== "string") return undefined;
+
+  const orderId = value.trim().replace(/\s+/g, " ");
+  return orderId ? orderId : undefined;
 }
 
 function normalizeAdminOffering(offering: AdminData["offerings"][number]): AdminData["offerings"][number] {

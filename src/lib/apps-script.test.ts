@@ -76,6 +76,19 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("collapses copied Apps Script order ids before returning them", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ ok: true, orderId: " ord_copied\nMemo: redirected " }), { status: 200 })
+    ));
+
+    await expect(submitInquiryToAppsScript(inquiry)).resolves.toEqual({
+      status: "sent",
+      orderId: "ord_copied Memo: redirected"
+    });
+  });
+
   it("reports malformed live admin data instead of treating it as catalog data", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
