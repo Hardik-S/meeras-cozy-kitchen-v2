@@ -141,6 +141,23 @@ describe("OrderSummaryPage", () => {
     });
   });
 
+  it("keeps copied order ids on one payment memo line", async () => {
+    window.history.replaceState(null, "", "/order/summary?id=ord_multiline%0AMemo:%20redirected");
+    const writeTextMock = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: writeTextMock }
+    });
+
+    render(<OrderSummaryPage />);
+    fireEvent.click(screen.getByRole("button", { name: /copy e-transfer details/i }));
+
+    expect(screen.getAllByText("ord_multiline Memo: redirected")[0]).toBeInTheDocument();
+    await waitFor(() => {
+      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_multiline Memo: redirected");
+    });
+  });
+
   it("falls back when stored payment metadata has a malformed email", () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_bad_payment",
