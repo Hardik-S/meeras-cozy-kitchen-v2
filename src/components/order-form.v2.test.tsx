@@ -111,6 +111,33 @@ describe("OrderForm v2 submit flow", () => {
     });
   });
 
+  it("keeps copied returned order ids on one summary route line", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        order: {
+          id: "  ord_copied_response\nMemo: redirected  ",
+          name: "Amina",
+          email: "amina@example.com",
+          paymentEmail: "m.ssethi1123@gmail.com",
+          summary: "Name: Amina"
+        }
+      }), { status: 200 })
+    ));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_copied_response%20Memo%3A%20redirected");
+    });
+
+    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
+      id: "ord_copied_response Memo: redirected"
+    });
+  });
+
   it("drops impossible returned serving counts before storing payment metadata", async () => {
     vi.stubGlobal("fetch", vi.fn(async () =>
       new Response(JSON.stringify({
