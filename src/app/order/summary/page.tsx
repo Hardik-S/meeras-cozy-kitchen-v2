@@ -191,7 +191,7 @@ function normalizeStoredText(value: string | undefined) {
 function normalizeStoredOrder(order: StoredOrder): StoredOrder {
   return {
     ...order,
-    id: order.id.trim(),
+    id: normalizeStoredText(order.id) ?? "",
     name: normalizeStoredText(order.name),
     email: normalizeStoredText(order.email),
     phone: normalizeStoredText(order.phone),
@@ -227,6 +227,6 @@ function readStoredOrder() {
 function readOrderIdFromLocation() {
   if (typeof window === "undefined") return undefined;
 
-  const id = new URLSearchParams(window.location.search).get("id")?.trim();
+  const id = normalizeStoredText(new URLSearchParams(window.location.search).get("id") ?? undefined);
   return id || undefined;
 }
