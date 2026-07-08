@@ -116,6 +116,23 @@ describe("inquirySchema", () => {
     expect(parsed.data?.eventDate).toBe("2026-05-20");
   });
 
+  it("collapses copied single-line customer fields before summaries use them", () => {
+    const inquirySchema = createInquirySchema(fixtureToday);
+    const parsed = inquirySchema.safeParse({
+      ...baseInquiry,
+      name: " Amina\nMemo: redirected ",
+      phone: " 416\n555 0101 ",
+      budget: " 100-150\nDeposit paid "
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data).toMatchObject({
+      name: "Amina Memo: redirected",
+      phone: "416 555 0101",
+      budget: "100-150 Deposit paid"
+    });
+  });
+
   it("treats whitespace-only honeypot values as empty browser noise", () => {
     const inquirySchema = createInquirySchema(fixtureToday);
     const parsed = inquirySchema.safeParse({
