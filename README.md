@@ -142,6 +142,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Create the inquiry validation schema per API request so the seven-day pickup notice window cannot freeze on a long-lived server process.
 - Create the browser form validation schema at submit time too, so an already-open order tab uses the current pickup notice window before calling the API.
 - Normalize copied inquiry catalog ID casing before validation and pricing, so direct customer payloads still match Sheet-managed menu rows.
+- Collapse copied single-line inquiry contact fields during validation, so names, phone numbers, and budgets cannot add hidden summary rows.
 - Require a selected inquiry flavour at both the browser and API validation boundary, so customer summaries do not save `Not selected` flavour rows.
 - Accept Sheet-managed cake size IDs while still requiring a selected cake size, so live menu options can submit through browser and API validation.
 - Normalize Sheet-driven quote ranges before totaling, so swapped low/high cells do not show inverted customer prices.
