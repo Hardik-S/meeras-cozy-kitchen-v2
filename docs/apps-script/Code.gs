@@ -121,14 +121,14 @@ function submitOrder(payload) {
   appendObject("Orders", {
     id,
     createdAt: now,
-    name: clean(inquiry.name),
-    email: clean(inquiry.email),
-    phone: clean(inquiry.phone),
-    eventDate: clean(inquiry.eventDate),
+    name: cleanSingleLine(inquiry.name),
+    email: cleanSingleLine(inquiry.email),
+    phone: cleanSingleLine(inquiry.phone),
+    eventDate: cleanSingleLine(inquiry.eventDate),
     productType: clean(inquiry.productType),
     cakeSizeId: clean(inquiry.cakeSizeId),
     flavourId: clean(inquiry.flavourId),
-    budget: clean(inquiry.budget),
+    budget: cleanSingleLine(inquiry.budget),
     message: clean(inquiry.message),
     estimateLow: estimate.low,
     estimateHigh: estimate.high,
@@ -594,12 +594,12 @@ function seedProductsAndOfferings() {
 function sendInquiryEmails(inquiry, summary, orderId) {
   const settings = settingsObject();
   const customerSubject = "We received your Meera's Cozy Kitchen inquiry";
-  const chefSubject = "New Meera's Cozy Kitchen order inquiry: " + clean(inquiry.name);
-  const customerBody = "Hi " + clean(inquiry.name) + ",\n\nThanks for your inquiry. Meera will review the details and reply soon.\n\n" + summary;
+  const chefSubject = "New Meera's Cozy Kitchen order inquiry: " + cleanSingleLine(inquiry.name);
+  const customerBody = "Hi " + cleanSingleLine(inquiry.name) + ",\n\nThanks for your inquiry. Meera will review the details and reply soon.\n\n" + summary;
   const chefBody = settings.chefNotificationCopy + "\n\nOrder ID: " + orderId + "\n\n" + summary;
 
-  sendMail(settings, clean(inquiry.email), customerSubject, customerBody, settings.defaultReceiver);
-  sendMail(settings, settings.defaultReceiver, chefSubject, chefBody, clean(inquiry.email));
+  sendMail(settings, cleanSingleLine(inquiry.email), customerSubject, customerBody, settings.defaultReceiver);
+  sendMail(settings, settings.defaultReceiver, chefSubject, chefBody, cleanSingleLine(inquiry.email));
 }
 
 function sendMail(settings, to, subject, body, replyTo) {
@@ -684,12 +684,12 @@ function buildSummary(inquiry, estimate) {
   const flavourLabel = selectedOfferingLabel(inquiry, inquiry.flavourId);
   const lines = [
     "Meera's Cozy Kitchen inquiry",
-    "Name: " + clean(inquiry.name),
-    "Email: " + clean(inquiry.email),
-    "Phone: " + clean(inquiry.phone),
-    "Pickup date: " + clean(inquiry.eventDate),
+    "Name: " + cleanSingleLine(inquiry.name),
+    "Email: " + cleanSingleLine(inquiry.email),
+    "Phone: " + cleanSingleLine(inquiry.phone),
+    "Pickup date: " + cleanSingleLine(inquiry.eventDate),
     "Product: " + clean(inquiry.productType),
-    "Budget: " + clean(inquiry.budget || "Not provided"),
+    "Budget: " + cleanSingleLine(inquiry.budget || "Not provided"),
     "Estimate: $" + estimate.low + "-$" + estimate.high,
     "",
     clean(inquiry.message)
@@ -871,6 +871,10 @@ function todayIso() {
 
 function clean(value) {
   return value === undefined || value === null ? "" : String(value).trim();
+}
+
+function cleanSingleLine(value) {
+  return clean(value).replace(/\s+/g, " ");
 }
 
 function toNumber(value) {

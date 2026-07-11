@@ -66,6 +66,7 @@ function loadSubmitOrder(
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "summaryTextOrDefault"),
     extractFunction(source, "inquiryTextOrDefault"),
@@ -388,6 +389,35 @@ describe("Apps Script Code.gs submitOrder", () => {
       summary: { copied: true }
     })).toThrow("Unsupported inquiry summary.");
     expect(appendObject).not.toHaveBeenCalled();
+  });
+
+  it("collapses copied single-line inquiry fields before appending order rows", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject);
+
+    submitOrder({
+      inquiry: {
+        name: " Amina\nMemo: redirected ",
+        email: "amina@example.com",
+        phone: " 416\n555 0101 ",
+        eventDate: "2099-05-20",
+        productType: "dessert-box",
+        budget: " 100-150\nDeposit paid ",
+        message: "Birthday dessert box with soft florals."
+      }
+    });
+
+    expect(appendObject).toHaveBeenCalledWith(
+      "Orders",
+      expect.objectContaining({
+        name: "Amina Memo: redirected",
+        phone: "416 555 0101",
+        budget: "100-150 Deposit paid",
+        summary: expect.stringContaining("Name: Amina Memo: redirected")
+      })
+    );
+    expect(appendObject.mock.calls[0][1].summary).toContain("Phone: 416 555 0101");
+    expect(appendObject.mock.calls[0][1].summary).toContain("Budget: 100-150 Deposit paid");
   });
 
   it("includes selected Sheet-backed add-ons in fallback summaries", () => {
