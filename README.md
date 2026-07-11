@@ -145,6 +145,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Normalize copied inquiry catalog ID casing before validation and pricing, so direct customer payloads still match Sheet-managed menu rows.
 - Collapse copied single-line inquiry contact fields during validation, so names, phone numbers, and budgets cannot add hidden summary rows.
 - Collapse direct Apps Script single-line inquiry fields too, so fallback submissions cannot save hidden summary rows.
+- Collapse copied public catalog display text in the browser cache, so menu labels and serving notes cannot add hidden customer-facing lines.
 - Require a selected inquiry flavour at both the browser and API validation boundary, so customer summaries do not save `Not selected` flavour rows.
 - Accept Sheet-managed cake size IDs while still requiring a selected cake size, so live menu options can submit through browser and API validation.
 - Normalize Sheet-driven quote ranges before totaling, so swapped low/high cells do not show inverted customer prices.
