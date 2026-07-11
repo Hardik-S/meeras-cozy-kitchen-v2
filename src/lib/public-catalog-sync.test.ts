@@ -47,15 +47,29 @@ describe("public catalog sync", () => {
       catalog: {
         ...defaultPublicCatalog,
         products: [
-          { ...defaultPublicCatalog.products[0], id: " cake ", label: " Custom cake " }
+          { ...defaultPublicCatalog.products[0], id: " cake ", label: " Custom\ncake " }
         ],
         offerings: [
-          { ...defaultPublicCatalog.addOns[0], id: " Fresh-Berries ", productId: " ALL ", category: " Add-On " as "add-on", label: " Fresh berry finish " }
+          {
+            ...defaultPublicCatalog.addOns[0],
+            id: " Fresh-Berries ",
+            productId: " ALL ",
+            category: " Add-On " as "add-on",
+            label: " Fresh\nberry finish ",
+            servings: " 12-14\npeople "
+          }
         ],
         cakeSizes: [],
         flavours: [],
         addOns: [
-          { ...defaultPublicCatalog.addOns[0], id: " Fresh-Berries ", productId: " all ", category: " Add-On " as "add-on", label: " Fresh berry finish " }
+          {
+            ...defaultPublicCatalog.addOns[0],
+            id: " Fresh-Berries ",
+            productId: " all ",
+            category: " Add-On " as "add-on",
+            label: " Fresh\nberry finish ",
+            servings: " 12-14\npeople "
+          }
         ]
       }
     }));
@@ -66,7 +80,13 @@ describe("public catalog sync", () => {
 
     expect(result.source).toBe("cached");
     expect(result.catalog.products[0]).toMatchObject({ id: "cake", label: "Custom cake" });
-    expect(result.catalog.offerings[0]).toMatchObject({ id: "fresh-berries", productId: "all", category: "add-on" });
+    expect(result.catalog.offerings[0]).toMatchObject({
+      id: "fresh-berries",
+      productId: "all",
+      category: "add-on",
+      label: "Fresh berry finish",
+      servings: "12-14 people"
+    });
     expect(result.catalog.addOns).toHaveLength(1);
     expect(result.catalog.addOns[0].id).toBe("fresh-berries");
     expect(fetchMock).not.toHaveBeenCalled();
