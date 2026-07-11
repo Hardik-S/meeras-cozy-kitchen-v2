@@ -28,6 +28,10 @@ function normalizeLedgerType(value: LedgerEntry["type"]): LedgerEntryType {
   return value.trim().toLowerCase() as LedgerEntryType;
 }
 
+function normalizeLedgerText(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {
   const amount = Number(entry.amount);
   const quantity = Number(entry.quantity);
@@ -36,14 +40,14 @@ export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {
 
   return {
     ...entry,
-    id: entry.id.trim(),
-    date: entry.date.trim(),
+    id: normalizeLedgerText(entry.id),
+    date: normalizeLedgerText(entry.date),
     type: normalizeLedgerType(entry.type),
-    category: entry.category.trim(),
-    description: entry.description.trim(),
+    category: normalizeLedgerText(entry.category),
+    description: normalizeLedgerText(entry.description),
     amount: safeAmount,
     quantity: safeQuantity,
-    orderId: entry.orderId.trim()
+    orderId: normalizeLedgerText(entry.orderId)
   };
 }
 
