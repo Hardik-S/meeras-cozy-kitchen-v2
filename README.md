@@ -59,6 +59,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Normalize copied catalog offering ID casing, so visible Sheet options still validate and price after submission.
 - Normalize direct pricing catalog ID lookups too, so copied Sheet-backed quote inputs cannot fall back to stale default prices.
 - Normalize live Sheet ledger text before finance reports and CSV exports use it, so copied dates and order IDs stay visible in monthly totals.
+- Collapse copied live Sheet ledger text before finance reports and CSV exports use it, so hidden line breaks cannot split rows.
 - Normalize copied live order estimate ranges, so manual Sheet edits cannot invert confirmed-order finance totals.
 - Normalize copied order estimates inside finance summaries too, so direct report inputs cannot invert confirmed potential.
 - Normalize copied order dates inside finance summaries too, so direct report inputs cannot hide confirmed potential.

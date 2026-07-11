@@ -195,11 +195,11 @@ describe("finance helpers", () => {
       id: " led_copied ",
       date: " 2026-05-09 ",
       type: " Income " as LedgerEntry["type"],
-      category: " Order ",
-      description: " Cake balance ",
+      category: " Order\nDeposit ",
+      description: " Cake balance\nMemo: copied ",
       amount: 75,
       quantity: 2,
-      orderId: " ord_1 "
+      orderId: " ord_1\npaid "
     }];
 
     const report = calculateMonthlyFinanceReport(copiedRows, [], "2026-05");
@@ -208,18 +208,18 @@ describe("finance helpers", () => {
     expect(report.entries[0]).toMatchObject({
       id: "led_copied",
       date: "2026-05-09",
-      category: "Order",
-      description: "Cake balance",
-      orderId: "ord_1"
+      category: "Order Deposit",
+      description: "Cake balance Memo: copied",
+      orderId: "ord_1 paid"
     });
     expect(buildLedgerCsvRows(copiedRows, "2026-05")[1]).toEqual([
       "2026-05-09",
       "income",
-      "Order",
-      "Cake balance",
+      "Order Deposit",
+      "Cake balance Memo: copied",
       2,
       75,
-      "ord_1"
+      "ord_1 paid"
     ]);
   });
 
