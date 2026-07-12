@@ -47,6 +47,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject non-number ledger amounts and quantities before Sheet mutations run, so copied finance payloads cannot save zeroed or fallback totals.
 - Reject negative ledger amounts before Sheet mutations run, so copied expense rows cannot invert finance totals.
 - Reject non-string ledger text values before Sheet mutations run, so copied finance payloads cannot save object-shaped dates or order links.
+- Collapse copied admin ledger text before Sheet mutations run, so finance rows stay single-line at the write boundary.
 - Reject fractional ledger quantities before Sheet mutations run, so copied finance payloads cannot save partial expense counts.
 - Reject malformed ledger entry payloads before Sheet mutations run, so copied finance containers cannot fall through to field defaults.
 - Reject blank admin mutation IDs before Sheet mutations run, so direct deletes and patches cannot silently no-op or target stringified copied values.

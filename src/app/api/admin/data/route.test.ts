@@ -353,6 +353,47 @@ describe("POST /api/admin/data", () => {
     }
   );
 
+  it("collapses copied ledger text before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertLedgerEntry",
+        payload: {
+          entry: {
+            id: " led_123 ",
+            date: " 2026-07-12 ",
+            type: " Expense ",
+            category: " Packaging\nSupplies ",
+            description: " Cake boxes\nMemo: copied ",
+            orderId: " ord_123\nMemo: hidden ",
+            amount: 12,
+            quantity: 1
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("upsertLedgerEntry", {
+      entry: {
+        id: "led_123",
+        date: "2026-07-12",
+        type: "expense",
+        category: "Packaging Supplies",
+        description: "Cake boxes Memo: copied",
+        orderId: "ord_123 Memo: hidden",
+        amount: 12,
+        quantity: 1
+      }
+    });
+  });
+
   it("rejects non-boolean order flags before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
