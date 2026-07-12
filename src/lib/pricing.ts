@@ -77,6 +77,7 @@ export function formatCurrency(value: number) {
 function normalizeQuoteLine(line: QuoteLine): QuoteLine {
   return {
     ...line,
+    label: line.label.replace(/\s+/g, " ").trim(),
     low: Math.min(line.low, line.high),
     high: Math.max(line.low, line.high)
   };
