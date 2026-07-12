@@ -98,6 +98,10 @@ function normalizeCatalogProductId(value: string) {
   return value.trim().toLowerCase();
 }
 
+function normalizeAdminDisplayText(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 function isOfferingCategory(value: unknown) {
   return normalizeOfferingCategory(value) !== undefined;
 }
@@ -201,8 +205,8 @@ function normalizeAdminOffering(offering: AdminData["offerings"][number]): Admin
     id: normalizeCatalogProductId(offering.id),
     productId: normalizeCatalogProductId(offering.productId),
     category: normalizeOfferingCategory(offering.category) ?? offering.category,
-    label: offering.label.trim(),
-    servings: offering.servings.trim()
+    label: normalizeAdminDisplayText(offering.label),
+    servings: normalizeAdminDisplayText(offering.servings)
   };
 }
 
@@ -210,7 +214,7 @@ function normalizeAdminProduct(product: AdminData["products"][number]): AdminDat
   return {
     ...product,
     id: normalizeCatalogProductId(product.id),
-    label: product.label.trim()
+    label: normalizeAdminDisplayText(product.label)
   };
 }
 

@@ -326,7 +326,7 @@ describe("Apps Script integration", () => {
           ...defaultAdminData,
           products: [{
             id: " cake ",
-            label: " Custom Cakes ",
+            label: " Custom\nCakes ",
             low: 58,
             high: 150,
             enabled: true,
@@ -336,10 +336,10 @@ describe("Apps Script integration", () => {
             id: " eight-inch ",
             productId: " cake ",
             category: " Cake-Size " as "cake-size",
-            label: " 8 inch round cake ",
+            label: " 8 inch\nround cake ",
             low: 88,
             high: 110,
-            servings: " 16-20 ",
+            servings: " 16-20\nservings ",
             enabled: true,
             sortOrder: 2
           }]
@@ -359,7 +359,7 @@ describe("Apps Script integration", () => {
           productId: "cake",
           category: "cake-size",
           label: "8 inch round cake",
-          servings: "16-20"
+          servings: "16-20 servings"
         })]
       }
     });
