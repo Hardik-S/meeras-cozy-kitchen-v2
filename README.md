@@ -93,6 +93,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject cached and live public catalog rows with impossible price ranges, so negative Sheet prices cannot reach customer menus.
 - Reject cached and live public catalog rows with fractional or negative sort orders, so copied Sheet snapshots cannot reorder menu rows ambiguously.
 - Normalize cached and live public catalog text before browser consumers use it, so old Sheet snapshots with copied whitespace do not break menu selection.
+- Collapse copied Sheet catalog display text before public API mapping returns it, so labels and serving notes stay single-line outside the browser cache.
 - Cache only live Sheet-backed public catalog responses, so temporary server fallbacks do not pin stale customer menus.
 - Drop selected add-ons that disappear after a live catalog refresh, so stale Sheet options are not submitted silently.
 - Reject unavailable catalog IDs at the inquiry API boundary too, so stale direct submissions cannot save hidden menu options.

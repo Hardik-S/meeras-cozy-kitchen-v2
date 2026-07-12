@@ -92,6 +92,43 @@ describe("catalog mappers", () => {
     });
   });
 
+  it("collapses copied Sheet display text before public catalog consumers use it", () => {
+    const catalog = getPublicCatalogFromAdminData({
+      ...defaultAdminData,
+      products: [
+        ...defaultAdminData.products,
+        {
+          id: "mini-cheesecake-box",
+          label: " Mini\ncheesecake   box ",
+          low: 42,
+          high: 52,
+          enabled: true,
+          sortOrder: 99
+        }
+      ],
+      offerings: [
+        ...defaultAdminData.offerings,
+        {
+          id: "mini-party-size",
+          productId: "mini-cheesecake-box",
+          category: "cake-size",
+          label: " Mini\nparty size ",
+          low: 12,
+          high: 18,
+          servings: " Serves\n12 ",
+          enabled: true,
+          sortOrder: 99
+        }
+      ]
+    });
+
+    expect(catalog.products.find((product) => product.id === "mini-cheesecake-box")?.label).toBe("Mini cheesecake box");
+    expect(catalog.cakeSizes.find((offering) => offering.id === "mini-party-size")).toMatchObject({
+      label: "Mini party size",
+      servings: "Serves 12"
+    });
+  });
+
   it("filters copied catalog rows with impossible price ranges or ambiguous sort orders", () => {
     const catalog = getPublicCatalogFromAdminData({
       ...defaultAdminData,
