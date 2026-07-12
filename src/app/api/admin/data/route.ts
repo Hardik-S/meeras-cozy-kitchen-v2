@@ -105,7 +105,7 @@ function normalizeCatalogSortOrder(value: unknown) {
 }
 
 function normalizeCatalogText(value: unknown) {
-  return typeof value === "string" ? value.trim() : undefined;
+  return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : undefined;
 }
 
 function normalizeCatalogId(value: unknown) {

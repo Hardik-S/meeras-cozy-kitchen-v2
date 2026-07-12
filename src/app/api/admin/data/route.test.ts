@@ -754,6 +754,45 @@ describe("POST /api/admin/data", () => {
     });
   });
 
+  it("collapses copied catalog display text before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "upsertOffering",
+        payload: {
+          offering: {
+            id: "fresh-berries",
+            productId: "all",
+            category: "add-on",
+            label: " Fresh\nberry finish ",
+            servings: " 12-14\npeople ",
+            low: 10,
+            high: 14
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("upsertOffering", {
+      offering: {
+        id: "fresh-berries",
+        productId: "all",
+        category: "add-on",
+        label: "Fresh berry finish",
+        servings: "12-14 people",
+        low: 10,
+        high: 14
+      }
+    });
+  });
+
   it.each([
     ["toggleProduct", { id: " Cake ", enabled: false }, { id: "cake", enabled: false }],
     ["deleteProduct", { id: " Cake " }, { id: "cake" }],
