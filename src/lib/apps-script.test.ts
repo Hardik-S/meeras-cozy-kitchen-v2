@@ -439,6 +439,52 @@ describe("Apps Script integration", () => {
     expect(calculateMonthlyFinanceReport([], result.data.orders, "2026-06").confirmedPotential).toBe(125);
   });
 
+  it("collapses copied live order text before admin consumers use it", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          orders: [{
+            id: " ord_copied\nMemo: hidden ",
+            createdAt: "2026-06-20T10:00:00.000Z",
+            name: " Amina\nKhan ",
+            email: " amina@example.com ",
+            phone: " 416\n555\n0101 ",
+            eventDate: "2026-06-28",
+            productType: "cake",
+            cakeSizeId: "eight-inch",
+            flavourId: "vanilla-rose",
+            budget: " 100-150\nflexible ",
+            message: " Birthday cake\nwith soft florals. ",
+            estimateLow: 95,
+            estimateHigh: 125,
+            status: "confirmed",
+            hearted: false,
+            pinned: false,
+            summary: " Custom cake\ninquiry "
+          }]
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toMatchObject({
+      status: "live",
+      data: {
+        orders: [expect.objectContaining({
+          id: "ord_copied Memo: hidden",
+          name: "Amina Khan",
+          phone: "416 555 0101",
+          budget: "100-150 flexible",
+          message: "Birthday cake with soft florals.",
+          summary: "Custom cake inquiry"
+        })]
+      }
+    });
+  });
+
   it("normalizes copied live order estimate ranges before finance summaries use them", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");

@@ -242,20 +242,20 @@ function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["ord
 
   return {
     ...order,
-    id: order.id.trim(),
+    id: normalizeAdminDisplayText(order.id),
     createdAt: order.createdAt.trim(),
-    name: order.name.trim(),
-    email: order.email.trim(),
-    phone: order.phone.trim(),
+    name: normalizeAdminDisplayText(order.name),
+    email: normalizeAdminDisplayText(order.email),
+    phone: normalizeAdminDisplayText(order.phone),
     eventDate: order.eventDate.trim(),
     productType: normalizeCatalogProductId(order.productType),
     cakeSizeId: normalizeCatalogProductId(order.cakeSizeId),
     flavourId: normalizeCatalogProductId(order.flavourId),
-    budget: order.budget.trim(),
-    message: order.message.trim(),
+    budget: normalizeAdminDisplayText(order.budget),
+    message: normalizeAdminDisplayText(order.message),
     ...estimates,
     status: normalizeOrderStatus(order.status) ?? order.status,
-    summary: order.summary.trim()
+    summary: normalizeAdminDisplayText(order.summary)
   };
 }
 
