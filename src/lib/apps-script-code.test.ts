@@ -141,9 +141,11 @@ function loadListAdminData(readObjects: (sheetName: string) => Array<Record<stri
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "toPositiveNumber"),
     extractFunction(source, "toBoolean"),
+    extractFunction(source, "orderedPriceRange"),
     extractFunction(source, "listAdminData"),
     "listAdminData"
   ].join("\n");
@@ -156,7 +158,7 @@ function loadListAdminData(readObjects: (sheetName: string) => Array<Record<stri
       senderName: "Meera's Cozy Kitchen",
       chefNotificationCopy: "New bakery inquiry received."
     }))
-  }) as () => { ok: true; data: { ledger: Array<Record<string, unknown>> } };
+  }) as () => { ok: true; data: { orders: Array<Record<string, unknown>>; ledger: Array<Record<string, unknown>> } };
 }
 
 function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
@@ -588,6 +590,49 @@ describe("Apps Script Code.gs request payloads", () => {
 });
 
 describe("Apps Script Code.gs listAdminData", () => {
+  it("collapses copied Sheet order text before returning admin data", () => {
+    const listAdminData = loadListAdminData((sheetName) => {
+      if (sheetName === "Orders") {
+        return [{
+          id: " ord_copied\nMemo: hidden ",
+          createdAt: " 2026-06-20T10:00:00.000Z ",
+          name: " Amina\nKhan ",
+          email: " amina@example.com ",
+          phone: " 416\n555\n0101 ",
+          eventDate: " 2026-06-28 ",
+          productType: " Cake ",
+          cakeSizeId: " Eight-Inch ",
+          flavourId: " Vanilla-Rose ",
+          budget: " 100-150\nflexible ",
+          message: " Birthday cake\nwith soft florals. ",
+          estimateLow: 125,
+          estimateHigh: 95,
+          status: " Confirmed ",
+          hearted: false,
+          pinned: false,
+          summary: " Custom cake\ninquiry "
+        }];
+      }
+
+      return [];
+    });
+
+    expect(listAdminData().data.orders[0]).toMatchObject({
+      id: "ord_copied Memo: hidden",
+      name: "Amina Khan",
+      phone: "416 555 0101",
+      productType: "cake",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla-rose",
+      budget: "100-150 flexible",
+      message: "Birthday cake with soft florals.",
+      estimateLow: 95,
+      estimateHigh: 125,
+      status: "confirmed",
+      summary: "Custom cake inquiry"
+    });
+  });
+
   it("defaults fractional Sheet ledger quantities before returning admin data", () => {
     const listAdminData = loadListAdminData((sheetName) => {
       if (sheetName === "Ledger") {

@@ -77,6 +77,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Include Sheet-backed cake size and flavour labels in deployed Apps Script fallback summaries too, so direct submissions do not save bare catalog IDs.
 - Normalize copied Apps Script estimate input casing, so direct deployed submissions still price Sheet-managed cake sizes and add-ons.
 - Order copied Apps Script estimate ranges before totaling, so direct deployed summaries cannot show inverted quote totals.
+- Normalize copied Apps Script admin order reads, so manual Sheet edits cannot leak multiline text or inverted estimates back to admin consumers.
 - Ignore copied non-add-on offering IDs inside Apps Script add-on selections, so direct deployed submissions cannot double-price cake sizes or flavours as extras.
 - Omit cake-size copy from non-cake inquiry summaries, so Sheet-managed dessert products do not show irrelevant `Not selected` rows.
 - Normalize copied cake product casing before summary branching, so direct inquiry payloads still show the chosen cake size.
