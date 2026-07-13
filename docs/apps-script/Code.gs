@@ -230,24 +230,26 @@ function listAdminData() {
         };
       }),
       orders: readObjects("Orders").map(function(row) {
+        const estimateLow = toNumber(row.estimateLow);
+        const estimateHigh = toNumber(row.estimateHigh);
         return {
-          id: row.id,
-          createdAt: row.createdAt,
-          name: row.name,
-          email: row.email,
-          phone: row.phone,
-          eventDate: row.eventDate,
-          productType: row.productType,
-          cakeSizeId: row.cakeSizeId,
-          flavourId: row.flavourId,
-          budget: row.budget,
-          message: row.message,
-          estimateLow: toNumber(row.estimateLow),
-          estimateHigh: toNumber(row.estimateHigh),
-          status: clean(row.status) || "new",
+          id: cleanSingleLine(row.id),
+          createdAt: cleanSingleLine(row.createdAt),
+          name: cleanSingleLine(row.name),
+          email: cleanSingleLine(row.email),
+          phone: cleanSingleLine(row.phone),
+          eventDate: cleanSingleLine(row.eventDate),
+          productType: clean(row.productType).toLowerCase(),
+          cakeSizeId: clean(row.cakeSizeId).toLowerCase(),
+          flavourId: clean(row.flavourId).toLowerCase(),
+          budget: cleanSingleLine(row.budget),
+          message: cleanSingleLine(row.message),
+          estimateLow: Math.min(estimateLow, estimateHigh),
+          estimateHigh: Math.max(estimateLow, estimateHigh),
+          status: clean(row.status).toLowerCase() || "new",
           hearted: toBoolean(row.hearted),
           pinned: toBoolean(row.pinned),
-          summary: row.summary
+          summary: cleanSingleLine(row.summary)
         };
       }),
       ledger: readObjects("Ledger").map(function(row) {
