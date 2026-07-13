@@ -135,6 +135,28 @@ function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<str
   }) as (payload: { entry?: Record<string, unknown> }) => unknown;
 }
 
+function loadListAdminData(readObjects: (sheetName: string) => Array<Record<string, unknown>>) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    extractFunction(source, "clean"),
+    extractFunction(source, "toNumber"),
+    extractFunction(source, "toPositiveNumber"),
+    extractFunction(source, "toBoolean"),
+    extractFunction(source, "listAdminData"),
+    "listAdminData"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    readObjects,
+    settingsObject: vi.fn(() => ({
+      defaultSender: "batb4016@gmail.com",
+      defaultReceiver: "batb4016@gmail.com",
+      senderName: "Meera's Cozy Kitchen",
+      chefNotificationCopy: "New bakery inquiry received."
+    }))
+  }) as () => { ok: true; data: { ledger: Array<Record<string, unknown>> } };
+}
+
 function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
@@ -539,6 +561,32 @@ describe("Apps Script Code.gs request payloads", () => {
     const requirePostPayload = loadRequirePostPayload();
 
     expect(() => requirePostPayload(payload)).toThrow("Unsupported request payload.");
+  });
+});
+
+describe("Apps Script Code.gs listAdminData", () => {
+  it("defaults fractional Sheet ledger quantities before returning admin data", () => {
+    const listAdminData = loadListAdminData((sheetName) => {
+      if (sheetName === "Ledger") {
+        return [{
+          id: "led_fractional",
+          date: "2026-07-12",
+          type: "expense",
+          category: "Packaging",
+          description: "Cake box",
+          amount: 8,
+          quantity: 1.5,
+          orderId: ""
+        }];
+      }
+
+      return [];
+    });
+
+    expect(listAdminData().data.ledger[0]).toMatchObject({
+      id: "led_fractional",
+      quantity: 1
+    });
   });
 });
 

@@ -884,7 +884,7 @@ function toNumber(value) {
 
 function toPositiveNumber(value, fallback) {
   const number = Number(value);
-  return Number.isFinite(number) && number > 0 ? number : fallback;
+  return Number.isFinite(number) && number > 0 && number % 1 === 0 ? number : fallback;
 }
 
 function toBoolean(value) {
