@@ -73,6 +73,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Validate inquiry pickup dates as real calendar days before applying the seven-day notice rule, so impossible `YYYY-MM-DD` strings cannot pass as future dates.
 - Build inquiry summaries from the live public catalog when it is available, so Sheet-managed products and flavours keep their customer-facing labels and quote ranges in emails, Apps Script rows, and the payment-instructions page.
 - Include selected add-ons in inquiry summaries, so Sheet-backed quote extras stay visible in emails, Apps Script rows, and payment instructions.
+- Collapse copied Sheet-backed labels inside inquiry summaries too, so customer emails and payment instructions stay single-line after manual cell edits.
 - Ignore copied add-ons scoped to another product inside inquiry summaries, so stale direct callers cannot display or price hidden options.
 - Include selected add-ons in deployed Apps Script fallback summaries too, so direct Sheet submissions keep quote extras visible.
 - Include Sheet-backed cake size and flavour labels in deployed Apps Script fallback summaries too, so direct submissions do not save bare catalog IDs.

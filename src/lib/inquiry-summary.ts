@@ -6,13 +6,17 @@ import type { InquiryInput } from "./validation";
 function titleCaseProduct(productType: InquiryInput["productType"], catalog?: PublicCatalog) {
   const normalizedProductType = normalizeCatalogId(productType);
   const product = catalog?.products.find((item) => normalizeCatalogId(item.id) === normalizedProductType);
-  const label = (product?.label ?? productBasePrices[normalizedProductType]?.label ?? normalizedProductType).replace("Custom ", "");
+  const label = normalizeDisplayLabel(product?.label ?? productBasePrices[normalizedProductType]?.label ?? normalizedProductType).replace("Custom ", "");
 
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 function normalizeCatalogId(value: string) {
   return value.trim().toLowerCase();
+}
+
+function normalizeDisplayLabel(value: string) {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 function labelFor<T extends { id: string; label: string }>(items: T[], id?: string) {
@@ -22,7 +26,9 @@ function labelFor<T extends { id: string; label: string }>(items: T[], id?: stri
 
   const normalizedId = normalizeCatalogId(id);
 
-  return items.find((item) => normalizeCatalogId(item.id) === normalizedId)?.label ?? "Not selected";
+  const label = items.find((item) => normalizeCatalogId(item.id) === normalizedId)?.label;
+
+  return label ? normalizeDisplayLabel(label) : "Not selected";
 }
 
 function labelsFor<T extends { id: string; label: string }>(items: T[], ids: string[]) {
