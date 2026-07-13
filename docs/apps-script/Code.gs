@@ -622,6 +622,15 @@ function isAddOnOffering(row) {
   return clean(row.category || "add-on").toLowerCase() === "add-on";
 }
 
+function orderedPriceRange(row) {
+  const low = toNumber(row.low);
+  const high = toNumber(row.high);
+  return {
+    low: Math.min(low, high),
+    high: Math.max(low, high)
+  };
+}
+
 function estimateInquiry(inquiry) {
   const products = readObjects("Products");
   const offerings = readObjects("Offerings");
@@ -631,16 +640,18 @@ function estimateInquiry(inquiry) {
   const cakeSize = offerings.filter(function(row) { return clean(row.id).toLowerCase() === cakeSizeId; })[0];
   const product = products.filter(function(row) { return clean(row.id).toLowerCase() === productType; })[0];
   const base = productType === "cake" && cakeSize ? cakeSize : product;
-  let low = base ? toNumber(base.low) : 0;
-  let high = base ? toNumber(base.high) : 0;
+  const baseRange = base ? orderedPriceRange(base) : { low: 0, high: 0 };
+  let low = baseRange.low;
+  let high = baseRange.high;
   addOnIds.forEach(function(id) {
     const addOn = offerings.filter(function(row) {
       const productId = clean(row.productId || "all").toLowerCase();
       return isAddOnOffering(row) && clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
     })[0];
     if (addOn) {
-      low += toNumber(addOn.low);
-      high += toNumber(addOn.high);
+      const addOnRange = orderedPriceRange(addOn);
+      low += addOnRange.low;
+      high += addOnRange.high;
     }
   });
   return { low, high };

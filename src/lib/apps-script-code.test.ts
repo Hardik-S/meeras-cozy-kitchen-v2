@@ -24,6 +24,7 @@ function loadEstimateInquiry(readObjects: (sheetName: string) => Array<Record<st
     extractFunction(source, "clean"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "isAddOnOffering"),
+    extractFunction(source, "orderedPriceRange"),
     extractFunction(source, "estimateInquiry"),
     "estimateInquiry"
   ].join("\n");
@@ -74,6 +75,7 @@ function loadSubmitOrder(
     extractFunction(source, "requireInquiryPayload"),
     extractFunction(source, "assertInquiryTextFields"),
     extractFunction(source, "isAddOnOffering"),
+    extractFunction(source, "orderedPriceRange"),
     extractFunction(source, "estimateInquiry"),
     extractFunction(source, "selectedAddOnLabels"),
     extractFunction(source, "selectedOfferingLabel"),
@@ -371,6 +373,27 @@ describe("Apps Script Code.gs estimateInquiry", () => {
       cakeSizeId: "six-inch",
       addOnIds: ["six-inch", "vanilla-rose", "fresh-berries"]
     })).toEqual({ low: 68, high: 80 });
+  });
+
+  it("orders copied Sheet price ranges before totaling fallback estimates", () => {
+    const estimateInquiry = loadEstimateInquiry((sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: "cake", low: 58, high: 150 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: "sheet-eight-inch", productId: "cake", category: "cake-size", low: 120, high: 95 },
+          { id: "rush-finish", productId: "all", category: "add-on", low: 15, high: 10 }
+        ];
+      }
+      return [];
+    });
+
+    expect(estimateInquiry({
+      productType: "cake",
+      cakeSizeId: "sheet-eight-inch",
+      addOnIds: ["rush-finish"]
+    })).toEqual({ low: 105, high: 135 });
   });
 });
 
