@@ -199,6 +199,7 @@ function loadUpsertProduct(upsertById: (sheetName: string, product: Record<strin
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "slug"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "requireCatalogPayload"),
@@ -225,6 +226,7 @@ function loadUpsertOffering(upsertById: (sheetName: string, offering: Record<str
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "slug"),
     extractFunction(source, "toNumber"),
     extractFunction(source, "requireCatalogPayload"),
@@ -987,6 +989,28 @@ describe("Apps Script Code.gs catalog toggles", () => {
     expect(upsertById).toHaveBeenCalledWith("Products", expect.objectContaining({
       id: "custom-cake",
       label: "Custom Cake"
+    }));
+  });
+
+  it("collapses copied offering serving notes before patching the sheet", () => {
+    const upsertById = vi.fn();
+    const upsertOffering = loadUpsertOffering(upsertById);
+
+    upsertOffering({
+      offering: {
+        id: "tall-six",
+        productId: "cake",
+        category: "cake-size",
+        label: "Tall six",
+        low: 72,
+        high: 84,
+        servings: " 10-12\nservings "
+      }
+    });
+
+    expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
+      id: "tall-six",
+      servings: "10-12 servings"
     }));
   });
 
