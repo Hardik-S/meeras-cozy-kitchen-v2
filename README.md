@@ -54,6 +54,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject malformed top-level Apps Script POST payloads before secret checks or setup run, so copied containers fail at the request boundary.
 - Accept legacy Apps Script ledger rows without quantity, then normalize them to `1`, so upgraded sheets keep loading finance data.
 - Normalize copied fractional ledger quantities to `1`, so manual Sheet edits cannot create partial-count finance totals.
+- Keep deployed Apps Script ledger quantity reads integer-only too, so manual Sheet edits cannot bypass the TypeScript finance guard.
 - Normalize copied negative ledger amounts to `0`, so manual Sheet edits cannot invert finance totals after write-side validation.
 - Normalize copied ledger type casing, so manual Sheet edits cannot hide valid income or expense rows.
 - Normalize copied catalog category casing, so manual Sheet edits cannot hide valid add-ons, flavours, or cake sizes.
