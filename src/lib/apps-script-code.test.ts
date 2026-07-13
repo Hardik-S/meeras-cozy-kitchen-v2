@@ -145,6 +145,7 @@ function loadListAdminData(readObjects: (sheetName: string) => Array<Record<stri
     extractFunction(source, "toNumber"),
     extractFunction(source, "toPositiveNumber"),
     extractFunction(source, "toBoolean"),
+    extractFunction(source, "normalizeLedgerEntryType"),
     extractFunction(source, "orderedPriceRange"),
     extractFunction(source, "listAdminData"),
     "listAdminData"
@@ -695,6 +696,34 @@ describe("Apps Script Code.gs listAdminData", () => {
     expect(listAdminData().data.ledger[0]).toMatchObject({
       id: "led_fractional",
       quantity: 1
+    });
+  });
+
+  it("collapses copied Sheet ledger text before returning admin data", () => {
+    const listAdminData = loadListAdminData((sheetName) => {
+      if (sheetName === "Ledger") {
+        return [{
+          id: " led_copied\nMemo: hidden ",
+          date: " 2026-07-12\nmanual ",
+          type: " Income ",
+          category: " Cake\nbalance ",
+          description: " Paid\nby e-transfer ",
+          amount: 80,
+          quantity: 2,
+          orderId: " ord_copied\nMemo: hidden "
+        }];
+      }
+
+      return [];
+    });
+
+    expect(listAdminData().data.ledger[0]).toMatchObject({
+      id: "led_copied Memo: hidden",
+      date: "2026-07-12 manual",
+      type: "income",
+      category: "Cake balance",
+      description: "Paid by e-transfer",
+      orderId: "ord_copied Memo: hidden"
     });
   });
 });

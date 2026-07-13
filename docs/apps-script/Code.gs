@@ -254,14 +254,14 @@ function listAdminData() {
       }),
       ledger: readObjects("Ledger").map(function(row) {
         return {
-          id: clean(row.id),
-          date: clean(row.date),
-          type: clean(row.type),
-          category: clean(row.category),
-          description: clean(row.description),
+          id: cleanSingleLine(row.id),
+          date: cleanSingleLine(row.date),
+          type: normalizeLedgerEntryType(row.type || "income"),
+          category: cleanSingleLine(row.category),
+          description: cleanSingleLine(row.description),
           amount: toNumber(row.amount),
           quantity: toPositiveNumber(row.quantity, 1),
-          orderId: clean(row.orderId)
+          orderId: cleanSingleLine(row.orderId)
         };
       })
     }
