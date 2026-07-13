@@ -75,6 +75,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Ignore copied add-ons scoped to another product inside inquiry summaries, so stale direct callers cannot display or price hidden options.
 - Include selected add-ons in deployed Apps Script fallback summaries too, so direct Sheet submissions keep quote extras visible.
 - Include Sheet-backed cake size and flavour labels in deployed Apps Script fallback summaries too, so direct submissions do not save bare catalog IDs.
+- Collapse copied Sheet-backed deployed fallback summary labels too, so direct submissions cannot save hidden line breaks in selected options.
 - Normalize copied Apps Script estimate input casing, so direct deployed submissions still price Sheet-managed cake sizes and add-ons.
 - Order copied Apps Script estimate ranges before totaling, so direct deployed summaries cannot show inverted quote totals.
 - Normalize copied Apps Script admin order reads, so manual Sheet edits cannot leak multiline text or inverted estimates back to admin consumers.

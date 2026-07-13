@@ -579,6 +579,47 @@ describe("Apps Script Code.gs submitOrder", () => {
     );
     expect(appendObject.mock.calls[0][1].summary).toContain("Flavour: Mango saffron");
   });
+
+  it("collapses copied Sheet-backed fallback summary labels before appending order rows", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
+      if (sheetName === "Products") {
+        return [{ id: "cake", low: 58, high: 150 }];
+      }
+      if (sheetName === "Offerings") {
+        return [
+          { id: "tall-six", productId: "cake", category: "cake-size", label: " Tall six\ncelebration cake ", low: 72, high: 84 },
+          { id: "mango-saffron", productId: "all", category: "flavour", label: " Mango\nsaffron ", low: 0, high: 0 },
+          { id: "gold-leaf", productId: "all", category: "add-on", label: " Gold\nleaf finish ", low: 18, high: 24 }
+        ];
+      }
+      return [];
+    });
+
+    submitOrder({
+      inquiry: {
+        name: "Amina",
+        email: "amina@example.com",
+        phone: "4165550101",
+        eventDate: "2099-05-20",
+        productType: "cake",
+        cakeSizeId: "tall-six",
+        flavourId: "mango-saffron",
+        addOnIds: ["gold-leaf"],
+        budget: "100-150",
+        message: "Birthday cake with mango saffron."
+      }
+    });
+
+    const summary = appendObject.mock.calls[0][1].summary;
+
+    expect(summary).toContain("Cake size: Tall six celebration cake");
+    expect(summary).toContain("Flavour: Mango saffron");
+    expect(summary).toContain("Add-ons: Gold leaf finish");
+    expect(summary).not.toContain("Tall six\ncelebration cake");
+    expect(summary).not.toContain("Mango\nsaffron");
+    expect(summary).not.toContain("Gold\nleaf finish");
+  });
 });
 
 describe("Apps Script Code.gs request payloads", () => {
