@@ -669,7 +669,7 @@ function selectedAddOnLabels(inquiry) {
       const productId = clean(row.productId || "all").toLowerCase();
       return isAddOnOffering(row) && clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
     })[0];
-    return addOn ? clean(addOn.label || id) : "";
+    return addOn ? cleanSingleLine(addOn.label || id) : "";
   }).filter(function(label) {
     return label;
   });
@@ -687,7 +687,7 @@ function selectedOfferingLabel(inquiry, id) {
     return clean(row.id).toLowerCase() === offeringId && (productId === "all" || productId === productType);
   })[0];
 
-  return offering ? clean(offering.label || offeringId) : "";
+  return offering ? cleanSingleLine(offering.label || offeringId) : "";
 }
 
 function buildSummary(inquiry, estimate) {
