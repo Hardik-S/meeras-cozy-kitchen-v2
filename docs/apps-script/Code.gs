@@ -394,7 +394,7 @@ function catalogTextOrDefault(row, key, fallback) {
   if (typeof row[key] !== "string") {
     throw new Error("Unsupported catalog text value.");
   }
-  return clean(row[key]) || fallback;
+  return cleanSingleLine(row[key]) || fallback;
 }
 
 function catalogRequiredText(row, key) {
