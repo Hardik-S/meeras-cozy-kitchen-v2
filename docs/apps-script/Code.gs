@@ -279,7 +279,7 @@ function updateSettings(payload) {
   allowed.forEach(function(key) {
     if (Object.prototype.hasOwnProperty.call(settings, key)) {
       assertSettingValue(settings[key]);
-      setSetting(key, settingValueOrDefault(key, settings[key], ""));
+      setSetting(key, settingValueOrDefault(key, settings[key], settingDefaultValue(key)));
     }
   });
   audit("updateSettings", JSON.stringify(settings));
@@ -303,6 +303,16 @@ function assertSettingKeys(settings, allowed) {
 function settingValueOrDefault(key, value, fallback) {
   const normalized = key === "chefNotificationCopy" ? clean(value) : cleanSingleLine(value);
   return normalized || fallback;
+}
+
+function settingDefaultValue(key) {
+  const defaults = {
+    defaultSender: SETTINGS.defaultEmail,
+    defaultReceiver: SETTINGS.defaultEmail,
+    senderName: SETTINGS.senderName,
+    chefNotificationCopy: "New bakery inquiry received. Reply from the admin dashboard or your inbox."
+  };
+  return defaults[key] || "";
 }
 
 function upsertProduct(payload) {

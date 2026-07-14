@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifyAdminSessionToken } from "@/lib/admin-auth";
 import { listAdminDataFromAppsScript, mutateAdminDataInAppsScript } from "@/lib/apps-script";
+import { defaultAdminData } from "@/lib/catalog";
 
 const allowedMutations = new Set([
   "updateSettings",
@@ -144,13 +145,20 @@ function hasUnsupportedSettingKey(settings: Record<string, unknown>) {
 }
 
 function normalizeSettingsValues(settings: Record<string, unknown>) {
+  const normalizeSettingValue = (key: string, value: string) => {
+    const normalized = key !== "chefNotificationCopy"
+      ? value.trim().replace(/\s+/g, " ")
+      : value.trim();
+    const fallback = defaultAdminData.settings[key as keyof typeof defaultAdminData.settings];
+
+    return normalized || fallback;
+  };
+
   return Object.fromEntries(
     Object.entries(settings).map(([key, value]) => [
       key,
-      typeof value === "string" && key !== "chefNotificationCopy"
-        ? value.trim().replace(/\s+/g, " ")
-        : typeof value === "string"
-          ? value.trim()
+      typeof value === "string"
+        ? normalizeSettingValue(key, value)
           : value
     ])
   );
