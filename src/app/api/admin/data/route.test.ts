@@ -108,7 +108,7 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).not.toHaveBeenCalled();
   });
 
-  it("trims copied settings values before reaching Apps Script", async () => {
+  it("collapses copied notification routing settings before reaching Apps Script", async () => {
     vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
 
     const response = await POST(new Request("http://localhost/api/admin/data", {
@@ -121,10 +121,10 @@ describe("POST /api/admin/data", () => {
         action: "updateSettings",
         payload: {
           settings: {
-            defaultSender: " Meera's Cozy Kitchen <orders@example.com> ",
-            defaultReceiver: " chef@example.com ",
-            senderName: " Meera ",
-            chefNotificationCopy: " prep@example.com "
+            defaultSender: " Meera's Cozy Kitchen\n<orders@example.com> ",
+            defaultReceiver: " chef\ninbox@example.com ",
+            senderName: " Meera\nSethi ",
+            chefNotificationCopy: " New inquiry\nreceived. "
           }
         }
       })
@@ -134,9 +134,9 @@ describe("POST /api/admin/data", () => {
     expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("updateSettings", {
       settings: {
         defaultSender: "Meera's Cozy Kitchen <orders@example.com>",
-        defaultReceiver: "chef@example.com",
-        senderName: "Meera",
-        chefNotificationCopy: "prep@example.com"
+        defaultReceiver: "chef inbox@example.com",
+        senderName: "Meera Sethi",
+        chefNotificationCopy: "New inquiry\nreceived."
       }
     });
   });

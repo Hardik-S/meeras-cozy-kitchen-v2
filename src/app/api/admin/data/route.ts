@@ -145,7 +145,14 @@ function hasUnsupportedSettingKey(settings: Record<string, unknown>) {
 
 function normalizeSettingsValues(settings: Record<string, unknown>) {
   return Object.fromEntries(
-    Object.entries(settings).map(([key, value]) => [key, typeof value === "string" ? value.trim() : value])
+    Object.entries(settings).map(([key, value]) => [
+      key,
+      typeof value === "string" && key !== "chefNotificationCopy"
+        ? value.trim().replace(/\s+/g, " ")
+        : typeof value === "string"
+          ? value.trim()
+          : value
+    ])
   );
 }
 
