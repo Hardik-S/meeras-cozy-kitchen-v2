@@ -391,6 +391,37 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("collapses copied live notification routing settings after Apps Script validation", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          settings: {
+            defaultSender: " bakery\nsender@example.com ",
+            defaultReceiver: " meera\ninbox@example.com ",
+            senderName: " Meera's\nCozy\tKitchen ",
+            chefNotificationCopy: " New inquiry\nreceived. "
+          }
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toMatchObject({
+      status: "live",
+      data: {
+        settings: {
+          defaultSender: "bakery sender@example.com",
+          defaultReceiver: "meera inbox@example.com",
+          senderName: "Meera's Cozy Kitchen",
+          chefNotificationCopy: "New inquiry\nreceived."
+        }
+      }
+    });
+  });
+
   it("normalizes copied live order strings before finance summaries use them", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");

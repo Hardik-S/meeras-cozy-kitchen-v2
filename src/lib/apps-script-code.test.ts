@@ -98,6 +98,8 @@ function loadUpdateSettings(setSetting: (key: string, value: string) => unknown)
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
     extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
+    extractFunction(source, "settingValueOrDefault"),
     extractFunction(source, "assertSettingValue"),
     extractFunction(source, "assertSettingKeys"),
     extractFunction(source, "updateSettings"),
@@ -109,6 +111,20 @@ function loadUpdateSettings(setSetting: (key: string, value: string) => unknown)
     audit: vi.fn(),
     listAdminData: vi.fn()
   }) as (payload: { settings?: Record<string, unknown> }) => unknown;
+}
+
+function loadSettingsObject(readObjects: (sheetName: string) => Array<Record<string, unknown>>) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    "const SETTINGS = { defaultEmail: 'batb4016@gmail.com', senderName: \"Meera's Cozy Kitchen\" };",
+    extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
+    extractFunction(source, "settingValueOrDefault"),
+    extractFunction(source, "settingsObject"),
+    "settingsObject"
+  ].join("\n");
+
+  return runInNewContext(script, { readObjects }) as () => Record<string, string>;
 }
 
 function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<string, unknown>) => unknown) {
@@ -780,6 +796,41 @@ describe("Apps Script Code.gs updateOrderStatus", () => {
 });
 
 describe("Apps Script Code.gs updateSettings", () => {
+  it("collapses copied notification routing settings before patching the sheet", () => {
+    const setSetting = vi.fn();
+    const updateSettings = loadUpdateSettings(setSetting);
+
+    updateSettings({
+      settings: {
+        defaultSender: " bakery\nsender@example.com ",
+        defaultReceiver: " meera\ninbox@example.com ",
+        senderName: " Meera's\nCozy\tKitchen ",
+        chefNotificationCopy: " New inquiry\nreceived. "
+      }
+    });
+
+    expect(setSetting).toHaveBeenCalledWith("defaultSender", "bakery sender@example.com");
+    expect(setSetting).toHaveBeenCalledWith("defaultReceiver", "meera inbox@example.com");
+    expect(setSetting).toHaveBeenCalledWith("senderName", "Meera's Cozy Kitchen");
+    expect(setSetting).toHaveBeenCalledWith("chefNotificationCopy", "New inquiry\nreceived.");
+  });
+
+  it("collapses copied notification routing settings before reading the sheet", () => {
+    const settingsObject = loadSettingsObject(() => [
+      { key: "defaultSender", value: " bakery\nsender@example.com " },
+      { key: "defaultReceiver", value: " meera\ninbox@example.com " },
+      { key: "senderName", value: " Meera's\nCozy\tKitchen " },
+      { key: "chefNotificationCopy", value: " New inquiry\nreceived. " }
+    ]);
+
+    expect(settingsObject()).toMatchObject({
+      defaultSender: "bakery sender@example.com",
+      defaultReceiver: "meera inbox@example.com",
+      senderName: "Meera's Cozy Kitchen",
+      chefNotificationCopy: "New inquiry\nreceived."
+    });
+  });
+
   it("rejects non-string setting values before patching the sheet", () => {
     const setSetting = vi.fn();
     const updateSettings = loadUpdateSettings(setSetting);
