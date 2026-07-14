@@ -132,6 +132,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Reject non-string admin setting values before Sheet mutations run, so copied direct writes cannot save object-shaped email settings.
 - Reject unknown admin setting keys before Sheet mutations run, so typos cannot pretend notification routing was saved.
 - Trim copied admin setting values before Sheet mutations run, so pasted notification routing does not save padded emails or names.
+- Collapse copied notification routing settings before live reads and deployed writes, so hidden line breaks cannot split sender, receiver, or sender-name values.
 - Reject non-string admin target IDs before Sheet mutations run, so copied direct writes cannot patch or delete object-shaped row keys.
 - Reject missing order statuses before Sheet mutations run, so copied direct writes cannot reset an order to `new` accidentally.
 - Clear malformed public catalog cache entries when the live catalog is unavailable, so stale browser storage does not keep slowing fallback page loads.

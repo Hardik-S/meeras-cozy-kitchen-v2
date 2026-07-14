@@ -219,10 +219,13 @@ function normalizeAdminProduct(product: AdminData["products"][number]): AdminDat
 }
 
 function normalizeAdminSettings(settings: AdminData["settings"]): AdminData["settings"] {
+  const normalizeSingleLineSetting = (value: string, fallback: string) =>
+    normalizeAdminDisplayText(value) || fallback;
+
   return {
-    defaultSender: settings.defaultSender.trim() || defaultAdminData.settings.defaultSender,
-    defaultReceiver: settings.defaultReceiver.trim() || defaultAdminData.settings.defaultReceiver,
-    senderName: settings.senderName.trim() || defaultAdminData.settings.senderName,
+    defaultSender: normalizeSingleLineSetting(settings.defaultSender, defaultAdminData.settings.defaultSender),
+    defaultReceiver: normalizeSingleLineSetting(settings.defaultReceiver, defaultAdminData.settings.defaultReceiver),
+    senderName: normalizeSingleLineSetting(settings.senderName, defaultAdminData.settings.senderName),
     chefNotificationCopy: settings.chefNotificationCopy.trim() || defaultAdminData.settings.chefNotificationCopy
   };
 }

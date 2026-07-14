@@ -279,7 +279,7 @@ function updateSettings(payload) {
   allowed.forEach(function(key) {
     if (Object.prototype.hasOwnProperty.call(settings, key)) {
       assertSettingValue(settings[key]);
-      setSetting(key, clean(settings[key]));
+      setSetting(key, settingValueOrDefault(key, settings[key], ""));
     }
   });
   audit("updateSettings", JSON.stringify(settings));
@@ -298,6 +298,11 @@ function assertSettingKeys(settings, allowed) {
       throw new Error("Unsupported settings key.");
     }
   });
+}
+
+function settingValueOrDefault(key, value, fallback) {
+  const normalized = key === "chefNotificationCopy" ? clean(value) : cleanSingleLine(value);
+  return normalized || fallback;
 }
 
 function upsertProduct(payload) {
@@ -830,7 +835,7 @@ function settingsObject() {
     if (!Object.prototype.hasOwnProperty.call(settings, key)) {
       return settings;
     }
-    settings[key] = clean(row.value) || defaults[key];
+    settings[key] = settingValueOrDefault(key, row.value, defaults[key]);
     return settings;
   }, defaults);
 }
