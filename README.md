@@ -120,6 +120,7 @@ Keeping v2 in a separate folder and repository gives the project a clean history
 - Normalize live Sheet order status casing before admin and finance consumers use it, so copied statuses cannot hide valid orders.
 - Normalize live Sheet catalog text before admin consumers use it, so copied product and offering labels stay clean outside public catalog mapping.
 - Collapse copied live Sheet catalog display text before admin consumers use it, so product labels and serving notes cannot add hidden rows in dashboards.
+- Normalize copied deployed Apps Script catalog reads too, so direct admin consumers see clean product and offering rows after manual Sheet edits.
 - Treat null admin dashboard response envelopes as save/load failures, so optimistic browser edits roll back instead of leaking client TypeErrors.
 - Catch rejected admin data loads after login or refresh, so a temporary Apps Script or network outage leaves the dashboard on its current screen with a clear load-failure notice instead of an unhandled client error.
 - Catch rejected admin login requests too, so a temporary session endpoint outage leaves the PIN screen with a clear retry notice.
