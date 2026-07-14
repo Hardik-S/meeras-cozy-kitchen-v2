@@ -208,8 +208,8 @@ function listAdminData() {
       settings: settingsObject(),
       products: readObjects("Products").map(function(row) {
         return {
-          id: row.id,
-          label: row.label,
+          id: cleanSingleLine(row.id).toLowerCase(),
+          label: cleanSingleLine(row.label),
           low: toNumber(row.low),
           high: toNumber(row.high),
           enabled: toBoolean(row.enabled),
@@ -218,13 +218,13 @@ function listAdminData() {
       }),
       offerings: readObjects("Offerings").map(function(row) {
         return {
-          id: row.id,
-          productId: row.productId,
-          category: row.category,
-          label: row.label,
+          id: cleanSingleLine(row.id).toLowerCase(),
+          productId: cleanSingleLine(row.productId).toLowerCase(),
+          category: cleanSingleLine(row.category).toLowerCase(),
+          label: cleanSingleLine(row.label),
           low: toNumber(row.low),
           high: toNumber(row.high),
-          servings: row.servings,
+          servings: cleanSingleLine(row.servings),
           enabled: toBoolean(row.enabled),
           sortOrder: toNumber(row.sortOrder)
         };

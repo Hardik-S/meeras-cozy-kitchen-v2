@@ -177,7 +177,15 @@ function loadListAdminData(readObjects: (sheetName: string) => Array<Record<stri
       senderName: "Meera's Cozy Kitchen",
       chefNotificationCopy: "New bakery inquiry received."
     }))
-  }) as () => { ok: true; data: { orders: Array<Record<string, unknown>>; ledger: Array<Record<string, unknown>> } };
+  }) as () => {
+    ok: true;
+    data: {
+      products: Array<Record<string, unknown>>;
+      offerings: Array<Record<string, unknown>>;
+      orders: Array<Record<string, unknown>>;
+      ledger: Array<Record<string, unknown>>;
+    };
+  };
 }
 
 function loadUpdateOrderFlags(patchByIdAndReturn: (sheetName: string, id: string, patch: Record<string, unknown>, action: string) => unknown) {
@@ -652,6 +660,49 @@ describe("Apps Script Code.gs request payloads", () => {
 });
 
 describe("Apps Script Code.gs listAdminData", () => {
+  it("collapses copied Sheet catalog text before returning admin data", () => {
+    const listAdminData = loadListAdminData((sheetName) => {
+      if (sheetName === "Products") {
+        return [{
+          id: " Dessert-Box ",
+          label: " Dessert\nbox ",
+          low: 38,
+          high: 48,
+          enabled: true,
+          sortOrder: 3
+        }];
+      }
+
+      if (sheetName === "Offerings") {
+        return [{
+          id: " Gold-Leaf ",
+          productId: " Dessert-Box ",
+          category: " Add-On ",
+          label: " Gold\nleaf finish ",
+          low: 8,
+          high: 12,
+          servings: " 12\npieces ",
+          enabled: true,
+          sortOrder: 5
+        }];
+      }
+
+      return [];
+    });
+
+    expect(listAdminData().data.products[0]).toMatchObject({
+      id: "dessert-box",
+      label: "Dessert box"
+    });
+    expect(listAdminData().data.offerings[0]).toMatchObject({
+      id: "gold-leaf",
+      productId: "dessert-box",
+      category: "add-on",
+      label: "Gold leaf finish",
+      servings: "12 pieces"
+    });
+  });
+
   it("collapses copied Sheet order text before returning admin data", () => {
     const listAdminData = loadListAdminData((sheetName) => {
       if (sheetName === "Orders") {
