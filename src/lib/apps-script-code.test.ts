@@ -97,9 +97,11 @@ function loadSubmitOrder(
 function loadUpdateSettings(setSetting: (key: string, value: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
+    "const SETTINGS = { defaultEmail: 'batb4016@gmail.com', senderName: \"Meera's Cozy Kitchen\" };",
     extractFunction(source, "clean"),
     extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "settingValueOrDefault"),
+    extractFunction(source, "settingDefaultValue"),
     extractFunction(source, "assertSettingValue"),
     extractFunction(source, "assertSettingKeys"),
     extractFunction(source, "updateSettings"),
@@ -813,6 +815,28 @@ describe("Apps Script Code.gs updateSettings", () => {
     expect(setSetting).toHaveBeenCalledWith("defaultReceiver", "meera inbox@example.com");
     expect(setSetting).toHaveBeenCalledWith("senderName", "Meera's Cozy Kitchen");
     expect(setSetting).toHaveBeenCalledWith("chefNotificationCopy", "New inquiry\nreceived.");
+  });
+
+  it("defaults blank copied notification settings before patching the sheet", () => {
+    const setSetting = vi.fn();
+    const updateSettings = loadUpdateSettings(setSetting);
+
+    updateSettings({
+      settings: {
+        defaultSender: "   ",
+        defaultReceiver: "\n\t",
+        senderName: " ",
+        chefNotificationCopy: "   "
+      }
+    });
+
+    expect(setSetting).toHaveBeenCalledWith("defaultSender", "batb4016@gmail.com");
+    expect(setSetting).toHaveBeenCalledWith("defaultReceiver", "batb4016@gmail.com");
+    expect(setSetting).toHaveBeenCalledWith("senderName", "Meera's Cozy Kitchen");
+    expect(setSetting).toHaveBeenCalledWith(
+      "chefNotificationCopy",
+      "New bakery inquiry received. Reply from the admin dashboard or your inbox."
+    );
   });
 
   it("collapses copied notification routing settings before reading the sheet", () => {

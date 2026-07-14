@@ -141,6 +141,39 @@ describe("POST /api/admin/data", () => {
     });
   });
 
+  it("defaults blank copied notification settings before reaching Apps Script", async () => {
+    vi.mocked(mutateAdminDataInAppsScript).mockResolvedValue({ ok: true });
+
+    const response = await POST(new Request("http://localhost/api/admin/data", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: `meera_admin_session=${encodeURIComponent(createAdminSessionToken())}`
+      },
+      body: JSON.stringify({
+        action: "updateSettings",
+        payload: {
+          settings: {
+            defaultSender: "   ",
+            defaultReceiver: "\n\t",
+            senderName: " ",
+            chefNotificationCopy: "   "
+          }
+        }
+      })
+    }));
+
+    expect(response.status).toBe(200);
+    expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("updateSettings", {
+      settings: {
+        defaultSender: "batb4016@gmail.com",
+        defaultReceiver: "batb4016@gmail.com",
+        senderName: "Meera's Cozy Kitchen",
+        chefNotificationCopy: "New bakery inquiry received. Reply from the admin dashboard or your inbox."
+      }
+    });
+  });
+
   it("rejects invalid order statuses before reaching Apps Script", async () => {
     const response = await POST(new Request("http://localhost/api/admin/data", {
       method: "POST",
