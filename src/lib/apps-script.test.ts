@@ -277,6 +277,34 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("rejects fractional live ledger quantities before finance summaries use them", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          ...defaultAdminData,
+          ledger: [{
+            id: "led_fractional_quantity",
+            date: "2026-06-10",
+            type: "expense",
+            category: "Packaging",
+            description: "Cake box",
+            amount: 12,
+            quantity: 1.5,
+            orderId: ""
+          }]
+        }
+      }), { status: 200 })
+    ));
+
+    await expect(listAdminDataFromAppsScript()).resolves.toEqual({
+      status: "error",
+      message: "Apps Script returned malformed admin data."
+    });
+  });
+
   it("normalizes copied offering categories before public catalog mapping", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
