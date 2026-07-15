@@ -171,7 +171,7 @@ function isLedgerEntry(value: unknown) {
     && hasStringFields(value, ["id", "date", "type", "category", "description", "orderId"])
     && isLedgerEntryType(value.type)
     && hasNumberFields(value, ["amount"])
-    && (value.quantity === undefined || isFiniteNumber(value.quantity));
+    && (value.quantity === undefined || (isIntegerNumber(value.quantity) && value.quantity > 0));
 }
 
 function isAdminData(value: unknown): value is AdminData {
