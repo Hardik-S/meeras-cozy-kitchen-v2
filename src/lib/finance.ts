@@ -28,8 +28,8 @@ function normalizeLedgerType(value: LedgerEntry["type"]): LedgerEntryType {
   return value.trim().toLowerCase() as LedgerEntryType;
 }
 
-function normalizeLedgerText(value: string) {
-  return value.trim().replace(/\s+/g, " ");
+function normalizeLedgerText(value: unknown) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 }
 
 export function normalizeLedgerEntry(entry: LedgerEntryLike): LedgerEntry {

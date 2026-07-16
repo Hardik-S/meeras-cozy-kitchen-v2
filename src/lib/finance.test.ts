@@ -278,6 +278,39 @@ describe("finance helpers", () => {
     ]);
   });
 
+  it("ignores malformed direct ledger text before reports and exports use it", () => {
+    const copiedRows = [{
+      id: { copied: "led_malformed_text" },
+      date: "2026-05-12",
+      type: " Expense ",
+      category: ["Packaging"],
+      description: { copied: "Receipt note" },
+      amount: 8,
+      quantity: 1,
+      orderId: ["ord_1"]
+    }] as unknown as LedgerEntry[];
+
+    const report = calculateMonthlyFinanceReport(copiedRows, [], "2026-05");
+
+    expect(report.entries[0]).toMatchObject({
+      id: "",
+      type: "expense",
+      category: "",
+      description: "",
+      orderId: ""
+    });
+    expect(report.expenses).toBe(8);
+    expect(buildLedgerCsvRows(copiedRows, "2026-05")[1]).toEqual([
+      "2026-05-12",
+      "expense",
+      "",
+      "",
+      1,
+      8,
+      ""
+    ]);
+  });
+
   it("formats the current month key from a date", () => {
     expect(currentMonthKey(new Date("2026-05-07T12:00:00"))).toBe("2026-05");
   });
