@@ -167,7 +167,12 @@ describe("OrderForm cake-only flow", () => {
   });
 
   it("requires pickup time and all five acknowledgements", async () => {
-    vi.stubGlobal("fetch", vi.fn());
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      ok: true,
+      source: "fallback",
+      catalog: defaultPublicCatalog
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "" } });
@@ -177,7 +182,7 @@ describe("OrderForm cake-only flow", () => {
 
     expect(await screen.findByText("Please choose a pickup time.")).toBeInTheDocument();
     expect(screen.getByText("Please confirm that inspiration photos may require slight adjustments.")).toBeInTheDocument();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/inquiry")).toBe(false);
   });
 
   it("falls back to a safe pending order when the successful API response lacks order metadata", async () => {
