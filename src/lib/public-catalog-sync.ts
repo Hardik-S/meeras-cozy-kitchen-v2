@@ -5,7 +5,7 @@ type CatalogSyncResult = {
   source: "default" | "cached" | "live" | "fallback";
 };
 
-const cacheKey = "meera:public-catalog";
+const cacheKey = "meera:public-catalog:cake-v1";
 const cacheTtlMs = 10 * 60 * 1000;
 let inFlight: Promise<CatalogSyncResult> | undefined;
 
@@ -17,12 +17,16 @@ function isPublicCatalog(value: unknown): value is PublicCatalog {
     && Array.isArray(catalog.offerings)
     && Array.isArray(catalog.cakeSizes)
     && Array.isArray(catalog.flavours)
-    && Array.isArray(catalog.addOns)
+    && Array.isArray(catalog.frostings)
+    && Array.isArray(catalog.fillings)
+    && Array.isArray(catalog.toppings)
     && catalog.products.every(isPublicProduct)
     && catalog.offerings.every(isPublicOffering)
     && catalog.cakeSizes.every((offering) => hasPublicOfferingCategory(offering, "cake-size"))
     && catalog.flavours.every((offering) => hasPublicOfferingCategory(offering, "flavour"))
-    && catalog.addOns.every((offering) => hasPublicOfferingCategory(offering, "add-on"));
+    && catalog.frostings.every((offering) => hasPublicOfferingCategory(offering, "frosting"))
+    && catalog.fillings.every((offering) => hasPublicOfferingCategory(offering, "filling"))
+    && catalog.toppings.every((offering) => hasPublicOfferingCategory(offering, "topping"));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -52,7 +56,11 @@ function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined
   if (typeof value !== "string") return undefined;
 
   const category = value.trim().toLowerCase();
-  return category === "cake-size" || category === "flavour" || category === "add-on"
+  return category === "cake-size"
+    || category === "flavour"
+    || category === "frosting"
+    || category === "filling"
+    || category === "topping"
     ? category
     : undefined;
 }
@@ -122,7 +130,9 @@ function normalizePublicCatalog(catalog: PublicCatalog): PublicCatalog {
     offerings,
     cakeSizes: offerings.filter((offering) => offering.category === "cake-size"),
     flavours: offerings.filter((offering) => offering.category === "flavour"),
-    addOns: offerings.filter((offering) => offering.category === "add-on")
+    frostings: offerings.filter((offering) => offering.category === "frosting"),
+    fillings: offerings.filter((offering) => offering.category === "filling"),
+    toppings: offerings.filter((offering) => offering.category === "topping")
   };
 }
 

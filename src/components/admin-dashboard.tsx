@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, Heart, Lock, Pin, Plus, Printer, RefreshCcw, Save, Trash2 } from "lucide-react";
 import { defaultAdminData, type AdminData, type AdminOffering, type AdminOrder, type AdminProduct, type LedgerEntry, type OrderStatus } from "@/lib/catalog";
 import { buildLedgerCsvRows, calculateMonthlyFinanceReport, currentMonthKey, ledgerEntryTotal } from "@/lib/finance";
+import { pickupTimeLabel } from "@/lib/validation";
 
 type Tab = "orders" | "products" | "finances" | "settings";
 
@@ -22,7 +23,7 @@ const emptyProduct: AdminProduct = {
 const emptyOffering: AdminOffering = {
   id: "new-offering",
   productId: "all",
-  category: "add-on",
+  category: "topping",
   label: "",
   low: 0,
   high: 0,
@@ -55,6 +56,10 @@ function urgencyClass(order: AdminOrder) {
 
 function currency(value: number) {
   return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD", maximumFractionDigits: 0 }).format(value);
+}
+
+function priceLabel(low: number, high: number) {
+  return low === high ? currency(low) : `${currency(low)}-${currency(high)}`;
 }
 
 function slug(value: string) {
@@ -304,7 +309,7 @@ export function AdminDashboard() {
                 <button className="note-main" type="button" onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}>
                   <span>
                     <strong>{order.name}</strong>
-                    <small>{order.eventDate} · {order.productType} · {currency(order.estimateLow)}-{currency(order.estimateHigh)}</small>
+                    <small>{order.eventDate} · {order.pickupTime ? pickupTimeLabel(order.pickupTime) : "time to confirm"} · {order.cakeSizeId} · {priceLabel(order.estimateLow, order.estimateHigh)}</small>
                   </span>
                   <span className="note-status">{order.status}</span>
                 </button>
@@ -331,6 +336,10 @@ export function AdminDashboard() {
                 {expandedOrderId === order.id ? (
                   <div className="note-detail">
                     <p>{order.message}</p>
+                    <p><strong>Cake:</strong> {order.cakeSizeId} · {order.flavourId}</p>
+                    <p><strong>Frosting:</strong> {order.frostingId || "No paid upgrade"}</p>
+                    <p><strong>Fillings:</strong> {order.fillingIds?.length ? order.fillingIds.join(", ") : "None"}</p>
+                    <p><strong>Toppings:</strong> {order.toppingIds?.length ? order.toppingIds.join(", ") : "None"}</p>
                     <p><strong>Email:</strong> {order.email}</p>
                     <p><strong>Phone:</strong> {order.phone}</p>
                     <pre>{order.summary}</pre>
@@ -349,7 +358,7 @@ export function AdminDashboard() {
             <div className="admin-list">
               {data.products.map((product) => (
                 <div key={product.id} className="admin-row">
-                  <span><strong>{product.label}</strong><small>{currency(product.low)}-{currency(product.high)}</small></span>
+                  <span><strong>{product.label}</strong><small>{priceLabel(product.low, product.high)}</small></span>
                   <span className="row-actions">
                     <button type="button" onClick={() => mutate("toggleProduct", { id: product.id, enabled: !product.enabled }, (current) => ({
                       ...current,
@@ -370,7 +379,7 @@ export function AdminDashboard() {
             <div className="admin-list">
               {data.offerings.map((offering) => (
                 <div key={offering.id} className="admin-row">
-                  <span><strong>{offering.label}</strong><small>{offering.category} · {offering.low || offering.high ? `${currency(offering.low)}-${currency(offering.high)}` : "included"}</small></span>
+                  <span><strong>{offering.label}</strong><small>{offering.category} · {offering.low || offering.high ? priceLabel(offering.low, offering.high) : "included"}</small></span>
                   <span className="row-actions">
                     <button type="button" onClick={() => mutate("toggleOffering", { id: offering.id, enabled: !offering.enabled }, (current) => ({
                       ...current,
@@ -482,7 +491,9 @@ function OfferingEditor({ offering, onChange, onSave }: { offering: AdminOfferin
       <select className="admin-input" value={offering.category} onChange={(event) => onChange({ ...offering, category: event.target.value as AdminOffering["category"] })}>
         <option value="cake-size">Cake size</option>
         <option value="flavour">Flavour</option>
-        <option value="add-on">Add-on</option>
+        <option value="frosting">Frosting</option>
+        <option value="filling">Filling</option>
+        <option value="topping">Topping</option>
       </select>
       <input className="admin-input" placeholder="Low" type="number" value={offering.low} onChange={(event) => onChange({ ...offering, low: Number(event.target.value) })} />
       <input className="admin-input" placeholder="High" type="number" value={offering.high} onChange={(event) => onChange({ ...offering, high: Number(event.target.value) })} />

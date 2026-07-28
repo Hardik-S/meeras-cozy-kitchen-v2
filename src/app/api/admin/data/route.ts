@@ -18,7 +18,7 @@ const allowedMutations = new Set([
 
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
-const allowedOfferingCategories = new Set(["cake-size", "flavour", "add-on"]);
+const allowedOfferingCategories = new Set(["cake-size", "flavour", "frosting", "filling", "topping"]);
 const allowedSettingKeys = new Set(["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
 const catalogToggleMutations = new Set(["toggleProduct", "toggleOffering"]);
 const idRequiredMutations = new Set([

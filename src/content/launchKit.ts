@@ -1,26 +1,26 @@
 export const launchChecklist = [
   "Confirm home-based food business obligations with Peel Public Health before taking paid orders.",
-  "Keep the first menu narrow: buttercream cakes, cupcakes, and shelf-stable-friendly dessert boxes.",
+  "Keep the first menu focused on the published cake sizes, flavours, frostings, fillings, and toppings.",
   "Photograph at least three practice cakes in daylight before posting a full offer.",
   "Use written order confirmations for pickup time, allergens, deposit, design, and final price.",
   "Do not claim halal certification, inspection approval, or allergen-free preparation."
 ];
 
 export const practiceCakePlan = [
-  "One 6 inch birthday cake with piped border and simple message.",
-  "One 8 inch floral cake with clean slice photo.",
-  "One cupcake dozen with two frosting styles.",
-  "One boxed Eid or birthday dessert sample if ingredient handling is low-risk."
+  "One 4-inch birthday cake with a piped border and simple message.",
+  "One 6-inch floral cake with a clean slice photo.",
+  "One 8-inch chocolate cake with a ganache finish.",
+  "One fruit-topped cake photographed in daylight."
 ];
 
 export const dmTemplates = [
   {
     title: "First inquiry reply",
-    body: "Thanks for reaching out. Could you send the date, servings, flavour idea, design inspiration, allergy notes, and pickup timing? I will confirm what is possible before quoting."
+    body: "Thanks for reaching out. Could you send the pickup date and time, cake size, flavour, design inspiration, and allergy notes? I will confirm what is possible before quoting."
   },
   {
     title: "Scope boundary",
-    body: "I am keeping the launch menu focused while I build the portfolio, so I can offer a simpler version of that design rather than a direct replica."
+    body: "I am keeping the launch menu focused while I build the photo gallery, so I can offer a simpler version of that design rather than a direct replica."
   },
   {
     title: "No rush order",

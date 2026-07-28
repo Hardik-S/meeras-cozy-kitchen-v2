@@ -7,28 +7,35 @@ import { createInquirySchema, type InquiryInput } from "@/lib/validation";
 
 const paymentEmail = "m.ssethi1123@gmail.com";
 
+type CatalogIssueKey = "cakeSizeId" | "flavourId" | "frostingId" | "fillingIds" | "toppingIds";
+
 function validateCatalogSelections(inquiry: InquiryInput, catalog: PublicCatalog) {
-  const issues: Partial<Record<"productType" | "cakeSizeId" | "flavourId" | "addOnIds", string[]>> = {};
-  const isAvailableForProduct = (offering: { productId: string }) =>
-    offering.productId === "all" || offering.productId === inquiry.productType;
+  const issues: Partial<Record<CatalogIssueKey, string[]>> = {};
+  const ids = <T extends { id: string }>(items: T[]) => new Set(items.map((item) => item.id));
+  const cakeSizeIds = ids(catalog.cakeSizes);
+  const flavourIds = ids(catalog.flavours);
+  const frostingIds = ids(catalog.frostings);
+  const fillingIds = ids(catalog.fillings);
+  const toppingIds = ids(catalog.toppings);
 
-  if (!catalog.products.some((product) => product.id === inquiry.productType)) {
-    issues.productType = ["Please choose an available product."];
-  }
-
-  const availableCakeSizes = catalog.cakeSizes.filter(isAvailableForProduct);
-  if (inquiry.productType === "cake" && !availableCakeSizes.some((size) => size.id === inquiry.cakeSizeId)) {
+  if (!cakeSizeIds.has(inquiry.cakeSizeId)) {
     issues.cakeSizeId = ["Please choose an available cake size."];
   }
 
-  const availableFlavours = catalog.flavours.filter(isAvailableForProduct);
-  if (!availableFlavours.some((flavour) => flavour.id === inquiry.flavourId)) {
+  if (!flavourIds.has(inquiry.flavourId)) {
     issues.flavourId = ["Please choose an available flavour."];
   }
 
-  const availableAddOns = new Set(catalog.addOns.filter(isAvailableForProduct).map((addOn) => addOn.id));
-  if (inquiry.addOnIds.some((addOnId) => !availableAddOns.has(addOnId))) {
-    issues.addOnIds = ["Please remove unavailable add-ons and try again."];
+  if (inquiry.frostingId && !frostingIds.has(inquiry.frostingId)) {
+    issues.frostingId = ["Please choose an available frosting."];
+  }
+
+  if (inquiry.fillingIds.some((id) => !fillingIds.has(id))) {
+    issues.fillingIds = ["Please remove unavailable fillings and try again."];
+  }
+
+  if (inquiry.toppingIds.some((id) => !toppingIds.has(id))) {
+    issues.toppingIds = ["Please remove unavailable toppings and try again."];
   }
 
   return issues;
@@ -94,11 +101,13 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       phone: parsed.data.phone,
       eventDate: parsed.data.eventDate,
-      productType: parsed.data.productType,
-      cakeSizeId: parsed.data.cakeSizeId ?? "",
-      flavourId: parsed.data.flavourId ?? "",
-      servings: parsed.data.servings,
-      budget: parsed.data.budget,
+      pickupTime: parsed.data.pickupTime,
+      productType: "cake",
+      cakeSizeId: parsed.data.cakeSizeId,
+      flavourId: parsed.data.flavourId,
+      frostingId: parsed.data.frostingId ?? "",
+      fillingIds: parsed.data.fillingIds,
+      toppingIds: parsed.data.toppingIds,
       message: parsed.data.message,
       paymentEmail,
       summary

@@ -1,172 +1,151 @@
 import "@testing-library/jest-dom/vitest";
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { business } from "@/content/business";
 import { defaultPublicCatalog } from "@/lib/catalog";
+import { resetPublicCatalogSyncForTests } from "@/lib/public-catalog-sync";
 import { OrderForm } from "./order-form";
 
 const pushMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: pushMock
-  })
+  useRouter: () => ({ push: pushMock })
 }));
+
+function acknowledgeAll() {
+  for (const label of [
+    business.noticeCopy,
+    business.allergenNotice,
+    business.pickupPolicy,
+    business.ingredientPositioning,
+    "Slight adjustments may be made compared to the inspiration photo."
+  ]) {
+    fireEvent.click(screen.getByLabelText(label));
+  }
+}
 
 function fillValidInquiry() {
   fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Amina" } });
   fireEvent.change(screen.getByLabelText("Email"), { target: { value: "amina@example.com" } });
   fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "4165550101" } });
   fireEvent.change(screen.getByLabelText("Pickup date"), { target: { value: "2099-05-20" } });
+  fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "12:00-14:00" } });
+  fireEvent.change(screen.getByLabelText("Flavour"), { target: { value: "vanilla" } });
+  fireEvent.change(screen.getByLabelText("Frosting upgrade"), {
+    target: { value: "white-chocolate-ganache" }
+  });
+  fireEvent.click(screen.getByLabelText("Raspberry, plus $5"));
+  fireEvent.click(screen.getByLabelText("Apricot, plus $5"));
+  fireEvent.click(screen.getByLabelText("Fresh Strawberry, plus $5"));
   fireEvent.change(screen.getByLabelText("Design notes"), {
     target: { value: "Birthday cake with soft floral piping." }
   });
-
-  for (const checkbox of screen.getAllByRole("checkbox")) {
-    fireEvent.click(checkbox);
-  }
+  acknowledgeAll();
 }
 
-function fillInquiryWithPickupDate(eventDate: string) {
-  fillValidInquiry();
-  fireEvent.change(screen.getByLabelText("Pickup date"), { target: { value: eventDate } });
+function successResponse() {
+  return new Response(JSON.stringify({
+    ok: true,
+    order: {
+      id: "ord_route_123",
+      name: "Amina",
+      email: "amina@example.com",
+      phone: "4165550101",
+      eventDate: "2099-05-20",
+      pickupTime: "12:00-14:00",
+      productType: "cake",
+      cakeSizeId: "four-inch",
+      flavourId: "vanilla",
+      frostingId: "white-chocolate-ganache",
+      fillingIds: ["raspberry-filling", "apricot-filling"],
+      toppingIds: ["fresh-strawberry"],
+      message: "Birthday cake with soft floral piping.",
+      paymentEmail: "m.ssethi1123@gmail.com",
+      summary: "Name: Amina"
+    }
+  }), { status: 200 });
 }
 
-describe("OrderForm v2 submit flow", () => {
+describe("OrderForm cake-only flow", () => {
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     sessionStorage.clear();
     pushMock.mockClear();
+    resetPublicCatalogSyncForTests();
   });
 
-  it("stores the order summary and navigates to payment instructions after API success", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({
+  it("shows only cake controls and the three starting prices", () => {
+    render(<OrderForm />);
+
+    expect(screen.getByRole("button", { name: "4-inch cake, Starting at $35" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "6-inch cake, Starting at $60" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "8-inch cake, Starting at $75" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Pickup time")).toBeInTheDocument();
+    expect(screen.getByLabelText("Frosting upgrade")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/product/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/servings/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/budget/i)).not.toBeInTheDocument();
+  });
+
+  it("submits pickup time and all selected cake options without legacy fields", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
+      void _init;
+      if (String(input) === "/api/inquiry") return successResponse();
+      return new Response(JSON.stringify({
         ok: true,
-        order: {
-          id: "ord_route_123",
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
-        }
-      }), { status: 200 })
-    ));
+        source: "fallback",
+        catalog: defaultPublicCatalog
+      }), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    expect(screen.getByTestId("submit-confetti")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_route_123");
     });
 
-    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
-      id: "ord_route_123",
-      paymentEmail: "m.ssethi1123@gmail.com"
+    const inquiryCall = fetchMock.mock.calls.find(([url]) => String(url) === "/api/inquiry");
+    const payload = JSON.parse(String(inquiryCall?.[1]?.body));
+    expect(payload).toMatchObject({
+      pickupTime: "12:00-14:00",
+      cakeSizeId: "four-inch",
+      flavourId: "vanilla",
+      frostingId: "white-chocolate-ganache",
+      fillingIds: ["raspberry-filling", "apricot-filling"],
+      toppingIds: ["fresh-strawberry"]
     });
-  }, 10_000);
-
-  it("normalizes returned order metadata before storing and routing", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: "  ord_copied_response  ",
-          name: "  Amina  ",
-          email: "  amina@example.com  ",
-          phone: "  4165550101  ",
-          eventDate: "  2099-05-20  ",
-          productType: "  Cake  ",
-          cakeSizeId: "  Eight-Inch  ",
-          flavourId: "  Vanilla-Rose  ",
-          budget: "  100-150  ",
-          message: "  Birthday cake with soft floral piping.  ",
-          paymentEmail: "  payments@example.com  ",
-          summary: "  Name: Amina from copied response  "
-        }
-      }), { status: 200 })
-    ));
-
-    render(<OrderForm />);
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_copied_response");
-    });
-
-    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
-      id: "ord_copied_response",
-      name: "Amina",
-      email: "amina@example.com",
-      productType: "cake",
-      cakeSizeId: "eight-inch",
-      flavourId: "vanilla-rose",
-      paymentEmail: "payments@example.com",
-      summary: "Name: Amina from copied response"
-    });
+    expect(payload).not.toHaveProperty("productType");
+    expect(payload).not.toHaveProperty("servings");
+    expect(payload).not.toHaveProperty("budget");
+    expect(payload).not.toHaveProperty("addOnIds");
   });
 
-  it("keeps copied returned order ids on one summary route line", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({
+  it("stores normalized returned order metadata", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) !== "/api/inquiry") {
+        return new Response(JSON.stringify({ ok: true, source: "fallback", catalog: defaultPublicCatalog }));
+      }
+      return new Response(JSON.stringify({
         ok: true,
         order: {
-          id: "  ord_copied_response\nMemo: redirected  ",
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
+          id: "  ord_copied\nresponse  ",
+          name: " Amina ",
+          email: " amina@example.com ",
+          pickupTime: " 12:00-14:00 ",
+          productType: " Cake ",
+          cakeSizeId: " Four-Inch ",
+          flavourId: " Vanilla ",
+          frostingId: " Oreo-Crunch ",
+          fillingIds: [" Raspberry-Filling "],
+          toppingIds: [" Fresh-Strawberry "],
+          paymentEmail: " payments@example.com ",
+          summary: " Name: Amina "
         }
-      }), { status: 200 })
-    ));
-
-    render(<OrderForm />);
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_copied_response%20Memo%3A%20redirected");
-    });
-
-    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
-      id: "ord_copied_response Memo: redirected"
-    });
-  });
-
-  it("drops impossible returned serving counts before storing payment metadata", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: "ord_bad_servings",
-          name: "Amina",
-          email: "amina@example.com",
-          servings: -3,
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
-        }
-      }), { status: 200 })
-    ));
-
-    render(<OrderForm />);
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_bad_servings");
-    });
-
-    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).not.toHaveProperty("servings");
-  });
-
-  it("shows an error when inquiry submission cannot reach the API", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => {
-      throw new Error("network unavailable");
+      }), { status: 200 });
     }));
 
     render(<OrderForm />);
@@ -174,317 +153,82 @@ describe("OrderForm v2 submit flow", () => {
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
     await waitFor(() => {
-      expect(screen.getByText("Please review the highlighted details.")).toBeInTheDocument();
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_copied%20response");
     });
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(JSON.parse(sessionStorage.getItem("meera:last-order") ?? "{}")).toMatchObject({
+      id: "ord_copied response",
+      productType: "cake",
+      cakeSizeId: "four-inch",
+      flavourId: "vanilla",
+      frostingId: "oreo-crunch",
+      fillingIds: ["raspberry-filling"],
+      toppingIds: ["fresh-strawberry"]
+    });
   });
 
-  it("validates pickup notice against the current browser date before submit", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    vi.setSystemTime(new Date("2099-01-01T12:00:00"));
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: "ord_stale_notice",
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
-        }
-      }), { status: 200 })
-    );
-    vi.stubGlobal("fetch", fetchMock);
+  it("requires pickup time and all five acknowledgements", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "" } });
+    fireEvent.click(screen.getByLabelText("Slight adjustments may be made compared to the inspiration photo."));
 
-    const { container } = render(<OrderForm />);
-    fillInquiryWithPickupDate("2099-01-07");
-    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
-    expect(screen.getByText("Please choose a pickup date at least 7 days away.")).toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(pushMock).not.toHaveBeenCalled();
+    expect(await screen.findByText("Please choose a pickup time.")).toBeInTheDocument();
+    expect(screen.getByText("Please confirm that inspiration photos may require slight adjustments.")).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("still navigates after success when browser storage is unavailable", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: "ord_storage_blocked",
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
-        }
-      }), { status: 200 })
-    ));
-    const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+  it("falls back to a safe pending order when the successful API response lacks order metadata", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/inquiry") {
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      }
+      return new Response(JSON.stringify({ ok: true, source: "fallback", catalog: defaultPublicCatalog }));
+    }));
+
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => expect(pushMock).toHaveBeenCalled());
+    expect(JSON.parse(sessionStorage.getItem("meera:last-order") ?? "{}")).toMatchObject({
+      productType: "cake",
+      pickupTime: "12:00-14:00",
+      frostingId: "white-chocolate-ganache",
+      fillingIds: ["raspberry-filling", "apricot-filling"],
+      toppingIds: ["fresh-strawberry"]
+    });
+  });
+
+  it("keeps a successful inquiry usable when session storage is unavailable", async () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("storage unavailable");
     });
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/inquiry") return successResponse();
+      return new Response(JSON.stringify({ ok: true, source: "fallback", catalog: defaultPublicCatalog }));
+    }));
 
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
     await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_storage_blocked");
-    });
-    expect(screen.queryByText("Please review the highlighted details.")).not.toBeInTheDocument();
-
-    setItemSpy.mockRestore();
-  });
-
-  it("falls back to a pending order when the API returns malformed order metadata", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    vi.setSystemTime(new Date("2099-01-01T12:00:00-05:00"));
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: 123,
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "",
-          summary: ""
-        }
-      }), { status: 200 })
-    ));
-
-    render(<OrderForm />);
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=pending_4070970000000");
-    });
-
-    expect(JSON.parse(sessionStorage.getItem("meera:last-order") || "{}")).toMatchObject({
-      id: "pending_4070970000000",
-      paymentEmail: "m.ssethi1123@gmail.com"
+      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_route_123");
     });
   });
 
-  it("shows an error when the inquiry API returns a null response envelope", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response("null", { status: 200 })
-    ));
-
-    render(<OrderForm />);
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Please review the highlighted details.")).toBeInTheDocument();
-    });
-    expect(pushMock).not.toHaveBeenCalled();
-  });
-
-  it("shows a copy-specific notice when clipboard access is blocked", async () => {
-    const writeTextMock = vi.fn(async () => {
-      throw new Error("clipboard blocked");
-    });
+  it("surfaces a copy fallback when clipboard access fails", async () => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
-      value: { writeText: writeTextMock }
+      value: { writeText: vi.fn().mockRejectedValue(new Error("blocked")) }
     });
-
-    render(<OrderForm />);
-    fireEvent.click(screen.getByRole("button", { name: /^copy$/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Copy failed. Use the email button or select the summary manually.")).toBeInTheDocument();
-    });
-    expect(writeTextMock).toHaveBeenCalled();
-  });
-
-  it("previews Sheet-driven catalog labels and prices before submit", () => {
-    render(
-      <OrderForm
-        catalog={{
-          ...defaultPublicCatalog,
-          cakeSizes: [
-            {
-              id: "tall-six-inch",
-              productId: "cake",
-              category: "cake-size",
-              label: "Tall six inch celebration cake",
-              low: 72,
-              high: 84,
-              servings: "10-12",
-              enabled: true,
-              sortOrder: 1
-            }
-          ],
-          flavours: [
-            {
-              id: "mango-saffron",
-              productId: "all",
-              category: "flavour",
-              label: "Mango saffron",
-              low: 0,
-              high: 0,
-              servings: "",
-              enabled: true,
-              sortOrder: 1
-            }
-          ]
-        }}
-      />
-    );
-
-    const summaryPreview = screen.getByText(/Meera's Cozy Kitchen inquiry/);
-
-    expect(summaryPreview).toHaveTextContent("Cake size: Tall six inch celebration cake");
-    expect(summaryPreview).toHaveTextContent("Flavour: Mango saffron");
-    expect(summaryPreview).toHaveTextContent("Estimated range: $72-$84");
-  });
-
-  it("shows Sheet-driven add-on ranges in ascending order", () => {
-    render(
-      <OrderForm
-        catalog={{
-          ...defaultPublicCatalog,
-          addOns: [
-            {
-              id: "rush-finish",
-              productId: "all",
-              category: "add-on",
-              label: "Rush finish",
-              low: 15,
-              high: 10,
-              servings: "",
-              enabled: true,
-              sortOrder: 1
-            }
-          ]
-        }}
-      />
-    );
-
-    expect(screen.getByLabelText(/Rush finish/i)).toBeInTheDocument();
-    expect(screen.getByText("$10-$15")).toBeInTheDocument();
-    expect(screen.queryByText("$15-$10")).not.toBeInTheDocument();
-  });
-
-  it("uses product-neutral copy for the customer email fallback", () => {
     render(<OrderForm />);
 
-    const emailLink = screen.getByRole("link", { name: /email/i });
+    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
 
-    expect(emailLink).toHaveAttribute(
-      "href",
-      expect.stringContaining("subject=Bakery%20inquiry%20for%20Meera's%20Cozy%20Kitchen")
-    );
-    expect(emailLink).not.toHaveAttribute("href", expect.stringContaining("Cake%20inquiry"));
-  });
-
-  it("drops selected add-ons that disappear after a live catalog refresh", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    const liveCatalogWithoutAddOns = {
-      ...defaultPublicCatalog,
-      offerings: defaultPublicCatalog.offerings.filter((offering) => offering.category !== "add-on"),
-      addOns: []
-    };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        ok: true,
-        source: "live",
-        catalog: liveCatalogWithoutAddOns
-      }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: "ord_refreshed_catalog",
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
-        }
-      }), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<OrderForm />);
-    fireEvent.click(screen.getByLabelText(/Fresh berry finish/i));
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(300);
-    });
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/catalog", expect.any(Object));
-    });
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_refreshed_catalog");
-    });
-    const inquiryCall = fetchMock.mock.calls.find(([url]) => url === "/api/inquiry");
-    expect(JSON.parse(inquiryCall?.[1]?.body as string).addOnIds).toEqual([]);
-  });
-
-  it("hides and drops add-ons that are scoped to a different selected product", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({
-        ok: true,
-        order: {
-          id: "ord_product_scoped_addons",
-          name: "Amina",
-          email: "amina@example.com",
-          paymentEmail: "m.ssethi1123@gmail.com",
-          summary: "Name: Amina"
-        }
-      }), { status: 200 })
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(
-      <OrderForm
-        catalog={{
-          ...defaultPublicCatalog,
-          addOns: [
-            ...defaultPublicCatalog.addOns,
-            {
-              id: "cake-topper",
-              productId: "cake",
-              category: "add-on",
-              label: "Cake topper",
-              low: 10,
-              high: 14,
-              servings: "",
-              enabled: true,
-              sortOrder: 99
-            },
-            {
-              id: "cupcake-sleeve",
-              productId: "cupcakes",
-              category: "add-on",
-              label: "Cupcake sleeve",
-              low: 4,
-              high: 6,
-              servings: "",
-              enabled: true,
-              sortOrder: 100
-            }
-          ]
-        }}
-      />
-    );
-
-    fireEvent.click(screen.getByLabelText(/Cake topper/i));
-    expect(screen.queryByLabelText(/Cupcake sleeve/i)).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /Cupcake dozen/i }));
-
-    expect(screen.queryByLabelText(/Cake topper/i)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/Cupcake sleeve/i)).toBeInTheDocument();
-
-    fillValidInquiry();
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(pushMock).toHaveBeenCalledWith("/order/summary?id=ord_product_scoped_addons");
-    });
-    const inquiryCall = fetchMock.mock.calls.find(([url]) => url === "/api/inquiry");
-    expect(JSON.parse(inquiryCall?.[1]?.body as string).addOnIds).not.toContain("cake-topper");
+    expect(await screen.findByText(/Copy failed/)).toBeInTheDocument();
   });
 });

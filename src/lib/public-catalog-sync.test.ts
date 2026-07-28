@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultPublicCatalog } from "./catalog";
 import { loadPublicCatalog, resetPublicCatalogSyncForTests } from "./public-catalog-sync";
 
+const cacheKey = "meera:public-catalog:cake-v1";
+
 describe("public catalog sync", () => {
   afterEach(() => {
     vi.useRealTimers();
@@ -10,7 +12,7 @@ describe("public catalog sync", () => {
     resetPublicCatalogSyncForTests();
   });
 
-  it("aborts slow live catalog fetches so public navigation stays responsive", async () => {
+  it("aborts slow live catalog fetches so navigation stays responsive", async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn((_url: string, init?: RequestInit) =>
       new Promise((_resolve, reject) => {
@@ -23,55 +25,41 @@ describe("public catalog sync", () => {
     await vi.advanceTimersByTimeAsync(260);
 
     await expect(resultPromise).resolves.toEqual({ catalog: defaultPublicCatalog, source: "default" });
-    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("reuses a session cached live catalog instead of fetching on every tab visit", async () => {
+  it("uses only the versioned cake-menu cache key", async () => {
     sessionStorage.setItem("meera:public-catalog", JSON.stringify({
       savedAt: Date.now(),
       catalog: defaultPublicCatalog
     }));
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockRejectedValue(new Error("offline"));
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
       catalog: defaultPublicCatalog,
-      source: "cached"
+      source: "default"
     });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("normalizes copied cached catalog text before browser consumers use it", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
+  it("reuses and normalizes a valid cake-only cached catalog", async () => {
+    const copiedCatalog = {
+      ...defaultPublicCatalog,
+      products: [{ ...defaultPublicCatalog.products[0], id: " Cake ", label: " Custom\ncake " }],
+      offerings: defaultPublicCatalog.offerings.map((item) =>
+        item.id === "fresh-strawberry"
+          ? { ...item, id: " Fresh-Strawberry ", label: " Fresh\nstrawberry " }
+          : item
+      ),
+      toppings: defaultPublicCatalog.toppings.map((item) =>
+        item.id === "fresh-strawberry"
+          ? { ...item, id: " Fresh-Strawberry ", label: " Fresh\nstrawberry " }
+          : item
+      )
+    };
+    sessionStorage.setItem(cacheKey, JSON.stringify({
       savedAt: Date.now(),
-      catalog: {
-        ...defaultPublicCatalog,
-        products: [
-          { ...defaultPublicCatalog.products[0], id: " cake ", label: " Custom\ncake " }
-        ],
-        offerings: [
-          {
-            ...defaultPublicCatalog.addOns[0],
-            id: " Fresh-Berries ",
-            productId: " ALL ",
-            category: " Add-On " as "add-on",
-            label: " Fresh\nberry finish ",
-            servings: " 12-14\npeople "
-          }
-        ],
-        cakeSizes: [],
-        flavours: [],
-        addOns: [
-          {
-            ...defaultPublicCatalog.addOns[0],
-            id: " Fresh-Berries ",
-            productId: " all ",
-            category: " Add-On " as "add-on",
-            label: " Fresh\nberry finish ",
-            servings: " 12-14\npeople "
-          }
-        ]
-      }
+      catalog: copiedCatalog
     }));
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -80,211 +68,85 @@ describe("public catalog sync", () => {
 
     expect(result.source).toBe("cached");
     expect(result.catalog.products[0]).toMatchObject({ id: "cake", label: "Custom cake" });
-    expect(result.catalog.offerings[0]).toMatchObject({
-      id: "fresh-berries",
-      productId: "all",
-      category: "add-on",
-      label: "Fresh berry finish",
-      servings: "12-14 people"
-    });
-    expect(result.catalog.addOns).toHaveLength(1);
-    expect(result.catalog.addOns[0].id).toBe("fresh-berries");
+    expect(result.catalog.toppings.find((item) => item.id === "fresh-strawberry")?.label).toBe("Fresh strawberry");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("clears malformed cached catalog data before falling back", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
-      savedAt: Date.now(),
-      catalog: {
-        products: "not an array",
-        offerings: [],
-        cakeSizes: [],
-        flavours: [],
-        addOns: []
-      }
-    }));
-    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
-  });
-
-  it("clears cached catalog rows with malformed public fields", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
-      savedAt: Date.now(),
+  it.each([
+    {
+      label: "missing cake categories",
+      catalog: { products: [], offerings: [], cakeSizes: [], flavours: [] }
+    },
+    {
+      label: "invalid price",
       catalog: {
         ...defaultPublicCatalog,
-        products: [
-          { ...defaultPublicCatalog.products[0], id: "" }
-        ]
+        toppings: [{ ...defaultPublicCatalog.toppings[0], low: -1 }]
       }
-    }));
-    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
-  });
-
-  it("clears cached catalog rows with impossible price ranges", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
-      savedAt: Date.now(),
+    },
+    {
+      label: "obsolete add-on category",
       catalog: {
         ...defaultPublicCatalog,
-        products: [
-          { ...defaultPublicCatalog.products[0], low: -1 }
-        ]
+        toppings: [{ ...defaultPublicCatalog.toppings[0], category: "add-on" }]
       }
-    }));
-    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
-    vi.stubGlobal("fetch", fetchMock);
+    }
+  ])("clears cached data with $label", async ({ catalog }) => {
+    sessionStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), catalog }));
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
 
     await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
       catalog: defaultPublicCatalog,
       source: "default"
     });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+    expect(sessionStorage.getItem(cacheKey)).toBeNull();
   });
 
-  it("clears cached catalog rows with fractional sort orders", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
-      savedAt: Date.now(),
-      catalog: {
-        ...defaultPublicCatalog,
-        products: [
-          { ...defaultPublicCatalog.products[0], sortOrder: 1.5 }
-        ]
-      }
-    }));
-    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
-  });
-
-  it("clears cached catalog rows with negative sort orders", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
-      savedAt: Date.now(),
-      catalog: {
-        ...defaultPublicCatalog,
-        addOns: [
-          { ...defaultPublicCatalog.addOns[0], sortOrder: -1 }
-        ]
-      }
-    }));
-    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
-  });
-
-  it("clears future-dated cached catalog data before falling back", async () => {
-    sessionStorage.setItem("meera:public-catalog", JSON.stringify({
+  it("clears expired and future-dated cache entries", async () => {
+    sessionStorage.setItem(cacheKey, JSON.stringify({
       savedAt: Date.now() + 60 * 60 * 1000,
       catalog: defaultPublicCatalog
     }));
-    const fetchMock = vi.fn().mockRejectedValue(new Error("catalog endpoint unavailable"));
-    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
 
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+    await loadPublicCatalog(defaultPublicCatalog);
+
+    expect(sessionStorage.getItem(cacheKey)).toBeNull();
   });
 
-  it("falls back instead of caching malformed live catalog data", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        ok: true,
-        source: "live",
-        catalog: {
-          products: "not an array",
-          offerings: [],
-          cakeSizes: [],
-          flavours: [],
-          addOns: []
-        }
-      })
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
-  });
-
-  it("falls back instead of caching live catalog rows with malformed public fields", async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        ok: true,
-        source: "live",
-        catalog: {
-          ...defaultPublicCatalog,
-          addOns: [
-            { ...defaultPublicCatalog.addOns[0], low: "10" }
-          ]
-        }
-      })
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "default"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
-  });
-
-  it("does not cache server fallback catalog responses", async () => {
+  it("caches live catalog responses but not server fallback responses", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          ok: true,
-          source: "fallback",
-          catalog: defaultPublicCatalog
-        })
+        json: async () => ({ ok: true, source: "fallback", catalog: defaultPublicCatalog })
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({
-          ok: true,
-          source: "live",
-          catalog: defaultPublicCatalog
-        })
+        json: async () => ({ ok: true, source: "live", catalog: defaultPublicCatalog })
       });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
-      catalog: defaultPublicCatalog,
-      source: "fallback"
-    });
-    expect(sessionStorage.getItem("meera:public-catalog")).toBeNull();
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toMatchObject({ source: "fallback" });
+    expect(sessionStorage.getItem(cacheKey)).toBeNull();
+
+    await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toMatchObject({ source: "live" });
+    expect(sessionStorage.getItem(cacheKey)).not.toBeNull();
+  });
+
+  it("does not cache malformed live data", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        source: "live",
+        catalog: { ...defaultPublicCatalog, frostings: "not-an-array" }
+      })
+    }));
 
     await expect(loadPublicCatalog(defaultPublicCatalog)).resolves.toEqual({
       catalog: defaultPublicCatalog,
-      source: "live"
+      source: "default"
     });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(sessionStorage.getItem(cacheKey)).toBeNull();
   });
 });

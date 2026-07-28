@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInquirySchema } from "./validation";
+import { createInquirySchema, pickupTimeOptions } from "./validation";
 
 const fixtureToday = new Date("2026-05-06T12:00:00-04:00");
 
@@ -8,186 +8,106 @@ const baseInquiry = {
   email: "amina@example.com",
   phone: "4165550101",
   eventDate: "2026-05-20",
-  servings: 18,
-  productType: "cake",
+  pickupTime: "12:00-14:00",
   cakeSizeId: "eight-inch",
-  flavourId: "vanilla-rose",
-  addOnIds: ["fresh-berries"],
-  budget: "100-150",
+  flavourId: "vanilla",
+  frostingId: "oreo-crunch",
+  fillingIds: ["raspberry-filling"],
+  toppingIds: ["fresh-strawberry"],
   message: "Birthday cake with soft florals.",
   acknowledgements: {
     notice: true,
     allergens: true,
     address: true,
-    certification: true
+    certification: true,
+    inspiration: true
   },
   website: ""
 };
 
 describe("inquirySchema", () => {
-  it("accepts a complete inquiry with required acknowledgements", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse(baseInquiry);
-
-    expect(parsed.success).toBe(true);
+  it.each(pickupTimeOptions)("accepts pickup window $label", ({ value }) => {
+    expect(createInquirySchema(fixtureToday).safeParse({
+      ...baseInquiry,
+      pickupTime: value
+    }).success).toBe(true);
   });
 
-  it("trims pasted whitespace around customer email addresses", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
+  it("normalizes copied ids, multi-select values, and customer fields", () => {
+    const parsed = createInquirySchema(fixtureToday).safeParse({
       ...baseInquiry,
-      email: "  amina@example.com  "
-    });
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.data?.email).toBe("amina@example.com");
-  });
-
-  it("normalizes copied add-on ids before pricing and summaries use them", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      addOnIds: [" fresh-berries ", "fresh-berries", " floral-piping "]
-    });
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.data?.addOnIds).toEqual(["fresh-berries", "floral-piping"]);
-  });
-
-  it("accepts Sheet-driven product ids from the admin catalog", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      productType: "mini-cheesecake-box",
-      cakeSizeId: undefined
-    });
-
-    expect(parsed.success).toBe(true);
-  });
-
-  it("accepts Sheet-driven cake size ids for cake inquiries", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      cakeSizeId: "sheet-tall-six-inch"
-    });
-
-    expect(parsed.success).toBe(true);
-  });
-
-  it("trims copied cake size ids before catalog validation uses them", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      cakeSizeId: " eight-inch "
-    });
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.data?.cakeSizeId).toBe("eight-inch");
-  });
-
-  it("normalizes copied catalog id casing before catalog validation uses them", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      productType: " Cake ",
+      name: " Amina\nMemo ",
+      email: "  amina@example.com  ",
       cakeSizeId: " Eight-Inch ",
-      flavourId: " Vanilla-Rose ",
-      addOnIds: [" Fresh-Berries ", "fresh-berries", " Floral-Piping "]
-    });
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.data).toMatchObject({
-      productType: "cake",
-      cakeSizeId: "eight-inch",
-      flavourId: "vanilla-rose",
-      addOnIds: ["fresh-berries", "floral-piping"]
-    });
-  });
-
-  it("trims copied pickup dates before notice validation uses them", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      eventDate: " 2026-05-20 "
-    });
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.data?.eventDate).toBe("2026-05-20");
-  });
-
-  it("collapses copied single-line customer fields before summaries use them", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
-      name: " Amina\nMemo: redirected ",
-      phone: " 416\n555 0101 ",
-      budget: " 100-150\nDeposit paid "
-    });
-
-    expect(parsed.success).toBe(true);
-    expect(parsed.data).toMatchObject({
-      name: "Amina Memo: redirected",
-      phone: "416 555 0101",
-      budget: "100-150 Deposit paid"
-    });
-  });
-
-  it("treats whitespace-only honeypot values as empty browser noise", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
-      ...baseInquiry,
+      flavourId: " Vanilla ",
+      fillingIds: [" raspberry-filling ", "raspberry-filling", " apricot-filling "],
+      toppingIds: [" Fresh-Strawberry "],
       website: "   "
     });
 
     expect(parsed.success).toBe(true);
-    expect(parsed.data?.website).toBe("");
+    expect(parsed.data).toMatchObject({
+      name: "Amina Memo",
+      email: "amina@example.com",
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla",
+      fillingIds: ["raspberry-filling", "apricot-filling"],
+      toppingIds: ["fresh-strawberry"],
+      website: ""
+    });
   });
 
-  it("rejects missing acknowledgement and honeypot submissions", () => {
-    const inquirySchema = createInquirySchema(fixtureToday);
-    const parsed = inquirySchema.safeParse({
+  it("allows no frosting, fillings, or toppings", () => {
+    const withoutFrosting: Partial<typeof baseInquiry> = { ...baseInquiry };
+    delete withoutFrosting.frostingId;
+    const parsed = createInquirySchema(fixtureToday).safeParse({
+      ...withoutFrosting,
+      fillingIds: [],
+      toppingIds: []
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+
+  it.each([undefined, "", "09:00-11:00"])("rejects missing or invalid pickup time %s", (pickupTime) => {
+    expect(createInquirySchema(fixtureToday).safeParse({
+      ...baseInquiry,
+      pickupTime
+    }).success).toBe(false);
+  });
+
+  it("enforces the inspiration-photo acknowledgement", () => {
+    expect(createInquirySchema(fixtureToday).safeParse({
       ...baseInquiry,
       acknowledgements: {
         ...baseInquiry.acknowledgements,
-        certification: false
-      },
-      website: "spam"
-    });
-
-    expect(parsed.success).toBe(false);
+        inspiration: false
+      }
+    }).success).toBe(false);
   });
 
-  it("rejects pickup dates inside the seven-day notice window", () => {
-    const schema = createInquirySchema(fixtureToday);
-
-    const parsed = schema.safeParse({
+  it("rejects removed legacy inquiry fields", () => {
+    expect(createInquirySchema(fixtureToday).safeParse({
       ...baseInquiry,
-      eventDate: "2026-05-12"
-    });
-
-    expect(parsed.success).toBe(false);
+      productType: "cake",
+      servings: 18,
+      budget: "100-150",
+      addOnIds: ["fresh-berries"]
+    }).success).toBe(false);
   });
 
-  it("rejects inquiries without a selected flavour", () => {
+  it("uses an injected date for the seven-day notice boundary", () => {
     const schema = createInquirySchema(fixtureToday);
 
-    const parsed = schema.safeParse({
-      ...baseInquiry,
-      flavourId: ""
-    });
-
-    expect(parsed.success).toBe(false);
+    expect(schema.safeParse({ ...baseInquiry, eventDate: "2026-05-13" }).success).toBe(true);
+    expect(schema.safeParse({ ...baseInquiry, eventDate: "2026-05-12" }).success).toBe(false);
   });
 
-  it("rejects impossible pickup dates", () => {
+  it("rejects impossible dates, missing flavours, and a filled honeypot", () => {
     const schema = createInquirySchema(fixtureToday);
 
-    const parsed = schema.safeParse({
-      ...baseInquiry,
-      eventDate: "9999-99-99"
-    });
-
-    expect(parsed.success).toBe(false);
+    expect(schema.safeParse({ ...baseInquiry, eventDate: "9999-99-99" }).success).toBe(false);
+    expect(schema.safeParse({ ...baseInquiry, flavourId: "" }).success).toBe(false);
+    expect(schema.safeParse({ ...baseInquiry, website: "spam" }).success).toBe(false);
   });
 });

@@ -4,7 +4,19 @@ This repository is the isolated workspace for Meera v2: a smoother, mobile-first
 
 ## Status
 
-V2 now contains the working Next.js app copied from v1 and refactored for faster perceived UX. V1 remains frozen in the parent folder.
+V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Apps Script migration, admin compatibility layer, and Vercel deployment. V1 remains frozen in the parent folder.
+
+## Current cake-only contract
+
+- Public navigation is exactly Home, Menu, Photos, FAQ, and Quote.
+- Canonical sizes are 4-inch at $35, 6-inch at $60, and 8-inch at $75, all shown as starting prices.
+- The public catalogue contains only cake sizes, flavours, one optional frosting upgrade, multiple fillings, and multiple toppings.
+- Quote submissions require a pickup date, one of seven two-hour pickup windows, and all five acknowledgements.
+- Client submissions do not accept product, servings, budget, or legacy add-on fields. The server writes `productType: "cake"` only for historical order compatibility.
+- The Apps Script migration version is `cake-only-v1`. It upserts the canonical menu and disables obsolete catalogue rows without deleting orders, ledger rows, settings, or historical columns.
+- The browser catalogue cache key is versioned so pre-migration products and pricing cannot reappear.
+- `/photos` is canonical; `/portfolio` redirects there. Food-safety guidance lives at `/faq#food-safety`; `/food-safety` redirects there.
+- Brand colours are `#9A1E1E`, `#FFF4E8`, `#E7D3C1`, `#60442E`, and `#3B2F2F`. The UI intentionally uses no box shadows.
 
 ## Version Boundary
 
@@ -14,7 +26,9 @@ The parent folder contains Meera v1. V1 is considered complete and frozen. Futur
 
 Keeping v2 in a separate folder and repository gives the project a clean history, independent deployment path, and a clear rollback boundary. It also lets future work copy useful v1 patterns without creating accidental changes in the original site.
 
-## Decisions
+## Historical engineering decisions
+
+The entries below preserve earlier hardening rationale and compatibility history. Where they mention older products, add-ons, servings, or budgets, the current cake-only contract above takes precedence.
 
 - Use `v2/` as the only editable product workspace for the next version.
 - Keep this repo independent from the parent v1 Git repository.

@@ -6,11 +6,7 @@ const resendSendMock = vi.hoisted(() => vi.fn());
 
 vi.mock("resend", () => ({
   Resend: vi.fn(function Resend() {
-    return {
-      emails: {
-        send: resendSendMock
-      }
-    };
+    return { emails: { send: resendSendMock } };
   })
 }));
 
@@ -19,21 +15,41 @@ const validPayload = {
   email: "amina@example.com",
   phone: "4165550101",
   eventDate: "2099-05-20",
-  servings: 18,
-  productType: "cake",
+  pickupTime: "12:00-14:00",
   cakeSizeId: "eight-inch",
-  flavourId: "vanilla-rose",
-  addOnIds: ["fresh-berries"],
-  budget: "100-150",
+  flavourId: "vanilla",
+  frostingId: "white-chocolate-ganache",
+  fillingIds: ["raspberry-filling", "apricot-filling"],
+  toppingIds: ["fresh-strawberry"],
   message: "Birthday cake with soft florals.",
   acknowledgements: {
     notice: true,
     allergens: true,
     address: true,
-    certification: true
+    certification: true,
+    inspiration: true
   },
   website: ""
 };
+
+function request(payload: unknown = validPayload) {
+  return new Request("http://localhost/api/inquiry", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
+
+function appsScriptMock(data = defaultAdminData, submit: { ok: boolean; orderId?: string; error?: string } = {
+  ok: true,
+  orderId: "ord_route_123"
+}) {
+  return vi.fn(async (_url: string, init?: RequestInit) => {
+    const body = JSON.parse(init?.body as string);
+    return body.action === "listAdminData"
+      ? new Response(JSON.stringify({ ok: true, data }), { status: 200 })
+      : new Response(JSON.stringify(submit), { status: submit.ok ? 200 : 500 });
+  });
+}
 
 describe("POST /api/inquiry", () => {
   afterEach(() => {
@@ -43,308 +59,148 @@ describe("POST /api/inquiry", () => {
     vi.unstubAllGlobals();
   });
 
-  it("accepts a valid inquiry without email environment variables", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify(validPayload)
-      })
-    );
+  it("accepts the canonical cake payload with fallback catalog data", async () => {
+    const response = await POST(request());
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.email.status).toBe("skipped");
-    expect(body.summary).toContain("Name: Amina");
+    expect(body.summary).toContain("Pickup time: 12pm-2pm");
+    expect(body.summary).toContain("Fillings: Raspberry, Apricot");
+    expect(body.summary).toContain("Starting at $100");
+    expect(body.order).toMatchObject({
+      productType: "cake",
+      pickupTime: "12:00-14:00",
+      cakeSizeId: "eight-inch",
+      frostingId: "white-chocolate-ganache",
+      fillingIds: ["raspberry-filling", "apricot-filling"],
+      toppingIds: ["fresh-strawberry"]
+    });
   });
 
-  it("forwards a valid inquiry to Apps Script when configured", async () => {
+  it("forwards the same validated cake summary to Apps Script", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string);
-
-      if (body.action === "listAdminData") {
-        return new Response(JSON.stringify({ ok: true, data: defaultAdminData }), { status: 200 });
-      }
-
-      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
-    });
+    const fetchMock = appsScriptMock();
     vi.stubGlobal("fetch", fetchMock);
 
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify(validPayload)
-      })
-    );
+    const response = await POST(request());
     const body = await response.json();
+    const submitCall = fetchMock.mock.calls.find(([, init]) =>
+      JSON.parse(init?.body as string).action === "submitOrder"
+    );
+    const submitBody = JSON.parse(submitCall?.[1]?.body as string);
 
     expect(response.status).toBe(200);
     expect(body.appsScript).toEqual({ status: "sent", orderId: "ord_route_123" });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(body.email).toEqual({ status: "skipped", reason: "apps-script-sent" });
+    expect(submitBody.summary).toBe(body.summary);
+    expect(submitBody.inquiry).not.toHaveProperty("productType");
   });
 
-  it("sends Sheet-driven product summaries with live catalog prices", async () => {
+  it("uses configured live cake labels and prices in every summary", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string);
-
-      if (body.action === "listAdminData") {
-        return new Response(JSON.stringify({
-          ok: true,
-          data: {
-            ...defaultAdminData,
-            products: [
-              ...defaultAdminData.products,
-              {
-                id: "mini-cheesecake-box",
-                label: "Mini cheesecake box",
-                low: 42,
-                high: 52,
-                enabled: true,
-                sortOrder: 4
-              }
-            ]
-          }
-        }), { status: 200 });
-      }
-
-      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
-    });
+    const liveData = {
+      ...defaultAdminData,
+      offerings: defaultAdminData.offerings.map((item) => {
+        if (item.id === "eight-inch") return { ...item, label: "Tall 8-inch cake", low: 85, high: 85 };
+        if (item.id === "fresh-strawberry") return { ...item, label: "Fresh local strawberry", low: 7, high: 7 };
+        return item;
+      })
+    };
+    const fetchMock = appsScriptMock(liveData);
     vi.stubGlobal("fetch", fetchMock);
 
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify({
-          ...validPayload,
-          productType: "mini-cheesecake-box",
-          cakeSizeId: undefined,
-          addOnIds: []
-        })
-      })
-    );
+    const response = await POST(request());
     const body = await response.json();
-    const submitBody = JSON.parse(fetchMock.mock.calls[1][1]?.body as string);
 
-    expect(response.status).toBe(200);
-    expect(body.summary).toContain("Product: Mini cheesecake box");
-    expect(body.summary).toContain("Estimated range: $42-$52");
-    expect(submitBody.summary).toContain("Product: Mini cheesecake box");
+    expect(body.summary).toContain("Cake size: Tall 8-inch cake");
+    expect(body.summary).toContain("Toppings: Fresh local strawberry");
+    expect(body.summary).toContain("Starting at $112");
   });
 
-  it("keeps the live catalog summary in fallback email when Apps Script submission fails", async () => {
+  it("sends the live-catalog summary by fallback email when the Sheet write fails", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
     vi.stubEnv("RESEND_API_KEY", "test-key");
     vi.stubEnv("ORDER_NOTIFY_EMAIL", "orders@example.com");
     resendSendMock.mockResolvedValue({ data: { id: "email_123" } });
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string);
+    vi.stubGlobal("fetch", appsScriptMock(defaultAdminData, {
+      ok: false,
+      error: "Sheet write failed."
+    }));
 
-      if (body.action === "listAdminData") {
-        return new Response(JSON.stringify({
-          ok: true,
-          data: {
-            ...defaultAdminData,
-            products: [
-              ...defaultAdminData.products,
-              {
-                id: "mini-cheesecake-box",
-                label: "Mini cheesecake box",
-                low: 42,
-                high: 52,
-                enabled: true,
-                sortOrder: 4
-              }
-            ]
-          }
-        }), { status: 200 });
-      }
-
-      return new Response(JSON.stringify({ ok: false, error: "Sheet write failed." }), { status: 500 });
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify({
-          ...validPayload,
-          productType: "mini-cheesecake-box",
-          cakeSizeId: undefined,
-          addOnIds: []
-        })
-      })
-    );
+    const response = await POST(request());
     const body = await response.json();
-    const fallbackEmail = resendSendMock.mock.calls[0][0];
 
-    expect(response.status).toBe(200);
     expect(body.appsScript).toEqual({ status: "error", message: "Sheet write failed." });
     expect(body.email).toEqual({ status: "sent", id: "email_123" });
-    expect(body.summary).toContain("Product: Mini cheesecake box");
-    expect(body.summary).toContain("Estimated range: $42-$52");
-    expect(fallbackEmail.text).toContain("Product: Mini cheesecake box");
-    expect(fallbackEmail.text).toContain("Estimated range: $42-$52");
+    expect(resendSendMock).toHaveBeenCalledWith(expect.objectContaining({ text: body.summary }));
   });
 
-  it("rejects stale add-ons that are no longer in the live catalog", async () => {
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string);
-
-      if (body.action === "listAdminData") {
-        return new Response(JSON.stringify({
-          ok: true,
-          data: {
-            ...defaultAdminData,
-            offerings: defaultAdminData.offerings.filter((offering) => offering.id !== "fresh-berries")
-          }
-        }), { status: 200 });
-      }
-
-      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify(validPayload)
-      })
-    );
+  it.each([
+    {
+      field: "fillingIds",
+      value: ["retired-filling"],
+      issue: "Please remove unavailable fillings and try again."
+    },
+    {
+      field: "toppingIds",
+      value: ["retired-topping"],
+      issue: "Please remove unavailable toppings and try again."
+    },
+    {
+      field: "frostingId",
+      value: "retired-frosting",
+      issue: "Please choose an available frosting."
+    }
+  ])("rejects stale $field choices", async ({ field, value, issue }) => {
+    const response = await POST(request({ ...validPayload, [field]: value }));
     const body = await response.json();
 
     expect(response.status).toBe(400);
-    expect(body.issues.addOnIds).toContain("Please remove unavailable add-ons and try again.");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(body.issues[field]).toContain(issue);
   });
 
-  it("rejects product-scoped add-ons for the wrong live catalog product", async () => {
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string);
-
-      if (body.action === "listAdminData") {
-        return new Response(JSON.stringify({
-          ok: true,
-          data: {
-            ...defaultAdminData,
-            offerings: [
-              ...defaultAdminData.offerings,
-              {
-                id: "cake-topper",
-                productId: "cake",
-                category: "add-on",
-                label: "Cake topper",
-                low: 10,
-                high: 14,
-                servings: "",
-                enabled: true,
-                sortOrder: 99
-              }
-            ]
-          }
-        }), { status: 200 });
-      }
-
-      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify({
-          ...validPayload,
-          productType: "cupcakes",
-          cakeSizeId: undefined,
-          addOnIds: ["cake-topper"]
-        })
-      })
-    );
-    const body = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(body.issues.addOnIds).toContain("Please remove unavailable add-ons and try again.");
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("accepts copied live offering id casing after schema normalization", async () => {
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
-    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
-      const body = JSON.parse(init?.body as string);
-
-      if (body.action === "listAdminData") {
-        return new Response(JSON.stringify({
-          ok: true,
-          data: {
-            ...defaultAdminData,
-            offerings: [
-              ...defaultAdminData.offerings,
-              {
-                id: " Cookie-Topper ",
-                productId: " All ",
-                category: " Add-On ",
-                label: " Cookie topper ",
-                low: 8,
-                high: 10,
-                servings: "",
-                enabled: true,
-                sortOrder: 99
-              }
-            ]
-          }
-        }), { status: 200 });
-      }
-
-      return new Response(JSON.stringify({ ok: true, orderId: "ord_route_123" }), { status: 200 });
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify({
-          ...validPayload,
-          addOnIds: [" Cookie-Topper "]
-        })
-      })
-    );
+  it("normalizes copied live offering ids before validation", async () => {
+    const response = await POST(request({
+      ...validPayload,
+      cakeSizeId: " Eight-Inch ",
+      flavourId: " Vanilla ",
+      frostingId: " White-Chocolate-Ganache ",
+      fillingIds: [" Raspberry-Filling "],
+      toppingIds: [" Fresh-Strawberry "]
+    }));
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.summary).toContain("Add-ons: Cookie topper");
-    expect(body.summary).toContain("Estimated range: $96-$110");
+    expect(body.order).toMatchObject({
+      cakeSizeId: "eight-inch",
+      flavourId: "vanilla",
+      frostingId: "white-chocolate-ganache",
+      fillingIds: ["raspberry-filling"],
+      toppingIds: ["fresh-strawberry"]
+    });
   });
 
-  it("rejects honeypot submissions", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify({ ...validPayload, website: "filled" })
-      })
-    );
-
-    expect(response.status).toBe(400);
+  it("rejects honeypots and removed legacy fields", async () => {
+    expect((await POST(request({ ...validPayload, website: "filled" }))).status).toBe(400);
+    expect((await POST(request({
+      ...validPayload,
+      productType: "cake",
+      servings: 18,
+      budget: "100-150",
+      addOnIds: []
+    }))).status).toBe(400);
   });
 
-  it("validates pickup notice against the current request date on long-lived servers", async () => {
+  it("validates notice against the current request date", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2099-05-20T12:00:00-04:00"));
 
-    const response = await POST(
-      new Request("http://localhost/api/inquiry", {
-        method: "POST",
-        body: JSON.stringify(validPayload)
-      })
-    );
+    const response = await POST(request());
     const body = await response.json();
 
     expect(response.status).toBe(400);

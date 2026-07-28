@@ -8,23 +8,24 @@ export type PriceRange = {
 export type CakeSize = PriceRange & {
   id: string;
   label: string;
-  servings: string;
 };
 
-export type AddOn = PriceRange & {
+export type CakeOption = PriceRange & {
   id: string;
   label: string;
   productId?: string;
 };
 
 export type QuoteInput = {
-  productType: ProductType;
   cakeSizeId?: string;
-  addOnIds?: string[];
+  frostingId?: string;
+  fillingIds?: string[];
+  toppingIds?: string[];
 };
 
 export type QuoteLine = PriceRange & {
   label: string;
+  kind: "size" | "extra";
 };
 
 export type QuoteEstimate = PriceRange & {
@@ -32,38 +33,45 @@ export type QuoteEstimate = PriceRange & {
 };
 
 export const cakeSizes: CakeSize[] = [
-  { id: "six-inch", label: "6 inch round cake", servings: "8-10", low: 58, high: 68 },
-  { id: "eight-inch", label: "8 inch round cake", servings: "14-20", low: 88, high: 100 },
-  { id: "ten-inch", label: "10 inch round cake", servings: "24-30", low: 128, high: 150 }
+  { id: "four-inch", label: "4-inch cake", low: 35, high: 35 },
+  { id: "six-inch", label: "6-inch cake", low: 60, high: 60 },
+  { id: "eight-inch", label: "8-inch cake", low: 75, high: 75 }
 ];
 
 export const productBasePrices: Record<string, PriceRange & { label: string }> = {
-  cake: { label: "Custom cake", low: 58, high: 150 },
-  cupcakes: { label: "Cupcake dozen", low: 34, high: 44 },
-  "dessert-box": { label: "Dessert box", low: 38, high: 48 }
+  cake: { label: "Custom cake", low: 35, high: 75 }
 };
 
 export const flavours = [
-  { id: "vanilla-rose", label: "Vanilla rose" },
-  { id: "chocolate-fudge", label: "Chocolate fudge" },
-  { id: "cardamom-pistachio", label: "Cardamom pistachio" },
-  { id: "lemon-raspberry", label: "Lemon raspberry" }
+  { id: "chocolate", label: "Chocolate" },
+  { id: "vanilla", label: "Vanilla" },
+  { id: "almond", label: "Almond" },
+  { id: "lemon", label: "Lemon" },
+  { id: "coconut", label: "Coconut" }
 ];
 
-export const addOns: AddOn[] = [
-  { id: "fresh-berries", label: "Fresh berry finish", low: 10, high: 12 },
-  { id: "fondant-name", label: "Fondant name or age", low: 5, high: 8 },
-  { id: "floral-piping", label: "Floral piping", low: 12, high: 18 },
-  { id: "premium-filling", label: "Premium filling", low: 8, high: 14 }
+export const frostings: CakeOption[] = [
+  { id: "oreo-crunch", label: "Oreo Crunch", low: 5, high: 5 },
+  { id: "dark-chocolate-ganache", label: "Dark Chocolate Ganache", low: 10, high: 10 },
+  { id: "white-chocolate-ganache", label: "White Chocolate Ganache", low: 10, high: 10 }
 ];
 
-export const holdForLaterItems = [
-  "Tiered cakes",
-  "Wedding cakes",
-  "Fresh cream cakes",
-  "Custard fillings",
-  "Cheesecake",
-  "Delivery"
+export const fillings: CakeOption[] = [
+  { id: "raspberry-filling", label: "Raspberry", low: 5, high: 5 },
+  { id: "blueberry-filling", label: "Blueberry", low: 5, high: 5 },
+  { id: "cherry-filling", label: "Cherry", low: 5, high: 5 },
+  { id: "strawberry-filling", label: "Strawberry", low: 5, high: 5 },
+  { id: "apricot-filling", label: "Apricot", low: 5, high: 5 }
+];
+
+export const toppings: CakeOption[] = [
+  { id: "dark-chocolate-ganache-drip", label: "Dark Chocolate Ganache Drip", low: 5, high: 5 },
+  { id: "white-chocolate-ganache-drip", label: "White Chocolate Ganache Drip", low: 5, high: 5 },
+  { id: "fresh-raspberry", label: "Fresh Raspberry", low: 5, high: 5 },
+  { id: "fresh-blueberry", label: "Fresh Blueberry", low: 5, high: 5 },
+  { id: "fresh-strawberry", label: "Fresh Strawberry", low: 5, high: 5 },
+  { id: "chopped-pistachio", label: "Chopped Pistachio", low: 5, high: 5 },
+  { id: "chopped-almonds", label: "Chopped Almonds", low: 5, high: 5 }
 ];
 
 export function formatCurrency(value: number) {
@@ -72,6 +80,17 @@ export function formatCurrency(value: number) {
     currency: "CAD",
     maximumFractionDigits: 0
   }).format(value);
+}
+
+function normalizeCatalogId(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function findOption<T extends { id: string }>(items: T[], id?: string) {
+  if (!id) return undefined;
+
+  const normalizedId = normalizeCatalogId(id);
+  return items.find((item) => normalizeCatalogId(item.id) === normalizedId);
 }
 
 function normalizeQuoteLine(line: QuoteLine): QuoteLine {
@@ -83,54 +102,38 @@ function normalizeQuoteLine(line: QuoteLine): QuoteLine {
   };
 }
 
-function normalizeCatalogId(value: string) {
-  return value.trim().toLowerCase();
-}
-
-function catalogIdEquals(value: string, expected: string) {
-  return normalizeCatalogId(value) === expected;
-}
-
-function isScopedToProduct(item: { productId?: string }, productType: string) {
-  if (!item.productId) {
-    return true;
-  }
-
-  const normalizedProductId = normalizeCatalogId(item.productId);
-
-  return normalizedProductId === "all" || normalizedProductId === productType;
-}
-
 export function calculateQuoteEstimate(
   input: QuoteInput,
   catalog?: {
-    products?: Array<PriceRange & { id: string; label: string }>;
-    cakeSizes?: Array<CakeSize | (PriceRange & { id: string; label: string; servings: string })>;
-    addOns?: Array<AddOn | (PriceRange & { id: string; label: string; productId?: string })>;
+    cakeSizes?: CakeSize[];
+    frostings?: CakeOption[];
+    fillings?: CakeOption[];
+    toppings?: CakeOption[];
   }
 ): QuoteEstimate {
   const lines: QuoteLine[] = [];
-  const productType = normalizeCatalogId(input.productType);
-  const cakeSizeId = input.cakeSizeId ? normalizeCatalogId(input.cakeSizeId) : undefined;
-  const selectedCakeSize = cakeSizeId
-    ? (catalog?.cakeSizes ?? cakeSizes).find((size) => catalogIdEquals(size.id, cakeSizeId))
-    : undefined;
-  const selectedProduct = (catalog?.products ?? []).find((product) => catalogIdEquals(product.id, productType));
-  const base = productType === "cake" && selectedCakeSize
-    ? selectedCakeSize
-    : selectedProduct ?? productBasePrices[productType] ?? {
-      label: productType,
-      low: 0,
-      high: 0
-    };
+  const selectedSize = findOption(catalog?.cakeSizes ?? cakeSizes, input.cakeSizeId);
+  const selectedFrosting = findOption(catalog?.frostings ?? frostings, input.frostingId);
 
-  lines.push(normalizeQuoteLine({ label: base.label, low: base.low, high: base.high }));
+  if (selectedSize) {
+    lines.push(normalizeQuoteLine({ ...selectedSize, kind: "size" }));
+  }
 
-  for (const addOnId of input.addOnIds ?? []) {
-    const normalizedAddOnId = normalizeCatalogId(addOnId);
-    const addOn = (catalog?.addOns ?? addOns).find((item) => catalogIdEquals(item.id, normalizedAddOnId) && isScopedToProduct(item, productType));
-    if (addOn) {
-      lines.push(normalizeQuoteLine({ label: addOn.label, low: addOn.low, high: addOn.high }));
+  if (selectedFrosting) {
+    lines.push(normalizeQuoteLine({ ...selectedFrosting, kind: "extra" }));
+  }
+
+  for (const fillingId of input.fillingIds ?? []) {
+    const filling = findOption(catalog?.fillings ?? fillings, fillingId);
+    if (filling) {
+      lines.push(normalizeQuoteLine({ ...filling, kind: "extra" }));
+    }
+  }
+
+  for (const toppingId of input.toppingIds ?? []) {
+    const topping = findOption(catalog?.toppings ?? toppings, toppingId);
+    if (topping) {
+      lines.push(normalizeQuoteLine({ ...topping, kind: "extra" }));
     }
   }
 
@@ -144,9 +147,15 @@ export function calculateQuoteEstimate(
   );
 }
 
-export function quoteRangeLabel(estimate: PriceRange) {
-  const low = Math.min(estimate.low, estimate.high);
-  const high = Math.max(estimate.low, estimate.high);
+export function quoteRangeLabel(price: PriceRange) {
+  const low = Math.min(price.low, price.high);
+  const high = Math.max(price.low, price.high);
 
-  return `${formatCurrency(low)}-${formatCurrency(high)}`;
+  return low === high
+    ? formatCurrency(low)
+    : `${formatCurrency(low)}-${formatCurrency(high)}`;
+}
+
+export function startingPriceLabel(price: PriceRange) {
+  return `Starting at ${formatCurrency(Math.min(price.low, price.high))}`;
 }

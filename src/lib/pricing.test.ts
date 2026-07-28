@@ -1,155 +1,80 @@
 import { describe, expect, it } from "vitest";
-import { calculateQuoteEstimate } from "./pricing";
+import {
+  calculateQuoteEstimate,
+  cakeSizes,
+  fillings,
+  flavours,
+  frostings,
+  quoteRangeLabel,
+  startingPriceLabel,
+  toppings
+} from "./pricing";
 
-describe("calculateQuoteEstimate", () => {
-  it("totals cake base price and selected add-ons", () => {
+describe("cake-only pricing", () => {
+  it("exposes the canonical menu", () => {
+    expect(cakeSizes.map(({ label, low }) => [label, low])).toEqual([
+      ["4-inch cake", 35],
+      ["6-inch cake", 60],
+      ["8-inch cake", 75]
+    ]);
+    expect(flavours.map((item) => item.label)).toEqual([
+      "Chocolate",
+      "Vanilla",
+      "Almond",
+      "Lemon",
+      "Coconut"
+    ]);
+    expect(frostings).toHaveLength(3);
+    expect(fillings).toHaveLength(5);
+    expect(toppings).toHaveLength(7);
+  });
+
+  it("totals one frosting and multiple fillings and toppings", () => {
     const estimate = calculateQuoteEstimate({
-      productType: "cake",
       cakeSizeId: "eight-inch",
-      addOnIds: ["fresh-berries", "fondant-name"]
+      frostingId: "white-chocolate-ganache",
+      fillingIds: ["raspberry-filling", "apricot-filling"],
+      toppingIds: ["fresh-strawberry", "chopped-pistachio"]
     });
-
-    expect(estimate.low).toBe(103);
-    expect(estimate.high).toBe(120);
-    expect(estimate.lines.map((line) => line.label)).toEqual([
-      "8 inch round cake",
-      "Fresh berry finish",
-      "Fondant name or age"
-    ]);
-  });
-
-  it("uses dessert-box pricing when no cake size is selected", () => {
-    const estimate = calculateQuoteEstimate({
-      productType: "dessert-box",
-      addOnIds: []
-    });
-
-    expect(estimate.low).toBe(38);
-    expect(estimate.high).toBe(48);
-  });
-
-  it("normalizes copied catalog id casing before matching prices", () => {
-    const estimate = calculateQuoteEstimate({
-      productType: " Cake ",
-      cakeSizeId: " Eight-Inch ",
-      addOnIds: [" Fresh-Berries "]
-    });
-
-    expect(estimate.low).toBe(98);
-    expect(estimate.high).toBe(112);
-    expect(estimate.lines.map((line) => line.label)).toEqual([
-      "8 inch round cake",
-      "Fresh berry finish"
-    ]);
-  });
-
-  it("keeps sheet-driven price ranges ordered when low and high are swapped", () => {
-    const estimate = calculateQuoteEstimate(
-      {
-        productType: "cake",
-        cakeSizeId: "sheet-eight-inch",
-        addOnIds: ["rush-finish"]
-      },
-      {
-        products: [],
-        cakeSizes: [
-          {
-            id: "sheet-eight-inch",
-            label: "Sheet eight inch",
-            servings: "14-20",
-            low: 120,
-            high: 95
-          }
-        ],
-        addOns: [
-          {
-            id: "rush-finish",
-            label: "Rush finish",
-            low: 15,
-            high: 10
-          }
-        ]
-      }
-    );
 
     expect(estimate.low).toBe(105);
-    expect(estimate.high).toBe(135);
-    expect(estimate.lines).toEqual([
-      { label: "Sheet eight inch", low: 95, high: 120 },
-      { label: "Rush finish", low: 10, high: 15 }
-    ]);
-  });
-
-  it("collapses copied Sheet price labels before quote lines use them", () => {
-    const estimate = calculateQuoteEstimate(
-      {
-        productType: "cake",
-        cakeSizeId: "sheet-eight-inch",
-        addOnIds: ["rush-finish"]
-      },
-      {
-        products: [],
-        cakeSizes: [
-          {
-            id: "sheet-eight-inch",
-            label: "Sheet\n eight\tinch",
-            servings: "14-20",
-            low: 88,
-            high: 100
-          }
-        ],
-        addOns: [
-          {
-            id: "rush-finish",
-            label: "Rush\nfinish",
-            low: 15,
-            high: 20
-          }
-        ]
-      }
-    );
-
+    expect(estimate.high).toBe(105);
     expect(estimate.lines.map((line) => line.label)).toEqual([
-      "Sheet eight inch",
-      "Rush finish"
+      "8-inch cake",
+      "White Chocolate Ganache",
+      "Raspberry",
+      "Apricot",
+      "Fresh Strawberry",
+      "Chopped Pistachio"
     ]);
   });
 
-  it("normalizes copied Sheet catalog ids before direct price lookups", () => {
+  it("normalizes copied ids and reversed live price ranges", () => {
     const estimate = calculateQuoteEstimate(
       {
-        productType: " Cake ",
         cakeSizeId: " Sheet-Eight-Inch ",
-        addOnIds: [" Rush-Finish "]
+        frostingId: " Oreo-Crunch ",
+        fillingIds: [" Berry-Filling "],
+        toppingIds: []
       },
       {
-        products: [],
-        cakeSizes: [
-          {
-            id: " Sheet-Eight-Inch ",
-            label: "Sheet eight inch",
-            servings: "14-20",
-            low: 88,
-            high: 100
-          }
-        ],
-        addOns: [
-          {
-            id: " Rush-Finish ",
-            productId: " Cake ",
-            label: "Rush finish",
-            low: 15,
-            high: 20
-          }
-        ]
+        cakeSizes: [{ id: "sheet-eight-inch", label: "Sheet\n eight\tinch", low: 120, high: 95 }],
+        frostings: [{ id: "oreo-crunch", label: "Oreo Crunch", low: 5, high: 5 }],
+        fillings: [{ id: "berry-filling", label: "Berry\n filling", low: 8, high: 6 }],
+        toppings: []
       }
     );
 
-    expect(estimate.low).toBe(103);
-    expect(estimate.high).toBe(120);
+    expect(estimate).toMatchObject({ low: 106, high: 133 });
     expect(estimate.lines.map((line) => line.label)).toEqual([
       "Sheet eight inch",
-      "Rush finish"
+      "Oreo Crunch",
+      "Berry filling"
     ]);
+  });
+
+  it("formats fixed prices and starting prices without ranges", () => {
+    expect(quoteRangeLabel({ low: 5, high: 5 })).toBe("$5");
+    expect(startingPriceLabel({ low: 75, high: 75 })).toBe("Starting at $75");
   });
 });

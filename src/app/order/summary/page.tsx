@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { CheckCircle2, Copy, Mail, WalletCards } from "lucide-react";
+import { pickupTimeLabel } from "@/lib/validation";
 
 type StoredOrder = {
   id: string;
@@ -11,11 +12,13 @@ type StoredOrder = {
   email?: string;
   phone?: string;
   eventDate?: string;
+  pickupTime?: string;
   productType?: string;
   cakeSizeId?: string;
   flavourId?: string;
-  servings?: number;
-  budget?: string;
+  frostingId?: string;
+  fillingIds?: string[];
+  toppingIds?: string[];
   message?: string;
   paymentEmail?: string;
   summary: string;
@@ -63,7 +66,7 @@ export default function OrderSummaryPage() {
     <section className="section-wrap py-12 md:py-20">
       <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <div className="flex items-center gap-3 text-[var(--sage)]">
+          <div className="flex items-center gap-3 text-[var(--accent)]">
             <CheckCircle2 size={28} aria-hidden="true" />
             <p className="text-sm font-black uppercase tracking-[0.08em]">Inquiry received</p>
           </div>
@@ -100,7 +103,7 @@ export default function OrderSummaryPage() {
                 <p className="mt-1 text-xl font-black">{paymentEmail}</p>
                 <p className="mt-2 text-sm font-bold text-[var(--muted)]">Suggested memo: {transferNote}</p>
               </div>
-              <div className="rounded-[8px] bg-white/80 p-4">
+              <div className="rounded-[8px] bg-[var(--background)] p-4">
                 <p className="text-sm font-black text-[var(--muted)]">Cash</p>
                 <p className="mt-1 font-bold">Cash can be arranged directly with Meera for pickup.</p>
               </div>
@@ -113,9 +116,10 @@ export default function OrderSummaryPage() {
               <div><dt>Name</dt><dd className="text-[var(--foreground)]">{order.name || "To confirm"}</dd></div>
               <div><dt>Order ID</dt><dd className="text-[var(--foreground)]">{order.id}</dd></div>
               <div><dt>Pickup date</dt><dd className="text-[var(--foreground)]">{order.eventDate || "To confirm"}</dd></div>
-              <div><dt>Product</dt><dd className="text-[var(--foreground)]">{order.productType || "Custom order"}</dd></div>
+              <div><dt>Pickup time</dt><dd className="text-[var(--foreground)]">{order.pickupTime ? pickupTimeLabel(order.pickupTime) : "To confirm"}</dd></div>
+              <div><dt>Cake size</dt><dd className="text-[var(--foreground)]">{order.cakeSizeId || "To confirm"}</dd></div>
             </dl>
-            <pre className="mt-5 max-h-80 overflow-auto whitespace-pre-wrap rounded-[8px] bg-[#fffdf8] p-4 text-sm leading-6 text-[var(--muted)]">{order.summary}</pre>
+            <pre className="summary-preview mt-5 max-h-80">{order.summary}</pre>
           </article>
         </div>
       </div>
@@ -175,11 +179,13 @@ function isStoredOrder(value: unknown): value is StoredOrder {
     && (order.email === undefined || typeof order.email === "string")
     && (order.phone === undefined || typeof order.phone === "string")
     && (order.eventDate === undefined || typeof order.eventDate === "string")
+    && (order.pickupTime === undefined || typeof order.pickupTime === "string")
     && (order.productType === undefined || typeof order.productType === "string")
     && (order.cakeSizeId === undefined || typeof order.cakeSizeId === "string")
     && (order.flavourId === undefined || typeof order.flavourId === "string")
-    && (order.servings === undefined || typeof order.servings === "number")
-    && (order.budget === undefined || typeof order.budget === "string")
+    && (order.frostingId === undefined || typeof order.frostingId === "string")
+    && (order.fillingIds === undefined || (Array.isArray(order.fillingIds) && order.fillingIds.every((item) => typeof item === "string")))
+    && (order.toppingIds === undefined || (Array.isArray(order.toppingIds) && order.toppingIds.every((item) => typeof item === "string")))
     && (order.message === undefined || typeof order.message === "string")
     && (order.paymentEmail === undefined || typeof order.paymentEmail === "string");
 }
@@ -196,10 +202,13 @@ function normalizeStoredOrder(order: StoredOrder): StoredOrder {
     email: normalizeStoredText(order.email),
     phone: normalizeStoredText(order.phone),
     eventDate: normalizeStoredText(order.eventDate),
+    pickupTime: normalizeStoredText(order.pickupTime),
     productType: normalizeStoredText(order.productType),
     cakeSizeId: normalizeStoredText(order.cakeSizeId),
     flavourId: normalizeStoredText(order.flavourId),
-    budget: normalizeStoredText(order.budget),
+    frostingId: normalizeStoredText(order.frostingId),
+    fillingIds: order.fillingIds?.map((item) => normalizeStoredText(item) ?? "").filter(Boolean),
+    toppingIds: order.toppingIds?.map((item) => normalizeStoredText(item) ?? "").filter(Boolean),
     message: normalizeStoredText(order.message),
     paymentEmail: normalizeStoredText(order.paymentEmail),
     summary: order.summary.trim()

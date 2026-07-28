@@ -5,44 +5,22 @@ import { defaultPublicCatalog } from "@/lib/catalog";
 import { MenuContent } from "./menu-content";
 
 describe("MenuContent", () => {
-  it("shows Sheet-driven product and add-on ranges in ascending order", () => {
-    render(
-      <MenuContent
-        initialCatalog={{
-          ...defaultPublicCatalog,
-          products: [
-            ...defaultPublicCatalog.products,
-            {
-              id: "mini-cheesecake-box",
-              label: "Mini cheesecake box",
-              low: 52,
-              high: 42,
-              enabled: true,
-              sortOrder: 4
-            }
-          ],
-          addOns: [
-            {
-              id: "rush-finish",
-              productId: "all",
-              category: "add-on",
-              label: "Rush finish",
-              low: 15,
-              high: 10,
-              servings: "",
-              enabled: true,
-              sortOrder: 1
-            }
-          ]
-        }}
-      />
-    );
+  it("shows the cake-only menu with visible fixed prices", () => {
+    render(<MenuContent initialCatalog={defaultPublicCatalog} />);
 
-    expect(screen.getByText("Mini cheesecake box")).toBeInTheDocument();
-    expect(screen.getAllByText("$42-$52").length).toBeGreaterThan(0);
-    expect(screen.getByText("Rush finish")).toBeInTheDocument();
-    expect(screen.getByText("$10-$15")).toBeInTheDocument();
-    expect(screen.queryByText("$52-$42")).not.toBeInTheDocument();
-    expect(screen.queryByText("$15-$10")).not.toBeInTheDocument();
+    expect(screen.getByText("4-inch cake")).toBeInTheDocument();
+    expect(screen.getByText("Starting at $35")).toBeInTheDocument();
+    expect(screen.getByText("Starting at $60")).toBeInTheDocument();
+    expect(screen.getByText("Starting at $75")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Flavours" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Frostings" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Fillings" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Toppings" })).toBeInTheDocument();
+    expect(screen.getByText("Oreo Crunch")).toBeInTheDocument();
+    expect(screen.getByText("Apricot")).toBeInTheDocument();
+    expect(screen.getByText("Chopped Pistachio")).toBeInTheDocument();
+    expect(screen.getAllByText("+$5").length).toBeGreaterThan(0);
+    expect(screen.queryByText(/cupcake/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/dessert box/i)).not.toBeInTheDocument();
   });
 });

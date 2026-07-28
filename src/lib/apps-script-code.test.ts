@@ -23,16 +23,16 @@ function loadEstimateInquiry(readObjects: (sheetName: string) => Array<Record<st
   const script = [
     extractFunction(source, "clean"),
     extractFunction(source, "toNumber"),
-    extractFunction(source, "isAddOnOffering"),
     extractFunction(source, "orderedPriceRange"),
     extractFunction(source, "estimateInquiry"),
     "estimateInquiry"
   ].join("\n");
 
   return runInNewContext(script, { readObjects }) as (inquiry: {
-    productType: string;
     cakeSizeId?: string;
-    addOnIds?: string[];
+    frostingId?: string;
+    fillingIds?: string[];
+    toppingIds?: string[];
   }) => { low: number; high: number };
 }
 
@@ -71,13 +71,12 @@ function loadSubmitOrder(
     extractFunction(source, "toNumber"),
     extractFunction(source, "summaryTextOrDefault"),
     extractFunction(source, "inquiryTextOrDefault"),
-    extractFunction(source, "assertInquiryAddOns"),
+    extractFunction(source, "assertInquiryChoices"),
     extractFunction(source, "requireInquiryPayload"),
     extractFunction(source, "assertInquiryTextFields"),
-    extractFunction(source, "isAddOnOffering"),
     extractFunction(source, "orderedPriceRange"),
     extractFunction(source, "estimateInquiry"),
-    extractFunction(source, "selectedAddOnLabels"),
+    extractFunction(source, "selectedOfferingLabels"),
     extractFunction(source, "selectedOfferingLabel"),
     extractFunction(source, "buildSummary"),
     extractFunction(source, "submitOrder"),
@@ -165,6 +164,7 @@ function loadListAdminData(readObjects: (sheetName: string) => Array<Record<stri
     extractFunction(source, "toBoolean"),
     extractFunction(source, "normalizeLedgerEntryType"),
     extractFunction(source, "orderedPriceRange"),
+    extractFunction(source, "csvIds"),
     extractFunction(source, "listAdminData"),
     "listAdminData"
   ].join("\n");
@@ -325,110 +325,168 @@ function loadDeleteOffering(deleteById: (sheetName: string, id: string) => unkno
   }) as (payload: { id: string }) => unknown;
 }
 
+function loadMigrateCakeCatalog({
+  readObjects,
+  patchById,
+  upsertById,
+  setSetting,
+  audit
+}: {
+  readObjects: (sheetName: string) => Array<Record<string, unknown>>;
+  patchById: ReturnType<typeof vi.fn>;
+  upsertById: ReturnType<typeof vi.fn>;
+  setSetting: ReturnType<typeof vi.fn>;
+  audit: ReturnType<typeof vi.fn>;
+}) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    "const CATALOG_VERSION = 'cake-only-v1';",
+    "const DEFAULT_PRODUCTS = [{ id: 'cake', enabled: true }];",
+    "const DEFAULT_OFFERINGS = [{ id: 'four-inch', enabled: true }, { id: 'chocolate', enabled: true }];",
+    extractFunction(source, "clean"),
+    extractFunction(source, "settingValue("),
+    extractFunction(source, "migrateCakeCatalog"),
+    "migrateCakeCatalog"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    readObjects,
+    patchById,
+    upsertById,
+    setSetting,
+    audit,
+    nowIso: vi.fn(() => "2026-07-27T00:00:00.000Z")
+  }) as () => void;
+}
+
 describe("Apps Script Code.gs estimateInquiry", () => {
-  it("matches copied Sheet catalog ids after trimming them", () => {
+  it("matches copied cake option ids after trimming and normalizing them", () => {
     const estimateInquiry = loadEstimateInquiry((sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: " dessert-box ", low: 38, high: 48 }];
-      }
-      if (sheetName === "Offerings") {
-        return [{ id: " fresh-berries ", productId: " all ", low: 10, high: 12 }];
-      }
-      return [];
-    });
-
-    expect(estimateInquiry({
-      productType: "dessert-box",
-      addOnIds: ["fresh-berries"]
-    })).toEqual({ low: 48, high: 60 });
-  });
-
-  it("ignores copied add-ons scoped to another product", () => {
-    const estimateInquiry = loadEstimateInquiry((sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: " cupcakes ", low: 34, high: 44 }];
-      }
       if (sheetName === "Offerings") {
         return [
-          { id: " cake-topper ", productId: " cake ", low: 10, high: 14 },
-          { id: " sprinkle-pack ", productId: " Cupcakes ", low: 4, high: 6 }
+          { id: " eight-inch ", category: " cake-size ", low: 75, high: 75 },
+          { id: " oreo-crunch ", category: " frosting ", low: 5, high: 5 },
+          { id: " raspberry-filling ", category: " filling ", low: 5, high: 5 },
+          { id: " fresh-strawberry ", category: " topping ", low: 5, high: 5 }
         ];
       }
       return [];
     });
 
     expect(estimateInquiry({
-      productType: "cupcakes",
-      addOnIds: ["cake-topper", "sprinkle-pack"]
-    })).toEqual({ low: 38, high: 50 });
+      cakeSizeId: " Eight-Inch ",
+      frostingId: " Oreo-Crunch ",
+      fillingIds: [" Raspberry-Filling "],
+      toppingIds: [" Fresh-Strawberry "]
+    })).toEqual({ low: 90, high: 90 });
   });
 
-  it("normalizes copied estimate input casing before matching Sheet rows", () => {
+  it("ignores non-canonical offering categories inside option selections", () => {
     const estimateInquiry = loadEstimateInquiry((sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: " cake ", low: 58, high: 150 }];
-      }
       if (sheetName === "Offerings") {
         return [
-          { id: " six-inch ", productId: " cake ", low: 58, high: 68 },
-          { id: " fresh-berries ", productId: " all ", low: 10, high: 12 }
+          { id: "six-inch", category: "cake-size", low: 60, high: 60 },
+          { id: "vanilla", category: "flavour", low: 99, high: 99 },
+          { id: "legacy-addon", category: "add-on", low: 99, high: 99 },
+          { id: "fresh-blueberry", category: "topping", low: 5, high: 5 }
         ];
       }
       return [];
     });
 
     expect(estimateInquiry({
-      productType: " Cake ",
-      cakeSizeId: " Six-Inch ",
-      addOnIds: [" Fresh-Berries "]
-    })).toEqual({ low: 68, high: 80 });
-  });
-
-  it("ignores copied non-add-on offering ids inside add-on selections", () => {
-    const estimateInquiry = loadEstimateInquiry((sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: "cake", low: 58, high: 150 }];
-      }
-      if (sheetName === "Offerings") {
-        return [
-          { id: "six-inch", productId: "cake", category: "cake-size", low: 58, high: 68 },
-          { id: "vanilla-rose", productId: "all", category: "flavour", low: 99, high: 99 },
-          { id: "fresh-berries", productId: "all", category: "add-on", low: 10, high: 12 }
-        ];
-      }
-      return [];
-    });
-
-    expect(estimateInquiry({
-      productType: "cake",
       cakeSizeId: "six-inch",
-      addOnIds: ["six-inch", "vanilla-rose", "fresh-berries"]
-    })).toEqual({ low: 68, high: 80 });
+      fillingIds: ["vanilla", "legacy-addon"],
+      toppingIds: ["fresh-blueberry"]
+    })).toEqual({ low: 65, high: 65 });
   });
 
-  it("orders copied Sheet price ranges before totaling fallback estimates", () => {
+  it("orders copied Sheet ranges before totaling", () => {
     const estimateInquiry = loadEstimateInquiry((sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: "cake", low: 58, high: 150 }];
-      }
       if (sheetName === "Offerings") {
         return [
-          { id: "sheet-eight-inch", productId: "cake", category: "cake-size", low: 120, high: 95 },
-          { id: "rush-finish", productId: "all", category: "add-on", low: 15, high: 10 }
+          { id: "sheet-eight-inch", category: "cake-size", low: 120, high: 95 },
+          { id: "rush-topping", category: "topping", low: 15, high: 10 }
         ];
       }
       return [];
     });
 
     expect(estimateInquiry({
-      productType: "cake",
       cakeSizeId: "sheet-eight-inch",
-      addOnIds: ["rush-finish"]
+      toppingIds: ["rush-topping"]
     })).toEqual({ low: 105, high: 135 });
   });
 });
 
+describe("Apps Script Code.gs cake catalog migration", () => {
+  it("disables obsolete rows, upserts canonical rows, and records its version without deleting history", () => {
+    const patchById = vi.fn();
+    const upsertById = vi.fn();
+    const setSetting = vi.fn();
+    const audit = vi.fn();
+    const migrateCakeCatalog = loadMigrateCakeCatalog({
+      readObjects: (sheetName) => {
+        if (sheetName === "Settings") return [];
+        if (sheetName === "Products") return [{ id: "cake" }, { id: "cupcakes" }];
+        if (sheetName === "Offerings") return [{ id: "four-inch" }, { id: "legacy-addon" }];
+        return [];
+      },
+      patchById,
+      upsertById,
+      setSetting,
+      audit
+    });
+
+    migrateCakeCatalog();
+
+    expect(patchById).toHaveBeenCalledWith("Products", "cupcakes", expect.objectContaining({ enabled: false }));
+    expect(patchById).toHaveBeenCalledWith("Offerings", "legacy-addon", expect.objectContaining({ enabled: false }));
+    expect(upsertById).toHaveBeenCalledWith("Products", expect.objectContaining({ id: "cake", enabled: true }));
+    expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({ id: "four-inch", enabled: true }));
+    expect(setSetting).toHaveBeenCalledWith("catalogVersion", "cake-only-v1");
+    expect(audit).toHaveBeenCalledWith("migrateCakeCatalog", "cake-only-v1");
+  });
+
+  it("is a no-op after the migration version is recorded", () => {
+    const patchById = vi.fn();
+    const upsertById = vi.fn();
+    const setSetting = vi.fn();
+    const audit = vi.fn();
+    const migrateCakeCatalog = loadMigrateCakeCatalog({
+      readObjects: (sheetName) => sheetName === "Settings"
+        ? [{ key: "catalogVersion", value: "cake-only-v1" }]
+        : [{ id: "legacy-row" }],
+      patchById,
+      upsertById,
+      setSetting,
+      audit
+    });
+
+    migrateCakeCatalog();
+
+    expect(patchById).not.toHaveBeenCalled();
+    expect(upsertById).not.toHaveBeenCalled();
+    expect(setSetting).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+});
+
 describe("Apps Script Code.gs submitOrder", () => {
+  const validInquiry = {
+    name: "Amina",
+    email: "amina@example.com",
+    phone: "4165550101",
+    eventDate: "2099-05-20",
+    pickupTime: "12:00-14:00",
+    cakeSizeId: "eight-inch",
+    flavourId: "vanilla",
+    frostingId: "oreo-crunch",
+    fillingIds: ["raspberry-filling"],
+    toppingIds: ["fresh-strawberry"],
+    message: "Birthday cake with soft florals."
+  };
+
   it("rejects malformed inquiry payloads before appending order rows", () => {
     const appendObject = vi.fn();
     const submitOrder = loadSubmitOrder(appendObject);
@@ -442,17 +500,19 @@ describe("Apps Script Code.gs submitOrder", () => {
     const appendObject = vi.fn();
     const submitOrder = loadSubmitOrder(appendObject);
 
-    expect(() => submitOrder({ inquiry: { name: { copied: true } } }))
+    expect(() => submitOrder({ inquiry: { ...validInquiry, name: { copied: true } } }))
       .toThrow("Unsupported inquiry text value.");
     expect(appendObject).not.toHaveBeenCalled();
   });
 
-  it("rejects non-string add-on ids before appending order rows", () => {
+  it("rejects non-string multi-select ids before appending order rows", () => {
     const appendObject = vi.fn();
     const submitOrder = loadSubmitOrder(appendObject);
 
-    expect(() => submitOrder({ inquiry: { addOnIds: [{ copied: true }] } }))
-      .toThrow("Unsupported inquiry add-on value.");
+    expect(() => submitOrder({
+      inquiry: { ...validInquiry, fillingIds: [{ copied: true }] }
+    }))
+      .toThrow("Unsupported inquiry fillings value.");
     expect(appendObject).not.toHaveBeenCalled();
   });
 
@@ -461,25 +521,25 @@ describe("Apps Script Code.gs submitOrder", () => {
     const submitOrder = loadSubmitOrder(appendObject);
 
     expect(() => submitOrder({
-      inquiry: { name: "Amina", productType: "dessert-box" },
+      inquiry: validInquiry,
       summary: { copied: true }
     })).toThrow("Unsupported inquiry summary.");
     expect(appendObject).not.toHaveBeenCalled();
   });
 
-  it("collapses copied single-line inquiry fields before appending order rows", () => {
+  it("stores the cake-only contract while collapsing copied single-line fields", () => {
     const appendObject = vi.fn();
     const submitOrder = loadSubmitOrder(appendObject);
 
     submitOrder({
       inquiry: {
+        ...validInquiry,
         name: " Amina\nMemo: redirected ",
-        email: "amina@example.com",
         phone: " 416\n555 0101 ",
-        eventDate: "2099-05-20",
-        productType: "dessert-box",
-        budget: " 100-150\nDeposit paid ",
-        message: "Birthday dessert box with soft florals."
+        pickupTime: " 12:00-14:00 ",
+        frostingId: " Oreo-Crunch ",
+        fillingIds: ["raspberry-filling", "apricot-filling"],
+        toppingIds: ["fresh-strawberry"]
       }
     });
 
@@ -488,166 +548,73 @@ describe("Apps Script Code.gs submitOrder", () => {
       expect.objectContaining({
         name: "Amina Memo: redirected",
         phone: "416 555 0101",
-        budget: "100-150 Deposit paid",
+        pickupTime: "12:00-14:00",
+        productType: "cake",
+        budget: "",
+        frostingId: "Oreo-Crunch",
+        fillingIds: "raspberry-filling,apricot-filling",
+        toppingIds: "fresh-strawberry",
         summary: expect.stringContaining("Name: Amina Memo: redirected")
       })
     );
     expect(appendObject.mock.calls[0][1].summary).toContain("Phone: 416 555 0101");
-    expect(appendObject.mock.calls[0][1].summary).toContain("Budget: 100-150 Deposit paid");
+    expect(appendObject.mock.calls[0][1].summary).not.toContain("Budget:");
+    expect(appendObject.mock.calls[0][1].summary).not.toContain("Servings:");
   });
 
-  it("includes selected Sheet-backed add-ons in fallback summaries", () => {
+  it("includes every selected Sheet-backed cake option in fallback summaries", () => {
     const appendObject = vi.fn();
     const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: "dessert-box", low: 38, high: 48 }];
-      }
       if (sheetName === "Offerings") {
         return [
-          { id: "gold-leaf", productId: "all", label: "Gold leaf finish", low: 18, high: 24 },
-          { id: "cake-topper", productId: "cake", label: "Cake topper", low: 12, high: 16 }
+          { id: "eight-inch", category: "cake-size", label: "8-inch cake", low: 75, high: 75 },
+          { id: "vanilla", category: "flavour", label: "Vanilla", low: 0, high: 0 },
+          { id: "oreo-crunch", category: "frosting", label: "Oreo Crunch", low: 5, high: 5 },
+          { id: "raspberry-filling", category: "filling", label: "Raspberry", low: 5, high: 5 },
+          { id: "fresh-strawberry", category: "topping", label: "Fresh Strawberry", low: 5, high: 5 }
         ];
       }
       return [];
     });
 
     submitOrder({
-      inquiry: {
-        name: "Amina",
-        email: "amina@example.com",
-        phone: "4165550101",
-        eventDate: "2099-05-20",
-        productType: "dessert-box",
-        addOnIds: ["gold-leaf", "cake-topper"],
-        budget: "100-150",
-        message: "Birthday dessert box with soft florals."
-      }
-    });
-
-    expect(appendObject).toHaveBeenCalledWith(
-      "Orders",
-      expect.objectContaining({
-        summary: expect.stringContaining("Add-ons: Gold leaf finish")
-      })
-    );
-    expect(appendObject.mock.calls[0][1].summary).not.toContain("Cake topper");
-  });
-
-  it("ignores copied non-add-on ids in fallback add-on summaries", () => {
-    const appendObject = vi.fn();
-    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: "cake", low: 58, high: 150 }];
-      }
-      if (sheetName === "Offerings") {
-        return [
-          { id: "six-inch", productId: "cake", category: "cake-size", label: "6 inch round cake", low: 58, high: 68 },
-          { id: "vanilla-rose", productId: "all", category: "flavour", label: "Vanilla rose", low: 99, high: 99 },
-          { id: "fresh-berries", productId: "all", category: "add-on", label: "Fresh berry finish", low: 10, high: 12 }
-        ];
-      }
-      return [];
-    });
-
-    submitOrder({
-      inquiry: {
-        name: "Amina",
-        email: "amina@example.com",
-        phone: "4165550101",
-        eventDate: "2099-05-20",
-        productType: "cake",
-        cakeSizeId: "six-inch",
-        flavourId: "vanilla-rose",
-        addOnIds: ["six-inch", "vanilla-rose", "fresh-berries"],
-        budget: "100-150",
-        message: "Birthday cake with soft florals."
-      }
-    });
-
-    expect(appendObject.mock.calls[0][1].summary).toContain("Add-ons: Fresh berry finish");
-    expect(appendObject.mock.calls[0][1].summary).not.toContain("Add-ons: 6 inch round cake");
-    expect(appendObject.mock.calls[0][1].summary).not.toContain("Add-ons: Vanilla rose");
-    expect(appendObject.mock.calls[0][1].summary).toContain("Cake size: 6 inch round cake");
-    expect(appendObject.mock.calls[0][1].summary).toContain("Flavour: Vanilla rose");
-  });
-
-  it("includes Sheet-backed cake size and flavour labels in fallback summaries", () => {
-    const appendObject = vi.fn();
-    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: "cake", low: 58, high: 150 }];
-      }
-      if (sheetName === "Offerings") {
-        return [
-          { id: "tall-six", productId: "cake", label: "Tall six inch celebration cake", low: 72, high: 84 },
-          { id: "mango-saffron", productId: "all", label: "Mango saffron", low: 0, high: 0 }
-        ];
-      }
-      return [];
-    });
-
-    submitOrder({
-      inquiry: {
-        name: "Amina",
-        email: "amina@example.com",
-        phone: "4165550101",
-        eventDate: "2099-05-20",
-        productType: "cake",
-        cakeSizeId: "tall-six",
-        flavourId: "mango-saffron",
-        budget: "100-150",
-        message: "Birthday cake with mango saffron."
-      }
-    });
-
-    expect(appendObject).toHaveBeenCalledWith(
-      "Orders",
-      expect.objectContaining({
-        summary: expect.stringContaining("Cake size: Tall six inch celebration cake")
-      })
-    );
-    expect(appendObject.mock.calls[0][1].summary).toContain("Flavour: Mango saffron");
-  });
-
-  it("collapses copied Sheet-backed fallback summary labels before appending order rows", () => {
-    const appendObject = vi.fn();
-    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
-      if (sheetName === "Products") {
-        return [{ id: "cake", low: 58, high: 150 }];
-      }
-      if (sheetName === "Offerings") {
-        return [
-          { id: "tall-six", productId: "cake", category: "cake-size", label: " Tall six\ncelebration cake ", low: 72, high: 84 },
-          { id: "mango-saffron", productId: "all", category: "flavour", label: " Mango\nsaffron ", low: 0, high: 0 },
-          { id: "gold-leaf", productId: "all", category: "add-on", label: " Gold\nleaf finish ", low: 18, high: 24 }
-        ];
-      }
-      return [];
-    });
-
-    submitOrder({
-      inquiry: {
-        name: "Amina",
-        email: "amina@example.com",
-        phone: "4165550101",
-        eventDate: "2099-05-20",
-        productType: "cake",
-        cakeSizeId: "tall-six",
-        flavourId: "mango-saffron",
-        addOnIds: ["gold-leaf"],
-        budget: "100-150",
-        message: "Birthday cake with mango saffron."
-      }
+      inquiry: validInquiry
     });
 
     const summary = appendObject.mock.calls[0][1].summary;
+    expect(summary).toContain("Pickup time: 12:00-14:00");
+    expect(summary).toContain("Cake size: 8-inch cake");
+    expect(summary).toContain("Flavour: Vanilla");
+    expect(summary).toContain("Frosting: Oreo Crunch");
+    expect(summary).toContain("Fillings: Raspberry");
+    expect(summary).toContain("Toppings: Fresh Strawberry");
+    expect(summary).toContain("Starting price: $90");
+  });
 
-    expect(summary).toContain("Cake size: Tall six celebration cake");
-    expect(summary).toContain("Flavour: Mango saffron");
-    expect(summary).toContain("Add-ons: Gold leaf finish");
-    expect(summary).not.toContain("Tall six\ncelebration cake");
-    expect(summary).not.toContain("Mango\nsaffron");
-    expect(summary).not.toContain("Gold\nleaf finish");
+  it("collapses copied Sheet-backed fallback labels", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
+      if (sheetName === "Offerings") {
+        return [
+          { id: "eight-inch", category: "cake-size", label: " 8-inch\ncake ", low: 75, high: 75 },
+          { id: "vanilla", category: "flavour", label: " Vanilla\nbean ", low: 0, high: 0 },
+          { id: "oreo-crunch", category: "frosting", label: " Oreo\nCrunch ", low: 5, high: 5 },
+          { id: "raspberry-filling", category: "filling", label: " Raspberry\nfilling ", low: 5, high: 5 },
+          { id: "fresh-strawberry", category: "topping", label: " Fresh\nStrawberry ", low: 5, high: 5 }
+        ];
+      }
+      return [];
+    });
+
+    submitOrder({ inquiry: validInquiry });
+
+    const summary = appendObject.mock.calls[0][1].summary;
+    expect(summary).toContain("Cake size: 8-inch cake");
+    expect(summary).toContain("Flavour: Vanilla bean");
+    expect(summary).toContain("Frosting: Oreo Crunch");
+    expect(summary).toContain("Fillings: Raspberry filling");
+    expect(summary).toContain("Toppings: Fresh Strawberry");
+    expect(summary).not.toContain("\nbean");
   });
 });
 
@@ -1200,7 +1167,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
     const upsertOffering = loadUpsertOffering(upsertById);
 
     expect(() => upsertOffering({
-      offering: { id: "floral-piping", label: "   ", category: "add-on", low: 12, high: 18 }
+      offering: { id: "floral-piping", label: "   ", category: "topping", low: 12, high: 18 }
     })).toThrow("Unsupported catalog text value.");
     expect(upsertById).not.toHaveBeenCalled();
   });
@@ -1213,7 +1180,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
       offering: {
         id: "custom-topper",
         productId: "cake",
-        category: "topping",
+        category: "decoration",
         label: "Custom topper",
         low: 12,
         high: 18
@@ -1230,7 +1197,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
       offering: {
         id: "custom-topper",
         productId: "cake",
-        category: " Add-On ",
+        category: " Topping ",
         label: "Custom topper",
         low: 12,
         high: 18
@@ -1239,7 +1206,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
 
     expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
       id: "custom-topper",
-      category: "add-on",
+      category: "topping",
       label: "Custom topper"
     }));
   });
@@ -1251,8 +1218,8 @@ describe("Apps Script Code.gs catalog toggles", () => {
     upsertOffering({
       offering: {
         id: "custom-topper",
-        productId: " Cupcakes ",
-        category: "add-on",
+        productId: " Cake ",
+        category: "topping",
         label: "Custom topper",
         low: 12,
         high: 18
@@ -1261,7 +1228,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
 
     expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({
       id: "custom-topper",
-      productId: "cupcakes",
+      productId: "cake",
       label: "Custom topper"
     }));
   });
@@ -1274,7 +1241,7 @@ describe("Apps Script Code.gs catalog toggles", () => {
       offering: {
         id: "custom-topper",
         productId: "   ",
-        category: "add-on",
+        category: "topping",
         label: "Custom topper",
         low: 12,
         high: 18

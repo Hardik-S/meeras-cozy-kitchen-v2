@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { dmTemplates, doNotOfferYet, launchChecklist, practiceCakePlan, priceIncreasePlan } from "@/content/launchKit";
-import { sourceLinks } from "@/content/sources";
 
 export const metadata: Metadata = {
   title: "Launch Kit",
@@ -24,8 +23,8 @@ export default function LaunchKitPage() {
           <h2 className="text-3xl font-black">Launch checklist</h2>
           <ol className="mt-5 grid gap-3">
             {launchChecklist.map((item, index) => (
-              <li key={item} className="flex gap-3 rounded-[8px] bg-[#fffdf8] p-3 text-sm font-bold leading-6 text-[var(--muted)]">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-xs text-white">{index + 1}</span>
+              <li key={item} className="flex gap-3 rounded-[8px] bg-[var(--background)] p-3 text-sm font-bold leading-6 text-[var(--muted)]">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-xs text-[var(--background)]">{index + 1}</span>
                 {item}
               </li>
             ))}
@@ -36,7 +35,7 @@ export default function LaunchKitPage() {
           <h2 className="text-3xl font-black">Practice cake plan</h2>
           <ul className="mt-5 grid gap-3">
             {practiceCakePlan.map((item) => (
-              <li key={item} className="rounded-[8px] bg-[var(--surface-rose)] p-3 text-sm font-bold leading-6 text-[var(--muted)]">
+              <li key={item} className="rounded-[8px] bg-[var(--surface-alt)] p-3 text-sm font-bold leading-6 text-[var(--muted)]">
                 {item}
               </li>
             ))}
@@ -57,9 +56,9 @@ export default function LaunchKitPage() {
       </section>
 
       <section className="mt-14 grid gap-5 md:grid-cols-2">
-        <div className="rounded-[8px] bg-[var(--foreground)] p-5 text-white">
+        <div className="rounded-[8px] bg-[var(--foreground)] p-5 text-[var(--background)]">
           <h2 className="text-3xl font-black">Do not offer yet</h2>
-          <ul className="mt-5 grid gap-2 text-sm font-bold text-white/85">
+          <ul className="mt-5 grid gap-2 text-sm font-bold text-[var(--background)]">
             {doNotOfferYet.map((item) => (
               <li key={item}>- {item}</li>
             ))}
@@ -72,18 +71,6 @@ export default function LaunchKitPage() {
               <li key={item}>- {item}</li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      <section className="mt-14">
-        <h2 className="text-3xl font-black">Source links</h2>
-        <div className="mt-5 grid gap-3">
-          {sourceLinks.map((source) => (
-            <a key={source.url} href={source.url} className="rounded-[8px] border border-[var(--line)] bg-white/75 p-4 hover:border-[var(--accent)]">
-              <span className="block font-black">{source.title}</span>
-              <span className="mt-1 block text-sm leading-6 text-[var(--muted)]">{source.note}</span>
-            </a>
-          ))}
         </div>
       </section>
     </div>

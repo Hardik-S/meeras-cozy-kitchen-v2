@@ -17,6 +17,7 @@ out/
 .next-dev.log
 .next-dev.err
 .turbo/
+*.tsbuildinfo
 .vercel/
 
 # OS/editor noise

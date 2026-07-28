@@ -1,15 +1,15 @@
 import { business } from "@/content/business";
 import type { PublicCatalog } from "./catalog";
-import { addOns, calculateQuoteEstimate, cakeSizes, flavours, productBasePrices, quoteRangeLabel } from "./pricing";
-import type { InquiryInput } from "./validation";
-
-function titleCaseProduct(productType: InquiryInput["productType"], catalog?: PublicCatalog) {
-  const normalizedProductType = normalizeCatalogId(productType);
-  const product = catalog?.products.find((item) => normalizeCatalogId(item.id) === normalizedProductType);
-  const label = normalizeDisplayLabel(product?.label ?? productBasePrices[normalizedProductType]?.label ?? normalizedProductType).replace("Custom ", "");
-
-  return label.charAt(0).toUpperCase() + label.slice(1);
-}
+import {
+  calculateQuoteEstimate,
+  cakeSizes,
+  fillings,
+  flavours,
+  frostings,
+  startingPriceLabel,
+  toppings
+} from "./pricing";
+import { pickupTimeLabel, type InquiryInput } from "./validation";
 
 function normalizeCatalogId(value: string) {
   return value.trim().toLowerCase();
@@ -20,12 +20,9 @@ function normalizeDisplayLabel(value: string) {
 }
 
 function labelFor<T extends { id: string; label: string }>(items: T[], id?: string) {
-  if (!id) {
-    return "Not selected";
-  }
+  if (!id) return "Not selected";
 
   const normalizedId = normalizeCatalogId(id);
-
   const label = items.find((item) => normalizeCatalogId(item.id) === normalizedId)?.label;
 
   return label ? normalizeDisplayLabel(label) : "Not selected";
@@ -37,40 +34,30 @@ function labelsFor<T extends { id: string; label: string }>(items: T[], ids: str
     .filter((label) => label !== "Not selected");
 }
 
-function scopedLabelsFor<T extends { id: string; label: string; productId?: string }>(items: T[], ids: string[], productType: string) {
-  const normalizedProductType = normalizeCatalogId(productType);
-  const availableItems = items.filter((item) => {
-    if (!item.productId) {
-      return true;
-    }
-
-    const normalizedProductId = normalizeCatalogId(item.productId);
-
-    return normalizedProductId === "all" || normalizedProductId === normalizedProductType;
-  });
-
-  return labelsFor(availableItems, ids);
-}
-
 export function buildInquirySummary(inquiry: InquiryInput, catalog?: PublicCatalog) {
-  const estimate = calculateQuoteEstimate(inquiry, catalog);
-  const selectedAddOns = scopedLabelsFor(catalog?.addOns ?? addOns, inquiry.addOnIds, inquiry.productType);
-  const normalizedProductType = normalizeCatalogId(inquiry.productType);
+  const estimate = calculateQuoteEstimate(inquiry, {
+    cakeSizes: catalog?.cakeSizes ?? cakeSizes,
+    frostings: catalog?.frostings ?? frostings,
+    fillings: catalog?.fillings ?? fillings,
+    toppings: catalog?.toppings ?? toppings
+  });
+  const selectedFillings = labelsFor(catalog?.fillings ?? fillings, inquiry.fillingIds);
+  const selectedToppings = labelsFor(catalog?.toppings ?? toppings, inquiry.toppingIds);
   const lines = [
     `${business.name} inquiry`,
     `Name: ${inquiry.name}`,
     `Email: ${inquiry.email}`,
     `Phone: ${inquiry.phone}`,
     `Pickup date: ${inquiry.eventDate}`,
-    `Servings: ${inquiry.servings}`,
-    `Product: ${titleCaseProduct(inquiry.productType, catalog)}`,
-    ...(normalizedProductType === "cake"
-      ? [`Cake size: ${labelFor(catalog?.cakeSizes ?? cakeSizes, inquiry.cakeSizeId)}`]
-      : []),
+    `Pickup time: ${pickupTimeLabel(inquiry.pickupTime)}`,
+    `Cake size: ${labelFor(catalog?.cakeSizes ?? cakeSizes, inquiry.cakeSizeId)}`,
     `Flavour: ${labelFor(catalog?.flavours ?? flavours, inquiry.flavourId)}`,
-    ...(selectedAddOns.length > 0 ? [`Add-ons: ${selectedAddOns.join(", ")}`] : []),
-    `Budget: ${inquiry.budget || "Not provided"}`,
-    `Estimated range: ${quoteRangeLabel(estimate)}`,
+    ...(inquiry.frostingId
+      ? [`Frosting: ${labelFor(catalog?.frostings ?? frostings, inquiry.frostingId)}`]
+      : ["Frosting: No paid upgrade"]),
+    ...(selectedFillings.length > 0 ? [`Fillings: ${selectedFillings.join(", ")}`] : []),
+    ...(selectedToppings.length > 0 ? [`Toppings: ${selectedToppings.join(", ")}`] : []),
+    `${startingPriceLabel(estimate)}`,
     "",
     "Notes:",
     inquiry.message

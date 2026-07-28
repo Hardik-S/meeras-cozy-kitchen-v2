@@ -24,36 +24,49 @@ const SETTINGS = {
   senderName: "Meera's Cozy Kitchen"
 };
 
+const CATALOG_VERSION = "cake-only-v1";
+
 const SHEETS = {
   Settings: ["key", "value", "updatedAt"],
   Products: ["id", "label", "low", "high", "enabled", "sortOrder", "updatedAt"],
   Offerings: ["id", "productId", "category", "label", "low", "high", "servings", "enabled", "sortOrder", "updatedAt"],
   Orders: [
     "id", "createdAt", "name", "email", "phone", "eventDate", "productType", "cakeSizeId", "flavourId",
-    "budget", "message", "estimateLow", "estimateHigh", "status", "hearted", "pinned", "summary"
+    "budget", "message", "estimateLow", "estimateHigh", "status", "hearted", "pinned", "summary",
+    "pickupTime", "frostingId", "fillingIds", "toppingIds"
   ],
   Ledger: ["id", "date", "type", "category", "description", "amount", "orderId", "updatedAt", "quantity"],
   AuditLog: ["id", "createdAt", "action", "actor", "details"]
 };
 
 const DEFAULT_PRODUCTS = [
-  { id: "cake", label: "Custom cake", low: 58, high: 150, enabled: true, sortOrder: 1 },
-  { id: "cupcakes", label: "Cupcake dozen", low: 34, high: 44, enabled: true, sortOrder: 2 },
-  { id: "dessert-box", label: "Dessert box", low: 38, high: 48, enabled: true, sortOrder: 3 }
+  { id: "cake", label: "Custom cake", low: 35, high: 75, enabled: true, sortOrder: 1 }
 ];
 
 const DEFAULT_OFFERINGS = [
-  { id: "six-inch", productId: "cake", category: "cake-size", label: "6 inch round cake", low: 58, high: 68, servings: "8-10", enabled: true, sortOrder: 1 },
-  { id: "eight-inch", productId: "cake", category: "cake-size", label: "8 inch round cake", low: 88, high: 100, servings: "14-20", enabled: true, sortOrder: 2 },
-  { id: "ten-inch", productId: "cake", category: "cake-size", label: "10 inch round cake", low: 128, high: 150, servings: "24-30", enabled: true, sortOrder: 3 },
-  { id: "vanilla-rose", productId: "all", category: "flavour", label: "Vanilla rose", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
-  { id: "chocolate-fudge", productId: "all", category: "flavour", label: "Chocolate fudge", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
-  { id: "cardamom-pistachio", productId: "all", category: "flavour", label: "Cardamom pistachio", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
-  { id: "lemon-raspberry", productId: "all", category: "flavour", label: "Lemon raspberry", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
-  { id: "fresh-berries", productId: "all", category: "add-on", label: "Fresh berry finish", low: 10, high: 12, servings: "", enabled: true, sortOrder: 1 },
-  { id: "fondant-name", productId: "all", category: "add-on", label: "Fondant name or age", low: 5, high: 8, servings: "", enabled: true, sortOrder: 2 },
-  { id: "floral-piping", productId: "all", category: "add-on", label: "Floral piping", low: 12, high: 18, servings: "", enabled: true, sortOrder: 3 },
-  { id: "premium-filling", productId: "all", category: "add-on", label: "Premium filling", low: 8, high: 14, servings: "", enabled: true, sortOrder: 4 }
+  { id: "four-inch", productId: "cake", category: "cake-size", label: "4-inch cake", low: 35, high: 35, servings: "", enabled: true, sortOrder: 1 },
+  { id: "six-inch", productId: "cake", category: "cake-size", label: "6-inch cake", low: 60, high: 60, servings: "", enabled: true, sortOrder: 2 },
+  { id: "eight-inch", productId: "cake", category: "cake-size", label: "8-inch cake", low: 75, high: 75, servings: "", enabled: true, sortOrder: 3 },
+  { id: "chocolate", productId: "cake", category: "flavour", label: "Chocolate", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
+  { id: "vanilla", productId: "cake", category: "flavour", label: "Vanilla", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
+  { id: "almond", productId: "cake", category: "flavour", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
+  { id: "lemon", productId: "cake", category: "flavour", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
+  { id: "coconut", productId: "cake", category: "flavour", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
+  { id: "oreo-crunch", productId: "cake", category: "frosting", label: "Oreo Crunch", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
+  { id: "dark-chocolate-ganache", productId: "cake", category: "frosting", label: "Dark Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 2 },
+  { id: "white-chocolate-ganache", productId: "cake", category: "frosting", label: "White Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 3 },
+  { id: "raspberry-filling", productId: "cake", category: "filling", label: "Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
+  { id: "blueberry-filling", productId: "cake", category: "filling", label: "Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
+  { id: "cherry-filling", productId: "cake", category: "filling", label: "Cherry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
+  { id: "strawberry-filling", productId: "cake", category: "filling", label: "Strawberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 4 },
+  { id: "apricot-filling", productId: "cake", category: "filling", label: "Apricot", low: 5, high: 5, servings: "", enabled: true, sortOrder: 5 },
+  { id: "dark-chocolate-ganache-drip", productId: "cake", category: "topping", label: "Dark Chocolate Ganache Drip", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
+  { id: "white-chocolate-ganache-drip", productId: "cake", category: "topping", label: "White Chocolate Ganache Drip", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
+  { id: "fresh-raspberry", productId: "cake", category: "topping", label: "Fresh Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
+  { id: "fresh-blueberry", productId: "cake", category: "topping", label: "Fresh Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 4 },
+  { id: "fresh-strawberry", productId: "cake", category: "topping", label: "Fresh Strawberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 5 },
+  { id: "chopped-pistachio", productId: "cake", category: "topping", label: "Chopped Pistachio", low: 5, high: 5, servings: "", enabled: true, sortOrder: 6 },
+  { id: "chopped-almonds", productId: "cake", category: "topping", label: "Chopped Almonds", low: 5, high: 5, servings: "", enabled: true, sortOrder: 7 }
 ];
 
 function doGet() {
@@ -106,6 +119,7 @@ function setupMeeraCozyKitchen() {
   });
   seedSettings();
   seedProductsAndOfferings();
+  migrateCakeCatalog();
   return { ok: true, data: listAdminData({}) .data };
 }
 
@@ -125,17 +139,21 @@ function submitOrder(payload) {
     email: cleanSingleLine(inquiry.email),
     phone: cleanSingleLine(inquiry.phone),
     eventDate: cleanSingleLine(inquiry.eventDate),
-    productType: clean(inquiry.productType),
+    productType: "cake",
     cakeSizeId: clean(inquiry.cakeSizeId),
     flavourId: clean(inquiry.flavourId),
-    budget: cleanSingleLine(inquiry.budget),
+    budget: "",
     message: clean(inquiry.message),
     estimateLow: estimate.low,
     estimateHigh: estimate.high,
     status: "new",
     hearted: false,
     pinned: false,
-    summary
+    summary,
+    pickupTime: cleanSingleLine(inquiry.pickupTime),
+    frostingId: clean(inquiry.frostingId),
+    fillingIds: inquiry.fillingIds.join(","),
+    toppingIds: inquiry.toppingIds.join(",")
   });
   sendInquiryEmails(inquiry, summary, id);
   audit("submitOrder", id);
@@ -166,15 +184,16 @@ function assertInquiryTextFields(inquiry) {
     "email",
     "phone",
     "eventDate",
-    "productType",
+    "pickupTime",
     "cakeSizeId",
     "flavourId",
-    "budget",
+    "frostingId",
     "message"
   ].forEach(function(key) {
     inquiryTextOrDefault(inquiry[key], "");
   });
-  assertInquiryAddOns(inquiry.addOnIds);
+  assertInquiryChoices(inquiry.fillingIds, "fillings");
+  assertInquiryChoices(inquiry.toppingIds, "toppings");
 }
 
 function inquiryTextOrDefault(value, fallback) {
@@ -187,16 +206,13 @@ function inquiryTextOrDefault(value, fallback) {
   return clean(value);
 }
 
-function assertInquiryAddOns(value) {
-  if (value === undefined || value === null) {
-    return;
-  }
+function assertInquiryChoices(value, label) {
   if (!Array.isArray(value)) {
-    throw new Error("Unsupported inquiry add-ons.");
+    throw new Error("Unsupported inquiry " + label + ".");
   }
   value.forEach(function(id) {
     if (typeof id !== "string") {
-      throw new Error("Unsupported inquiry add-on value.");
+      throw new Error("Unsupported inquiry " + label + " value.");
     }
   });
 }
@@ -239,9 +255,13 @@ function listAdminData() {
           email: cleanSingleLine(row.email),
           phone: cleanSingleLine(row.phone),
           eventDate: cleanSingleLine(row.eventDate),
+          pickupTime: cleanSingleLine(row.pickupTime),
           productType: clean(row.productType).toLowerCase(),
           cakeSizeId: clean(row.cakeSizeId).toLowerCase(),
           flavourId: clean(row.flavourId).toLowerCase(),
+          frostingId: clean(row.frostingId).toLowerCase(),
+          fillingIds: csvIds(row.fillingIds),
+          toppingIds: csvIds(row.toppingIds),
           budget: cleanSingleLine(row.budget),
           message: cleanSingleLine(row.message),
           estimateLow: Math.min(estimateLow, estimateHigh),
@@ -363,7 +383,7 @@ function upsertOffering(payload) {
   upsertById("Offerings", {
     id: slug(id),
     productId: catalogProductIdOrDefault(offering, "productId", "all"),
-    category: catalogCategoryOrDefault(offering, "add-on"),
+    category: catalogCategoryOrDefault(offering, "topping"),
     label: label,
     low: low,
     high: high,
@@ -422,7 +442,13 @@ function catalogRequiredText(row, key) {
 
 function catalogCategoryOrDefault(row, fallback) {
   const category = catalogTextOrDefault(row, "category", fallback).toLowerCase();
-  if (category !== "cake-size" && category !== "flavour" && category !== "add-on") {
+  if (
+    category !== "cake-size"
+    && category !== "flavour"
+    && category !== "frosting"
+    && category !== "filling"
+    && category !== "topping"
+  ) {
     throw new Error("Unsupported catalog category.");
   }
   return category;
@@ -608,6 +634,54 @@ function seedProductsAndOfferings() {
   }
 }
 
+function settingValue(key) {
+  const row = readObjects("Settings").filter(function(item) {
+    return clean(item.key) === key;
+  })[0];
+  return row ? clean(row.value) : "";
+}
+
+function migrateCakeCatalog() {
+  if (settingValue("catalogVersion") === CATALOG_VERSION) {
+    return;
+  }
+
+  const productIds = DEFAULT_PRODUCTS.map(function(item) { return item.id; });
+  const offeringIds = DEFAULT_OFFERINGS.map(function(item) { return item.id; });
+  const updatedAt = nowIso();
+
+  readObjects("Products").forEach(function(row) {
+    const id = clean(row.id).toLowerCase();
+    if (id && productIds.indexOf(id) < 0) {
+      patchById("Products", id, { enabled: false, updatedAt: updatedAt });
+    }
+  });
+  DEFAULT_PRODUCTS.forEach(function(product) {
+    upsertById("Products", Object.assign({}, product, { updatedAt: updatedAt }));
+  });
+
+  readObjects("Offerings").forEach(function(row) {
+    const id = clean(row.id).toLowerCase();
+    if (id && offeringIds.indexOf(id) < 0) {
+      patchById("Offerings", id, { enabled: false, updatedAt: updatedAt });
+    }
+  });
+  DEFAULT_OFFERINGS.forEach(function(offering) {
+    upsertById("Offerings", Object.assign({}, offering, { updatedAt: updatedAt }));
+  });
+
+  setSetting("catalogVersion", CATALOG_VERSION);
+  audit("migrateCakeCatalog", CATALOG_VERSION);
+}
+
+function csvIds(value) {
+  return clean(value).split(",").map(function(id) {
+    return cleanSingleLine(id).toLowerCase();
+  }).filter(function(id) {
+    return id;
+  });
+}
+
 function sendInquiryEmails(inquiry, summary, orderId) {
   const settings = settingsObject();
   const customerSubject = "We received your Meera's Cozy Kitchen inquiry";
@@ -635,10 +709,6 @@ function sendMail(settings, to, subject, body, replyTo) {
   MailApp.sendEmail(to, subject, body, options);
 }
 
-function isAddOnOffering(row) {
-  return clean(row.category || "add-on").toLowerCase() === "add-on";
-}
-
 function orderedPriceRange(row) {
   const low = toNumber(row.low);
   const high = toNumber(row.high);
@@ -649,88 +719,83 @@ function orderedPriceRange(row) {
 }
 
 function estimateInquiry(inquiry) {
-  const products = readObjects("Products");
   const offerings = readObjects("Offerings");
-  const productType = clean(inquiry.productType).toLowerCase();
   const cakeSizeId = clean(inquiry.cakeSizeId).toLowerCase();
-  const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id).toLowerCase(); });
-  const cakeSize = offerings.filter(function(row) { return clean(row.id).toLowerCase() === cakeSizeId; })[0];
-  const product = products.filter(function(row) { return clean(row.id).toLowerCase() === productType; })[0];
-  const base = productType === "cake" && cakeSize ? cakeSize : product;
-  const baseRange = base ? orderedPriceRange(base) : { low: 0, high: 0 };
+  const selectedExtraIds = []
+    .concat(inquiry.frostingId ? [inquiry.frostingId] : [])
+    .concat(inquiry.fillingIds || [])
+    .concat(inquiry.toppingIds || [])
+    .map(function(id) { return clean(id).toLowerCase(); });
+  const cakeSize = offerings.filter(function(row) {
+    return clean(row.category).toLowerCase() === "cake-size"
+      && clean(row.id).toLowerCase() === cakeSizeId;
+  })[0];
+  const baseRange = cakeSize ? orderedPriceRange(cakeSize) : { low: 0, high: 0 };
   let low = baseRange.low;
   let high = baseRange.high;
-  addOnIds.forEach(function(id) {
-    const addOn = offerings.filter(function(row) {
-      const productId = clean(row.productId || "all").toLowerCase();
-      return isAddOnOffering(row) && clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
+  selectedExtraIds.forEach(function(id) {
+    const extra = offerings.filter(function(row) {
+      const category = clean(row.category).toLowerCase();
+      return (category === "frosting" || category === "filling" || category === "topping")
+        && clean(row.id).toLowerCase() === id;
     })[0];
-    if (addOn) {
-      const addOnRange = orderedPriceRange(addOn);
-      low += addOnRange.low;
-      high += addOnRange.high;
+    if (extra) {
+      const range = orderedPriceRange(extra);
+      low += range.low;
+      high += range.high;
     }
   });
   return { low, high };
 }
 
-function selectedAddOnLabels(inquiry) {
-  const productType = clean(inquiry.productType).toLowerCase();
-  const addOnIds = (inquiry.addOnIds || []).map(function(id) { return clean(id).toLowerCase(); });
-  const offerings = readObjects("Offerings");
-
-  return addOnIds.map(function(id) {
-    const addOn = offerings.filter(function(row) {
-      const productId = clean(row.productId || "all").toLowerCase();
-      return isAddOnOffering(row) && clean(row.id).toLowerCase() === id && (productId === "all" || productId === productType);
-    })[0];
-    return addOn ? cleanSingleLine(addOn.label || id) : "";
-  }).filter(function(label) {
-    return label;
-  });
-}
-
-function selectedOfferingLabel(inquiry, id) {
-  const productType = clean(inquiry.productType).toLowerCase();
+function selectedOfferingLabel(id, category) {
   const offeringId = clean(id).toLowerCase();
   if (!offeringId) {
     return "";
   }
 
   const offering = readObjects("Offerings").filter(function(row) {
-    const productId = clean(row.productId || "all").toLowerCase();
-    return clean(row.id).toLowerCase() === offeringId && (productId === "all" || productId === productType);
+    return clean(row.id).toLowerCase() === offeringId
+      && (!category || clean(row.category).toLowerCase() === category);
   })[0];
 
   return offering ? cleanSingleLine(offering.label || offeringId) : "";
 }
 
+function selectedOfferingLabels(ids, category) {
+  return (ids || []).map(function(id) {
+    return selectedOfferingLabel(id, category);
+  }).filter(function(label) {
+    return label;
+  });
+}
+
 function buildSummary(inquiry, estimate) {
-  const addOnLabels = selectedAddOnLabels(inquiry);
-  const productType = clean(inquiry.productType).toLowerCase();
-  const cakeSizeLabel = productType === "cake" ? selectedOfferingLabel(inquiry, inquiry.cakeSizeId) : "";
-  const flavourLabel = selectedOfferingLabel(inquiry, inquiry.flavourId);
+  const cakeSizeLabel = selectedOfferingLabel(inquiry.cakeSizeId, "cake-size");
+  const flavourLabel = selectedOfferingLabel(inquiry.flavourId, "flavour");
+  const frostingLabel = selectedOfferingLabel(inquiry.frostingId, "frosting");
+  const fillingLabels = selectedOfferingLabels(inquiry.fillingIds, "filling");
+  const toppingLabels = selectedOfferingLabels(inquiry.toppingIds, "topping");
   const lines = [
     "Meera's Cozy Kitchen inquiry",
     "Name: " + cleanSingleLine(inquiry.name),
     "Email: " + cleanSingleLine(inquiry.email),
     "Phone: " + cleanSingleLine(inquiry.phone),
     "Pickup date: " + cleanSingleLine(inquiry.eventDate),
-    "Product: " + clean(inquiry.productType),
-    "Budget: " + cleanSingleLine(inquiry.budget || "Not provided"),
-    "Estimate: $" + estimate.low + "-$" + estimate.high,
+    "Pickup time: " + cleanSingleLine(inquiry.pickupTime),
+    "Cake size: " + cakeSizeLabel,
+    "Flavour: " + flavourLabel,
+    "Frosting: " + (frostingLabel || "No paid upgrade"),
+    "Starting price: $" + estimate.low,
     "",
     clean(inquiry.message)
   ];
 
-  if (addOnLabels.length) {
-    lines.splice(6, 0, "Add-ons: " + addOnLabels.join(", "));
+  if (fillingLabels.length) {
+    lines.splice(9, 0, "Fillings: " + fillingLabels.join(", "));
   }
-  if (flavourLabel) {
-    lines.splice(6, 0, "Flavour: " + flavourLabel);
-  }
-  if (cakeSizeLabel) {
-    lines.splice(6, 0, "Cake size: " + cakeSizeLabel);
+  if (toppingLabels.length) {
+    lines.splice(fillingLabels.length ? 10 : 9, 0, "Toppings: " + toppingLabels.join(", "));
   }
 
   return lines.join("\n");

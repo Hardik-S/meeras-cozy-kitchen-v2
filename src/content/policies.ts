@@ -13,19 +13,10 @@ export const customerPolicies = [
   },
   {
     title: "Allergens",
-    body: "Orders are prepared in a home kitchen that may handle wheat, milk, eggs, soy, peanuts, tree nuts, and sesame."
+    body: "Orders are prepared in a home kitchen that may handle wheat, milk, soy, peanuts, tree nuts, and sesame."
   },
   {
     title: "Payments",
     body: "The site does not collect card details. Payment and deposit instructions are confirmed directly with the customer."
   }
-];
-
-export const restrictedClaims = [
-  "halal certified",
-  "licensed",
-  "approved by Peel",
-  "allergen-free",
-  "nut-free",
-  "same-day custom cakes"
 ];

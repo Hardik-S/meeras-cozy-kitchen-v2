@@ -1,4 +1,12 @@
-import { addOns, cakeSizes, flavours, productBasePrices, type ProductType } from "./pricing";
+import {
+  cakeSizes,
+  fillings,
+  flavours,
+  frostings,
+  productBasePrices,
+  toppings,
+  type ProductType
+} from "./pricing";
 
 export type AdminSettings = {
   defaultSender: string;
@@ -16,7 +24,7 @@ export type AdminProduct = {
   sortOrder: number;
 };
 
-export type OfferingCategory = "cake-size" | "flavour" | "add-on";
+export type OfferingCategory = "cake-size" | "flavour" | "frosting" | "filling" | "topping";
 
 export type AdminOffering = {
   id: string;
@@ -39,10 +47,15 @@ export type AdminOrder = {
   email: string;
   phone: string;
   eventDate: string;
+  pickupTime?: string;
   productType: string;
   cakeSizeId: string;
   flavourId: string;
-  budget: string;
+  frostingId?: string;
+  fillingIds?: string[];
+  toppingIds?: string[];
+  servings?: number;
+  budget?: string;
   message: string;
   estimateLow: number;
   estimateHigh: number;
@@ -78,8 +91,28 @@ export type PublicCatalog = {
   offerings: AdminOffering[];
   cakeSizes: AdminOffering[];
   flavours: AdminOffering[];
-  addOns: AdminOffering[];
+  frostings: AdminOffering[];
+  fillings: AdminOffering[];
+  toppings: AdminOffering[];
 };
+
+function offering(
+  category: OfferingCategory,
+  item: { id: string; label: string; low?: number; high?: number },
+  sortOrder: number
+): AdminOffering {
+  return {
+    id: item.id,
+    productId: "cake",
+    category,
+    label: item.label,
+    low: item.low ?? 0,
+    high: item.high ?? 0,
+    servings: "",
+    enabled: true,
+    sortOrder
+  };
+}
 
 export const defaultAdminData: AdminData = {
   settings: {
@@ -98,39 +131,11 @@ export const defaultAdminData: AdminData = {
       sortOrder: index + 1
     })),
   offerings: [
-    ...cakeSizes.map((size, index) => ({
-      id: size.id,
-      productId: "cake" as const,
-      category: "cake-size" as const,
-      label: size.label,
-      low: size.low,
-      high: size.high,
-      servings: size.servings,
-      enabled: true,
-      sortOrder: index + 1
-    })),
-    ...flavours.map((flavour, index) => ({
-      id: flavour.id,
-      productId: "all" as const,
-      category: "flavour" as const,
-      label: flavour.label,
-      low: 0,
-      high: 0,
-      servings: "",
-      enabled: true,
-      sortOrder: index + 1
-    })),
-    ...addOns.map((addOn, index) => ({
-      id: addOn.id,
-      productId: "all" as const,
-      category: "add-on" as const,
-      label: addOn.label,
-      low: addOn.low,
-      high: addOn.high,
-      servings: "",
-      enabled: true,
-      sortOrder: index + 1
-    }))
+    ...cakeSizes.map((item, index) => offering("cake-size", item, index + 1)),
+    ...flavours.map((item, index) => offering("flavour", item, index + 1)),
+    ...frostings.map((item, index) => offering("frosting", item, index + 1)),
+    ...fillings.map((item, index) => offering("filling", item, index + 1)),
+    ...toppings.map((item, index) => offering("topping", item, index + 1))
   ],
   orders: [],
   ledger: []
@@ -151,11 +156,12 @@ function hasPublicSortOrder(item: { sortOrder: number }) {
   return Number.isInteger(item.sortOrder) && item.sortOrder >= 0;
 }
 
-function normalizeOfferingCategory(value: string): OfferingCategory | undefined {
+export function normalizeOfferingCategory(value: string): OfferingCategory | undefined {
   const category = value.trim().toLowerCase();
+  const categories: OfferingCategory[] = ["cake-size", "flavour", "frosting", "filling", "topping"];
 
-  return category === "cake-size" || category === "flavour" || category === "add-on"
-    ? category
+  return categories.includes(category as OfferingCategory)
+    ? category as OfferingCategory
     : undefined;
 }
 
@@ -175,14 +181,14 @@ function normalizeProduct(product: AdminProduct): AdminProduct {
   };
 }
 
-function normalizeOffering(offering: AdminOffering): AdminOffering {
+function normalizeOffering(item: AdminOffering): AdminOffering {
   return {
-    ...offering,
-    id: normalizeCatalogProductId(offering.id),
-    productId: normalizeCatalogProductId(offering.productId),
-    category: normalizeOfferingCategory(offering.category) ?? offering.category,
-    label: normalizeCatalogDisplayText(offering.label),
-    servings: normalizeCatalogDisplayText(offering.servings)
+    ...item,
+    id: normalizeCatalogProductId(item.id),
+    productId: normalizeCatalogProductId(item.productId),
+    category: normalizeOfferingCategory(item.category) ?? item.category,
+    label: normalizeCatalogDisplayText(item.label),
+    servings: normalizeCatalogDisplayText(item.servings)
   };
 }
 
@@ -191,30 +197,31 @@ export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
     .map(normalizeProduct)
     .filter((product) =>
       product.enabled
-      && product.id.length > 0
+      && product.id === "cake"
       && product.label.length > 0
       && hasPublicPriceRange(product)
       && hasPublicSortOrder(product)
     ));
-  const enabledProductIds = new Set<ProductType>(products.map((product) => product.id));
   const offerings = sortByOrder(data.offerings
     .map(normalizeOffering)
-    .filter((offering) =>
-      offering.enabled
-      && offering.id.length > 0
-      && offering.label.length > 0
-      && normalizeOfferingCategory(offering.category) !== undefined
-      && hasPublicPriceRange(offering)
-      && hasPublicSortOrder(offering)
-      && (offering.productId === "all" || enabledProductIds.has(offering.productId))
+    .filter((item) =>
+      item.enabled
+      && item.id.length > 0
+      && item.label.length > 0
+      && normalizeOfferingCategory(item.category) !== undefined
+      && hasPublicPriceRange(item)
+      && hasPublicSortOrder(item)
+      && (item.productId === "all" || item.productId === "cake")
     ));
 
   return {
     products,
     offerings,
-    cakeSizes: offerings.filter((offering) => offering.category === "cake-size"),
-    flavours: offerings.filter((offering) => offering.category === "flavour"),
-    addOns: offerings.filter((offering) => offering.category === "add-on")
+    cakeSizes: offerings.filter((item) => item.category === "cake-size"),
+    flavours: offerings.filter((item) => item.category === "flavour"),
+    frostings: offerings.filter((item) => item.category === "frosting"),
+    fillings: offerings.filter((item) => item.category === "filling"),
+    toppings: offerings.filter((item) => item.category === "topping")
   };
 }
 

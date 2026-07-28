@@ -89,7 +89,11 @@ function normalizeOfferingCategory(value: unknown): OfferingCategory | undefined
   if (!isString(value)) return undefined;
 
   const category = value.trim().toLowerCase();
-  return category === "cake-size" || category === "flavour" || category === "add-on"
+  return category === "cake-size"
+    || category === "flavour"
+    || category === "frosting"
+    || category === "filling"
+    || category === "topping"
     ? category
     : undefined;
 }
@@ -156,10 +160,15 @@ function isAdminOrder(value: unknown) {
       "productType",
       "cakeSizeId",
       "flavourId",
-      "budget",
       "message",
       "summary"
     ])
+    && (value.pickupTime === undefined || isString(value.pickupTime))
+    && (value.frostingId === undefined || isString(value.frostingId))
+    && (value.fillingIds === undefined || (Array.isArray(value.fillingIds) && value.fillingIds.every(isString)))
+    && (value.toppingIds === undefined || (Array.isArray(value.toppingIds) && value.toppingIds.every(isString)))
+    && (value.budget === undefined || isString(value.budget))
+    && (value.servings === undefined || isFiniteNumber(value.servings))
     && hasNumberFields(value, ["estimateLow", "estimateHigh"])
     && isOrderStatus(value.status)
     && isBoolean(value.hearted)
@@ -251,10 +260,14 @@ function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["ord
     email: normalizeAdminDisplayText(order.email),
     phone: normalizeAdminDisplayText(order.phone),
     eventDate: order.eventDate.trim(),
+    pickupTime: normalizeAdminDisplayText(order.pickupTime || ""),
     productType: normalizeCatalogProductId(order.productType),
     cakeSizeId: normalizeCatalogProductId(order.cakeSizeId),
     flavourId: normalizeCatalogProductId(order.flavourId),
-    budget: normalizeAdminDisplayText(order.budget),
+    frostingId: normalizeCatalogProductId(order.frostingId || ""),
+    fillingIds: (order.fillingIds || []).map(normalizeCatalogProductId),
+    toppingIds: (order.toppingIds || []).map(normalizeCatalogProductId),
+    budget: normalizeAdminDisplayText(order.budget || ""),
     message: normalizeAdminDisplayText(order.message),
     ...estimates,
     status: normalizeOrderStatus(order.status) ?? order.status,

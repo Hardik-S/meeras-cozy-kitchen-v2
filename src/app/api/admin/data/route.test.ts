@@ -707,7 +707,7 @@ describe("POST /api/admin/data", () => {
           offering: {
             id: "custom-topper",
             productId: "cake",
-            category: "topping",
+            category: "decoration",
             label: "Custom topper",
             low: 12,
             high: 18
@@ -736,7 +736,7 @@ describe("POST /api/admin/data", () => {
           offering: {
             id: "custom-topper",
             productId: "cake",
-            category: " Add-On ",
+            category: " Topping ",
             label: "Custom topper",
             servings: "",
             low: 12,
@@ -751,7 +751,7 @@ describe("POST /api/admin/data", () => {
       offering: {
         id: "custom-topper",
         productId: "cake",
-        category: "add-on",
+        category: "topping",
         label: "Custom topper",
         servings: "",
         low: 12,
@@ -802,10 +802,10 @@ describe("POST /api/admin/data", () => {
         action: "upsertOffering",
         payload: {
           offering: {
-            id: " Fresh-Berries ",
+            id: " Fresh-Strawberry ",
             productId: " Cake ",
-            category: " Add-On ",
-            label: "Fresh berries",
+            category: " Topping ",
+            label: "Fresh strawberry",
             servings: "",
             low: 10,
             high: 14
@@ -817,10 +817,10 @@ describe("POST /api/admin/data", () => {
     expect(offeringResponse.status).toBe(200);
     expect(mutateAdminDataInAppsScript).toHaveBeenLastCalledWith("upsertOffering", {
       offering: {
-        id: "fresh-berries",
+        id: "fresh-strawberry",
         productId: "cake",
-        category: "add-on",
-        label: "Fresh berries",
+        category: "topping",
+        label: "Fresh strawberry",
         servings: "",
         low: 10,
         high: 14
@@ -841,10 +841,10 @@ describe("POST /api/admin/data", () => {
         action: "upsertOffering",
         payload: {
           offering: {
-            id: "fresh-berries",
+            id: "fresh-strawberry",
             productId: "all",
-            category: "add-on",
-            label: " Fresh\nberry finish ",
+            category: "topping",
+            label: " Fresh\nstrawberry ",
             servings: " 12-14\npeople ",
             low: 10,
             high: 14
@@ -856,10 +856,10 @@ describe("POST /api/admin/data", () => {
     expect(response.status).toBe(200);
     expect(mutateAdminDataInAppsScript).toHaveBeenCalledWith("upsertOffering", {
       offering: {
-        id: "fresh-berries",
+        id: "fresh-strawberry",
         productId: "all",
-        category: "add-on",
-        label: "Fresh berry finish",
+        category: "topping",
+        label: "Fresh strawberry",
         servings: "12-14 people",
         low: 10,
         high: 14

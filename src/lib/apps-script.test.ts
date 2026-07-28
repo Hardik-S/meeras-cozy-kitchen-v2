@@ -9,18 +9,19 @@ const inquiry: InquiryInput = {
   email: "amina@example.com",
   phone: "4165550101",
   eventDate: "2099-05-20",
-  servings: 18,
-  productType: "cake",
+  pickupTime: "12:00-14:00",
   cakeSizeId: "eight-inch",
-  flavourId: "vanilla-rose",
-  addOnIds: ["fresh-berries"],
-  budget: "100-150",
+  flavourId: "vanilla",
+  frostingId: "oreo-crunch",
+  fillingIds: ["raspberry-filling"],
+  toppingIds: ["fresh-strawberry"],
   message: "Birthday cake with soft florals.",
   acknowledgements: {
     notice: true,
     allergens: true,
     address: true,
-    certification: true
+    certification: true,
+    inspiration: true
   },
   website: ""
 };
@@ -68,11 +69,19 @@ describe("Apps Script integration", () => {
         headers: { "Content-Type": "text/plain;charset=utf-8" }
       })
     );
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    const body = JSON.parse((fetchMock.mock.calls as unknown as Array<[string, RequestInit]>)[0][1].body as string);
     expect(body).toMatchObject({
       action: "submitOrder",
       secret: "shared-secret",
-      inquiry: { name: "Amina", email: "amina@example.com" }
+      inquiry: {
+        name: "Amina",
+        email: "amina@example.com",
+        pickupTime: "12:00-14:00",
+        cakeSizeId: "eight-inch",
+        frostingId: "oreo-crunch",
+        fillingIds: ["raspberry-filling"],
+        toppingIds: ["fresh-strawberry"]
+      }
     });
   });
 
@@ -305,7 +314,7 @@ describe("Apps Script integration", () => {
     });
   });
 
-  it("normalizes copied offering categories before public catalog mapping", async () => {
+  it("normalizes copied cake-only offering categories before public catalog mapping", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
     vi.stubGlobal("fetch", vi.fn(async () =>
@@ -316,12 +325,12 @@ describe("Apps Script integration", () => {
           offerings: [
             ...defaultAdminData.offerings,
             {
-              id: " Cookie-Topper ",
+              id: " Cookie-Crumb ",
               productId: " Cake ",
-              category: " add-on ",
-              label: " Cookie topper ",
-              low: 8,
-              high: 10,
+              category: " topping ",
+              label: " Cookie crumb ",
+              low: 5,
+              high: 5,
               servings: "",
               enabled: true,
               sortOrder: 99
@@ -337,10 +346,10 @@ describe("Apps Script integration", () => {
     if (result.status !== "live") return;
 
     const catalog = getPublicCatalogFromAdminData(result.data);
-    expect(catalog.addOns.find((addOn) => addOn.id === "cookie-topper")).toMatchObject({
+    expect(catalog.toppings.find((topping) => topping.id === "cookie-crumb")).toMatchObject({
       productId: "cake",
-      category: "add-on",
-      label: "Cookie topper"
+      category: "topping",
+      label: "Cookie crumb"
     });
   });
 

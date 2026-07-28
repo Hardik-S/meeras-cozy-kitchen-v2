@@ -8,259 +8,82 @@ const inquiry: InquiryInput = {
   email: "amina@example.com",
   phone: "4165550101",
   eventDate: "2099-05-20",
-  servings: 18,
-  productType: "mini-cheesecake-box",
-  flavourId: "mango-saffron",
-  addOnIds: [],
-  budget: "100-150",
-  message: "Birthday dessert box with soft florals.",
+  pickupTime: "12:00-14:00",
+  cakeSizeId: "eight-inch",
+  flavourId: "vanilla",
+  frostingId: "white-chocolate-ganache",
+  fillingIds: ["raspberry-filling", "apricot-filling"],
+  toppingIds: ["fresh-strawberry", "chopped-pistachio"],
+  message: "Birthday cake with soft florals.",
   acknowledgements: {
     notice: true,
     allergens: true,
     address: true,
-    certification: true
+    certification: true,
+    inspiration: true
   },
   website: ""
 };
 
 describe("buildInquirySummary", () => {
-  it("uses live catalog labels and prices for Sheet-driven products", () => {
-    const summary = buildInquirySummary(inquiry, {
-      ...defaultPublicCatalog,
-      products: [
-        ...defaultPublicCatalog.products,
-        {
-          id: "mini-cheesecake-box",
-          label: "Mini cheesecake box",
-          low: 42,
-          high: 52,
+  it("includes pickup time and every selected cake option", () => {
+    const summary = buildInquirySummary(inquiry);
+
+    expect(summary).toContain("Pickup time: 12pm-2pm");
+    expect(summary).toContain("Cake size: 8-inch cake");
+    expect(summary).toContain("Flavour: Vanilla");
+    expect(summary).toContain("Frosting: White Chocolate Ganache");
+    expect(summary).toContain("Fillings: Raspberry, Apricot");
+    expect(summary).toContain("Toppings: Fresh Strawberry, Chopped Pistachio");
+    expect(summary).toContain("Starting at $105");
+    expect(summary).not.toContain("Product:");
+    expect(summary).not.toContain("Servings:");
+    expect(summary).not.toContain("Budget:");
+  });
+
+  it("uses normalized live catalog labels and prices", () => {
+    const summary = buildInquirySummary(
+      {
+        ...inquiry,
+        cakeSizeId: " sheet-eight-inch ",
+        flavourId: " mango ",
+        frostingId: undefined,
+        fillingIds: [],
+        toppingIds: []
+      },
+      {
+        ...defaultPublicCatalog,
+        cakeSizes: [{
+          id: "sheet-eight-inch",
+          productId: "cake",
+          category: "cake-size",
+          label: "Sheet\n eight\tinch",
+          low: 80,
+          high: 80,
+          servings: "",
           enabled: true,
-          sortOrder: 4
-        }
-      ],
-      flavours: [
-        ...defaultPublicCatalog.flavours,
-        {
-          id: "mango-saffron",
-          productId: "all",
+          sortOrder: 99
+        }],
+        flavours: [{
+          id: "mango",
+          productId: "cake",
           category: "flavour",
-          label: "Mango saffron",
+          label: "Mango\n cake",
           low: 0,
           high: 0,
           servings: "",
           enabled: true,
           sortOrder: 99
-        }
-      ]
-    });
-
-    expect(summary).toContain("Product: Mini cheesecake box");
-    expect(summary).toContain("Flavour: Mango saffron");
-    expect(summary).toContain("Estimated range: $42-$52");
-  });
-
-  it("includes selected Sheet-backed add-ons in the customer summary", () => {
-    const summary = buildInquirySummary(
-      {
-        ...inquiry,
-        addOnIds: ["gold-leaf", "custom-topper"]
-      },
-      {
-        ...defaultPublicCatalog,
-        products: [
-          ...defaultPublicCatalog.products,
-          {
-            id: "mini-cheesecake-box",
-            label: "Mini cheesecake box",
-            low: 42,
-            high: 52,
-            enabled: true,
-            sortOrder: 4
-          }
-        ],
-        addOns: [
-          ...defaultPublicCatalog.addOns,
-          {
-            id: "gold-leaf",
-            productId: "all",
-            category: "add-on",
-            label: "Gold leaf finish",
-            low: 18,
-            high: 24,
-            servings: "",
-            enabled: true,
-            sortOrder: 20
-          },
-          {
-            id: "custom-topper",
-            productId: "mini-cheesecake-box",
-            category: "add-on",
-            label: "Custom topper",
-            low: 12,
-            high: 16,
-            servings: "",
-            enabled: true,
-            sortOrder: 21
-          }
-        ]
+        }],
+        frostings: [],
+        fillings: [],
+        toppings: []
       }
     );
 
-    expect(summary).toContain("Add-ons: Gold leaf finish, Custom topper");
-    expect(summary).toContain("Estimated range: $72-$92");
-  });
-
-  it("collapses copied Sheet-backed labels before customer summaries use them", () => {
-    const summary = buildInquirySummary(
-      {
-        ...inquiry,
-        productType: "mini-cheesecake-box",
-        flavourId: "mango-saffron",
-        addOnIds: ["gold-leaf", "custom-topper"]
-      },
-      {
-        ...defaultPublicCatalog,
-        products: [
-          ...defaultPublicCatalog.products,
-          {
-            id: "mini-cheesecake-box",
-            label: "Mini\n cheesecake\tbox",
-            low: 42,
-            high: 52,
-            enabled: true,
-            sortOrder: 4
-          }
-        ],
-        flavours: [
-          ...defaultPublicCatalog.flavours,
-          {
-            id: "mango-saffron",
-            productId: "all",
-            category: "flavour",
-            label: "Mango\n saffron",
-            low: 0,
-            high: 0,
-            servings: "",
-            enabled: true,
-            sortOrder: 99
-          }
-        ],
-        addOns: [
-          ...defaultPublicCatalog.addOns,
-          {
-            id: "gold-leaf",
-            productId: "all",
-            category: "add-on",
-            label: "Gold\n leaf\tfinish",
-            low: 18,
-            high: 24,
-            servings: "",
-            enabled: true,
-            sortOrder: 20
-          },
-          {
-            id: "custom-topper",
-            productId: "mini-cheesecake-box",
-            category: "add-on",
-            label: "Custom\n topper",
-            low: 12,
-            high: 16,
-            servings: "",
-            enabled: true,
-            sortOrder: 21
-          }
-        ]
-      }
-    );
-
-    expect(summary).toContain("Product: Mini cheesecake box");
-    expect(summary).toContain("Flavour: Mango saffron");
-    expect(summary).toContain("Add-ons: Gold leaf finish, Custom topper");
-  });
-
-  it("ignores copied Sheet-backed add-ons scoped to another product", () => {
-    const summary = buildInquirySummary(
-      {
-        ...inquiry,
-        addOnIds: ["gold-leaf", "cake-topper"]
-      },
-      {
-        ...defaultPublicCatalog,
-        products: [
-          ...defaultPublicCatalog.products,
-          {
-            id: "mini-cheesecake-box",
-            label: "Mini cheesecake box",
-            low: 42,
-            high: 52,
-            enabled: true,
-            sortOrder: 4
-          }
-        ],
-        addOns: [
-          ...defaultPublicCatalog.addOns,
-          {
-            id: "gold-leaf",
-            productId: "all",
-            category: "add-on",
-            label: "Gold leaf finish",
-            low: 18,
-            high: 24,
-            servings: "",
-            enabled: true,
-            sortOrder: 20
-          },
-          {
-            id: "cake-topper",
-            productId: "cake",
-            category: "add-on",
-            label: "Cake topper",
-            low: 12,
-            high: 16,
-            servings: "",
-            enabled: true,
-            sortOrder: 21
-          }
-        ]
-      }
-    );
-
-    expect(summary).toContain("Add-ons: Gold leaf finish");
-    expect(summary).not.toContain("Cake topper");
-    expect(summary).toContain("Estimated range: $60-$76");
-  });
-
-  it("normalizes copied cake product casing before showing cake size copy", () => {
-    const summary = buildInquirySummary({
-      ...inquiry,
-      productType: " Cake ",
-      cakeSizeId: " six-inch ",
-      flavourId: " vanilla-rose "
-    });
-
-    expect(summary).toContain("Product: Cake");
-    expect(summary).toContain("Cake size: 6 inch round cake");
-    expect(summary).toContain("Flavour: Vanilla rose");
-    expect(summary).toContain("Estimated range: $58-$68");
-  });
-
-  it("omits the cake-size line for non-cake product summaries", () => {
-    const summary = buildInquirySummary(inquiry, {
-      ...defaultPublicCatalog,
-      products: [
-        ...defaultPublicCatalog.products,
-        {
-          id: "mini-cheesecake-box",
-          label: "Mini cheesecake box",
-          low: 42,
-          high: 52,
-          enabled: true,
-          sortOrder: 4
-        }
-      ]
-    });
-
-    expect(summary).toContain("Product: Mini cheesecake box");
-    expect(summary).not.toContain("Cake size:");
+    expect(summary).toContain("Cake size: Sheet eight inch");
+    expect(summary).toContain("Flavour: Mango cake");
+    expect(summary).toContain("Frosting: No paid upgrade");
+    expect(summary).toContain("Starting at $80");
   });
 });

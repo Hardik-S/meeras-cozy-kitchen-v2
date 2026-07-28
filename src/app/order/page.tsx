@@ -7,9 +7,9 @@ export default function OrderPage() {
   return (
     <div className="section-wrap py-12 md:py-20">
       <p className="eyebrow">Order inquiry</p>
-      <h1 className="page-title">Build a quote before you message.</h1>
+      <h1 className="page-title">Build your cake quote.</h1>
       <p className="lede mt-6 max-w-3xl">
-        Choose the closest cake size, flavour, add-ons, and pickup date. This does not collect payment or confirm the order; it creates a clear inquiry for Meera to review.
+        Choose a cake size, flavour, optional frosting, fillings, toppings, and pickup window. This creates an inquiry for Meera to review; it does not confirm the order or collect payment.
       </p>
       <div className="mt-10">
         <OrderForm catalog={defaultPublicCatalog} />

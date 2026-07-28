@@ -27,6 +27,6 @@ export const faqs: FaqItem[] = [
   {
     question: "Can I send design inspiration?",
     answer:
-      "Yes. Inspiration photos are welcome, but final designs are adapted to the available ingredients, tools, and timeline."
+      "Yes. Inspiration photos are welcome, with slight adjustments where needed for available ingredients, tools, and timing."
   }
 ];
