@@ -13,15 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 function acknowledgeAll() {
-  for (const label of [
-    business.noticeCopy,
-    business.allergenNotice,
-    business.pickupPolicy,
-    business.ingredientPositioning,
-    "Slight adjustments may be made compared to the inspiration photo."
-  ]) {
-    fireEvent.click(screen.getByLabelText(label));
-  }
+  fireEvent.click(screen.getByLabelText("Accept required acknowledgements"));
 }
 
 function fillValidInquiry() {
@@ -86,6 +78,27 @@ describe("OrderForm cake-only flow", () => {
     expect(screen.queryByLabelText(/product/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/servings/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/budget/i)).not.toBeInTheDocument();
+  });
+
+  it("uses one acceptance checkbox with all acknowledgements in a disclosure", () => {
+    render(<OrderForm />);
+
+    expect(screen.getByLabelText("Accept required acknowledgements")).not.toBeChecked();
+    expect(screen.queryByLabelText(business.noticeCopy)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(business.allergenNotice)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(business.pickupPolicy)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(business.ingredientPositioning)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Slight adjustments may be made compared to the inspiration photo.")).not.toBeInTheDocument();
+    expect(screen.getByText("View all required acknowledgements")).toBeInTheDocument();
+    expect(screen.getByText(business.noticeCopy)).toBeInTheDocument();
+    expect(screen.getByText(business.allergenNotice)).toBeInTheDocument();
+    expect(screen.getByText(business.pickupPolicy)).toBeInTheDocument();
+    expect(screen.getByText(business.ingredientPositioning)).toBeInTheDocument();
+    expect(screen.getByText("Slight adjustments may be made compared to the inspiration photo.")).toBeInTheDocument();
+
+    acknowledgeAll();
+
+    expect(screen.getByLabelText("Accept required acknowledgements")).toBeChecked();
   });
 
   it("submits pickup time and all selected cake options without legacy fields", async () => {
@@ -166,7 +179,7 @@ describe("OrderForm cake-only flow", () => {
     });
   });
 
-  it("requires pickup time and all five acknowledgements", async () => {
+  it("requires pickup time and the combined acknowledgement", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({
       ok: true,
       source: "fallback",
@@ -176,12 +189,12 @@ describe("OrderForm cake-only flow", () => {
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "" } });
-    fireEvent.click(screen.getByLabelText("Slight adjustments may be made compared to the inspiration photo."));
+    fireEvent.click(screen.getByLabelText("Accept required acknowledgements"));
 
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
     expect(await screen.findByText("Please choose a pickup time.")).toBeInTheDocument();
-    expect(screen.getByText("Please confirm that inspiration photos may require slight adjustments.")).toBeInTheDocument();
+    expect(screen.getByText("Please confirm the notice policy.")).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/inquiry")).toBe(false);
   });
 

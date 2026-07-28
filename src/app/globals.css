@@ -248,7 +248,7 @@ input[type="checkbox"] {
 
 .acknowledgement {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.75rem;
   border-radius: 8px;
   background: var(--surface-alt);
@@ -256,6 +256,30 @@ input[type="checkbox"] {
   color: var(--muted);
   font-size: 0.875rem;
   font-weight: 800;
+  line-height: 1.5rem;
+}
+
+.acknowledgement-details {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--muted);
+}
+
+.acknowledgement-details summary {
+  cursor: pointer;
+  padding: 0.8rem;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.acknowledgement-details ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0 2rem 1rem 2.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
   line-height: 1.5rem;
 }
 

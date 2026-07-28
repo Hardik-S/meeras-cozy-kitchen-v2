@@ -33,6 +33,16 @@ type FormState = {
   website: string;
 };
 
+type AcknowledgementKey = keyof FormState["acknowledgements"];
+
+const acknowledgementItems: Array<{ key: AcknowledgementKey; label: string }> = [
+  { key: "notice", label: business.noticeCopy },
+  { key: "allergens", label: business.allergenNotice },
+  { key: "address", label: business.pickupPolicy },
+  { key: "certification", label: business.ingredientPositioning },
+  { key: "inspiration", label: "Slight adjustments may be made compared to the inspiration photo." }
+];
+
 type SubmittedOrder = {
   id: string;
   name: string;
@@ -215,6 +225,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error" | "copied" | "copy-error">("idle");
   const [summary, setSummary] = useState("");
   const [confettiKey, setConfettiKey] = useState(0);
+  const acknowledgementsAccepted = acknowledgementItems.every(({ key }) => form.acknowledgements[key]);
   const estimate = useMemo(
     () => calculateQuoteEstimate(form, {
       cakeSizes: liveCatalog.cakeSizes,
@@ -436,28 +447,32 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
 
         <fieldset className="grid gap-3">
           <legend className="text-sm font-black">Required acknowledgements</legend>
-          {[
-            ["notice", business.noticeCopy],
-            ["allergens", business.allergenNotice],
-            ["address", business.pickupPolicy],
-            ["certification", business.ingredientPositioning],
-            ["inspiration", "Slight adjustments may be made compared to the inspiration photo."]
-          ].map(([key, label]) => (
-            <label key={key} className="acknowledgement">
-              <input
-                className="mt-1"
-                type="checkbox"
-                checked={form.acknowledgements[key as keyof FormState["acknowledgements"]]}
-                onChange={(event) =>
-                  update("acknowledgements", {
-                    ...form.acknowledgements,
-                    [key]: event.target.checked
-                  })
-                }
-              />
-              {label}
-            </label>
-          ))}
+          <label className="acknowledgement">
+            <input
+              type="checkbox"
+              checked={acknowledgementsAccepted}
+              aria-describedby="required-acknowledgement-details"
+              onChange={(event) => {
+                const accepted = event.target.checked;
+                update("acknowledgements", {
+                  notice: accepted,
+                  allergens: accepted,
+                  address: accepted,
+                  certification: accepted,
+                  inspiration: accepted
+                });
+              }}
+            />
+            Accept required acknowledgements
+          </label>
+          <details className="acknowledgement-details" id="required-acknowledgement-details">
+            <summary>View all required acknowledgements</summary>
+            <ul>
+              {acknowledgementItems.map(({ key, label }) => (
+                <li key={key}>{label}</li>
+              ))}
+            </ul>
+          </details>
           {errors.acknowledgements ? <ErrorText>{errors.acknowledgements}</ErrorText> : null}
         </fieldset>
 
