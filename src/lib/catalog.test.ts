@@ -3,7 +3,8 @@ import { defaultAdminData, getPublicCatalogFromAdminData } from "./catalog";
 
 describe("cake-only catalog mappers", () => {
   it("seeds only the canonical cake product and menu categories", () => {
-    expect(defaultAdminData.settings.defaultSender).toBe("batb4016@gmail.com");
+    expect(defaultAdminData.settings.defaultSender).toBe("meerascozykitchen@gmail.com");
+    expect(defaultAdminData.settings.defaultReceiver).toBe("meerascozykitchen@gmail.com");
     expect(defaultAdminData.products.map((product) => product.id)).toEqual(["cake"]);
     expect(defaultAdminData.offerings.reduce<Record<string, number>>((counts, item) => {
       counts[item.category] = (counts[item.category] ?? 0) + 1;
@@ -11,7 +12,7 @@ describe("cake-only catalog mappers", () => {
     }, {})).toEqual({
       "cake-size": 3,
       flavour: 5,
-      frosting: 3,
+      frosting: 8,
       filling: 5,
       topping: 7
     });

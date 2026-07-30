@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { business } from "@/content/business";
 import { defaultPublicCatalog } from "@/lib/catalog";
@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 function acknowledgeAll() {
-  fireEvent.click(screen.getByLabelText("Accept required acknowledgements"));
+  fireEvent.click(screen.getByRole("button", { name: "Accept all acknowledgements" }));
 }
 
 function fillValidInquiry() {
@@ -22,9 +22,9 @@ function fillValidInquiry() {
   fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "4165550101" } });
   fireEvent.change(screen.getByLabelText("Pickup date"), { target: { value: "2099-05-20" } });
   fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "12:00-14:00" } });
-  fireEvent.change(screen.getByLabelText("Flavour"), { target: { value: "vanilla" } });
-  fireEvent.change(screen.getByLabelText("Frosting upgrade"), {
-    target: { value: "white-chocolate-ganache" }
+  fireEvent.change(screen.getByLabelText("Cake Flavour"), { target: { value: "vanilla" } });
+  fireEvent.change(screen.getByLabelText("Frosting Flavours"), {
+    target: { value: "chocolate-frosting" }
   });
   fireEvent.click(screen.getByLabelText("Raspberry, plus $5"));
   fireEvent.click(screen.getByLabelText("Apricot, plus $5"));
@@ -48,11 +48,11 @@ function successResponse() {
       productType: "cake",
       cakeSizeId: "four-inch",
       flavourId: "vanilla",
-      frostingId: "white-chocolate-ganache",
+      frostingId: "chocolate-frosting",
       fillingIds: ["raspberry-filling", "apricot-filling"],
       toppingIds: ["fresh-strawberry"],
       message: "Birthday cake with soft floral piping.",
-      paymentEmail: "m.ssethi1123@gmail.com",
+      paymentEmail: "meerascozykitchen@gmail.com",
       summary: "Name: Amina"
     }
   }), { status: 200 });
@@ -74,31 +74,79 @@ describe("OrderForm cake-only flow", () => {
     expect(screen.getByRole("button", { name: "6-inch cake, Starting at $60" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "8-inch cake, Starting at $75" })).toBeInTheDocument();
     expect(screen.getByLabelText("Pickup time")).toBeInTheDocument();
-    expect(screen.getByLabelText("Frosting upgrade")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cake Flavour")).toBeInTheDocument();
+    expect(screen.getByLabelText("Frosting Flavours")).toHaveValue("");
     expect(screen.queryByLabelText(/product/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/servings/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/budget/i)).not.toBeInTheDocument();
   });
 
-  it("uses one acceptance checkbox with all acknowledgements in a disclosure", () => {
+  it("requires an independent frosting choice and shows all eight options in canonical order", () => {
     render(<OrderForm />);
 
-    expect(screen.getByLabelText("Accept required acknowledgements")).not.toBeChecked();
-    expect(screen.queryByLabelText(business.noticeCopy)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(business.allergenNotice)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(business.pickupPolicy)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(business.ingredientPositioning)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Slight adjustments may be made compared to the inspiration photo.")).not.toBeInTheDocument();
-    expect(screen.getByText("View all required acknowledgements")).toBeInTheDocument();
-    expect(screen.getByText(business.noticeCopy)).toBeInTheDocument();
-    expect(screen.getByText(business.allergenNotice)).toBeInTheDocument();
-    expect(screen.getByText(business.pickupPolicy)).toBeInTheDocument();
-    expect(screen.getByText(business.ingredientPositioning)).toBeInTheDocument();
-    expect(screen.getByText("Slight adjustments may be made compared to the inspiration photo.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cake Flavour")).toHaveValue("chocolate");
+    const frostingSelect = screen.getByLabelText("Frosting Flavours");
+    expect(frostingSelect).toHaveValue("");
+    expect(within(frostingSelect).getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Choose a frosting flavour",
+      "Chocolate (Included)",
+      "Vanilla (Included)",
+      "Almond (Included)",
+      "Lemon (Included)",
+      "Coconut (Included)",
+      "Oreo Crunch (+$5)",
+      "Dark Chocolate Ganache (+$10)",
+      "White Chocolate Ganache (+$10)"
+    ]);
+    expect(within(frostingSelect).getByRole("option", { name: "Choose a frosting flavour" })).toBeDisabled();
+  });
+
+  it("starts with six individually checkable acknowledgements expanded", () => {
+    render(<OrderForm />);
+
+    const toggle = screen.getByRole("button", { name: /hide required acknowledgements/i });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+    const acknowledgementLabels = [
+      business.noticeCopy,
+      business.allergenNotice,
+      business.pickupPolicy,
+      business.ingredientPositioning,
+      "Slight adjustments may be made compared to the inspiration photo.",
+      business.depositPolicy
+    ];
+    for (const label of acknowledgementLabels) {
+      const checkbox = screen.getByLabelText(label);
+      expect(checkbox).not.toBeChecked();
+      fireEvent.click(checkbox);
+      expect(checkbox).toBeChecked();
+    }
+  });
+
+  it("accepts all terms at once, preserves them while folded, and re-enables after one is unchecked", () => {
+    render(<OrderForm />);
 
     acknowledgeAll();
+    expect(screen.getByRole("button", { name: "All acknowledgements accepted" })).toBeDisabled();
+    expect(screen.getByLabelText(business.noticeCopy)).toBeChecked();
+    expect(screen.getByLabelText(business.allergenNotice)).toBeChecked();
+    expect(screen.getByLabelText(business.pickupPolicy)).toBeChecked();
+    expect(screen.getByLabelText(business.ingredientPositioning)).toBeChecked();
+    expect(screen.getByLabelText("Slight adjustments may be made compared to the inspiration photo.")).toBeChecked();
+    expect(screen.getByLabelText(business.depositPolicy)).toBeChecked();
 
-    expect(screen.getByLabelText("Accept required acknowledgements")).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: /hide required acknowledgements/i }));
+    const showButton = screen.getByRole("button", { name: /show required acknowledgements/i });
+    expect(showButton).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByLabelText(business.noticeCopy)).toBeChecked();
+    expect(screen.getByLabelText(business.depositPolicy)).toBeChecked();
+
+    fireEvent.click(showButton);
+    fireEvent.click(screen.getByLabelText(business.depositPolicy));
+
+    expect(screen.getByLabelText(business.depositPolicy)).not.toBeChecked();
+    expect(screen.getByLabelText(business.noticeCopy)).toBeChecked();
+    expect(screen.getByRole("button", { name: "Accept all acknowledgements" })).toBeEnabled();
   });
 
   it("submits pickup time and all selected cake options without legacy fields", async () => {
@@ -127,9 +175,17 @@ describe("OrderForm cake-only flow", () => {
       pickupTime: "12:00-14:00",
       cakeSizeId: "four-inch",
       flavourId: "vanilla",
-      frostingId: "white-chocolate-ganache",
+      frostingId: "chocolate-frosting",
       fillingIds: ["raspberry-filling", "apricot-filling"],
-      toppingIds: ["fresh-strawberry"]
+      toppingIds: ["fresh-strawberry"],
+      acknowledgements: {
+        notice: true,
+        allergens: true,
+        address: true,
+        certification: true,
+        inspiration: true,
+        payment: true
+      }
     });
     expect(payload).not.toHaveProperty("productType");
     expect(payload).not.toHaveProperty("servings");
@@ -179,8 +235,8 @@ describe("OrderForm cake-only flow", () => {
     });
   });
 
-  it("requires pickup time and the combined acknowledgement", async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+  it("requires pickup time, a frosting, and every acknowledgement", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(async () => new Response(JSON.stringify({
       ok: true,
       source: "fallback",
       catalog: defaultPublicCatalog
@@ -189,13 +245,45 @@ describe("OrderForm cake-only flow", () => {
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "" } });
-    fireEvent.click(screen.getByLabelText("Accept required acknowledgements"));
+    fireEvent.change(screen.getByLabelText("Frosting Flavours"), { target: { value: "" } });
+    fireEvent.click(screen.getByLabelText(business.noticeCopy));
 
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
     expect(await screen.findByText("Please choose a pickup time.")).toBeInTheDocument();
+    expect(screen.getByText("Please choose a frosting flavour.")).toBeInTheDocument();
     expect(screen.getByText("Please confirm the notice policy.")).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/inquiry")).toBe(false);
+  });
+
+  it("reopens the acknowledgement panel and focuses the first unchecked term after invalid submit", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(async () => new Response(JSON.stringify({
+      ok: true,
+      source: "fallback",
+      catalog: defaultPublicCatalog
+    }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<OrderForm />);
+    fillValidInquiry();
+    fireEvent.click(screen.getByLabelText(business.noticeCopy));
+    fireEvent.click(screen.getByRole("button", { name: /hide required acknowledgements/i }));
+
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /hide required acknowledgements/i })).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByLabelText(business.noticeCopy)).toHaveFocus();
+    });
+    expect(screen.getByText("Please confirm the notice policy.")).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/inquiry")).toBe(false);
+  });
+
+  it("does not render or trigger submit confetti", () => {
+    render(<OrderForm />);
+
+    expect(document.querySelector(".button-confetti")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
+    expect(document.querySelector(".button-confetti")).not.toBeInTheDocument();
   });
 
   it("falls back to a safe pending order when the successful API response lacks order metadata", async () => {
@@ -214,7 +302,7 @@ describe("OrderForm cake-only flow", () => {
     expect(JSON.parse(sessionStorage.getItem("meera:last-order") ?? "{}")).toMatchObject({
       productType: "cake",
       pickupTime: "12:00-14:00",
-      frostingId: "white-chocolate-ganache",
+      frostingId: "chocolate-frosting",
       fillingIds: ["raspberry-filling", "apricot-filling"],
       toppingIds: ["fresh-strawberry"]
     });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Nunito, Playfair_Display } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { MotionObserver } from "@/components/motion-observer";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -25,8 +26,8 @@ export const metadata: Metadata = {
     "Mobile-first home bakery site for custom celebration cakes in Brampton.",
   metadataBase: new URL("https://meeras-cozy-kitchen-v2.vercel.app"),
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png"
+    icon: "/meeras-logo.jpg",
+    apple: "/meeras-logo.jpg"
   }
 };
 
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunito.variable} ${playfair.variable}`} data-scroll-behavior="smooth">
       <body>
+        <MotionObserver />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

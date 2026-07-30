@@ -5,7 +5,7 @@ import { buildInquirySummary } from "@/lib/inquiry-summary";
 import { sendInquiryEmail } from "@/lib/mail";
 import { createInquirySchema, type InquiryInput } from "@/lib/validation";
 
-const paymentEmail = "m.ssethi1123@gmail.com";
+const paymentEmail = "meerascozykitchen@gmail.com";
 
 type CatalogIssueKey = "cakeSizeId" | "flavourId" | "frostingId" | "fillingIds" | "toppingIds";
 
@@ -26,7 +26,7 @@ function validateCatalogSelections(inquiry: InquiryInput, catalog: PublicCatalog
     issues.flavourId = ["Please choose an available flavour."];
   }
 
-  if (inquiry.frostingId && !frostingIds.has(inquiry.frostingId)) {
+  if (!frostingIds.has(inquiry.frostingId)) {
     issues.frostingId = ["Please choose an available frosting."];
   }
 
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       productType: "cake",
       cakeSizeId: parsed.data.cakeSizeId,
       flavourId: parsed.data.flavourId,
-      frostingId: parsed.data.frostingId ?? "",
+      frostingId: parsed.data.frostingId,
       fillingIds: parsed.data.fillingIds,
       toppingIds: parsed.data.toppingIds,
       message: parsed.data.message,

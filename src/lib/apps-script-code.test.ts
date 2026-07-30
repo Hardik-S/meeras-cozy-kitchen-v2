@@ -96,7 +96,7 @@ function loadSubmitOrder(
 function loadUpdateSettings(setSetting: (key: string, value: string) => unknown) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
-    "const SETTINGS = { defaultEmail: 'batb4016@gmail.com', senderName: \"Meera's Cozy Kitchen\" };",
+    "const SETTINGS = { defaultEmail: 'meerascozykitchen@gmail.com', senderName: \"Meera's Cozy Kitchen\" };",
     extractFunction(source, "clean"),
     extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "settingValueOrDefault"),
@@ -117,7 +117,7 @@ function loadUpdateSettings(setSetting: (key: string, value: string) => unknown)
 function loadSettingsObject(readObjects: (sheetName: string) => Array<Record<string, unknown>>) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
-    "const SETTINGS = { defaultEmail: 'batb4016@gmail.com', senderName: \"Meera's Cozy Kitchen\" };",
+    "const SETTINGS = { defaultEmail: 'meerascozykitchen@gmail.com', senderName: \"Meera's Cozy Kitchen\" };",
     extractFunction(source, "clean"),
     extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "settingValueOrDefault"),
@@ -126,6 +126,25 @@ function loadSettingsObject(readObjects: (sheetName: string) => Array<Record<str
   ].join("\n");
 
   return runInNewContext(script, { readObjects }) as () => Record<string, string>;
+}
+
+function loadSendInquiryEmails(sendMail: ReturnType<typeof vi.fn>) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    "const PAYMENT_POLICY = 'Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash.';",
+    extractFunction(source, "clean"),
+    extractFunction(source, "cleanSingleLine"),
+    extractFunction(source, "sendInquiryEmails"),
+    "sendInquiryEmails"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    settingsObject: vi.fn(() => ({
+      defaultReceiver: "meerascozykitchen@gmail.com",
+      chefNotificationCopy: "New bakery inquiry received."
+    })),
+    sendMail
+  }) as (inquiry: { name: string; email: string }, summary: string, orderId: string) => void;
 }
 
 function loadUpsertLedgerEntry(upsertById: (sheetName: string, entry: Record<string, unknown>) => unknown) {
@@ -172,8 +191,8 @@ function loadListAdminData(readObjects: (sheetName: string) => Array<Record<stri
   return runInNewContext(script, {
     readObjects,
     settingsObject: vi.fn(() => ({
-      defaultSender: "batb4016@gmail.com",
-      defaultReceiver: "batb4016@gmail.com",
+      defaultSender: "meerascozykitchen@gmail.com",
+      defaultReceiver: "meerascozykitchen@gmail.com",
       senderName: "Meera's Cozy Kitchen",
       chefNotificationCopy: "New bakery inquiry received."
     }))
@@ -325,6 +344,16 @@ function loadDeleteOffering(deleteById: (sheetName: string, id: string) => unkno
   }) as (payload: { id: string }) => unknown;
 }
 
+function extractConstDeclaration(source: string, name: string) {
+  const start = source.indexOf(`const ${name} =`);
+  if (start < 0) throw new Error(`Missing ${name}`);
+
+  const end = source.indexOf(";", start);
+  if (end < 0) throw new Error(`Unclosed ${name}`);
+
+  return source.slice(start, end + 1);
+}
+
 function loadMigrateCakeCatalog({
   readObjects,
   patchById,
@@ -340,9 +369,9 @@ function loadMigrateCakeCatalog({
 }) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
-    "const CATALOG_VERSION = 'cake-only-v1';",
-    "const DEFAULT_PRODUCTS = [{ id: 'cake', enabled: true }];",
-    "const DEFAULT_OFFERINGS = [{ id: 'four-inch', enabled: true }, { id: 'chocolate', enabled: true }];",
+    extractConstDeclaration(source, "CATALOG_VERSION"),
+    extractConstDeclaration(source, "DEFAULT_PRODUCTS"),
+    extractConstDeclaration(source, "DEFAULT_OFFERINGS"),
     extractFunction(source, "clean"),
     extractFunction(source, "settingValue("),
     extractFunction(source, "migrateCakeCatalog"),
@@ -356,6 +385,32 @@ function loadMigrateCakeCatalog({
     setSetting,
     audit,
     nowIso: vi.fn(() => "2026-07-27T00:00:00.000Z")
+  }) as () => void;
+}
+
+function loadMigrateCanonicalContactEmail({
+  readObjects,
+  setSetting,
+  audit
+}: {
+  readObjects: (sheetName: string) => Array<Record<string, unknown>>;
+  setSetting: ReturnType<typeof vi.fn>;
+  audit: ReturnType<typeof vi.fn>;
+}) {
+  const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
+  const script = [
+    "const SETTINGS = { defaultEmail: 'meerascozykitchen@gmail.com' };",
+    "const CONTACT_SETTINGS_VERSION = 'canonical-contact-email-v1';",
+    extractFunction(source, "clean"),
+    extractFunction(source, "settingValue("),
+    extractFunction(source, "migrateCanonicalContactEmail"),
+    "migrateCanonicalContactEmail"
+  ].join("\n");
+
+  return runInNewContext(script, {
+    readObjects,
+    setSetting,
+    audit
   }) as () => void;
 }
 
@@ -444,8 +499,28 @@ describe("Apps Script Code.gs cake catalog migration", () => {
     expect(patchById).toHaveBeenCalledWith("Offerings", "legacy-addon", expect.objectContaining({ enabled: false }));
     expect(upsertById).toHaveBeenCalledWith("Products", expect.objectContaining({ id: "cake", enabled: true }));
     expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({ id: "four-inch", enabled: true }));
-    expect(setSetting).toHaveBeenCalledWith("catalogVersion", "cake-only-v1");
-    expect(audit).toHaveBeenCalledWith("migrateCakeCatalog", "cake-only-v1");
+    const upsertedFrostings = upsertById.mock.calls
+      .filter(([sheetName, offering]) => sheetName === "Offerings" && offering.category === "frosting")
+      .map(([, offering]) => ({
+        id: offering.id,
+        label: offering.label,
+        low: offering.low,
+        high: offering.high,
+        sortOrder: offering.sortOrder
+      }));
+
+    expect(upsertedFrostings).toEqual([
+      { id: "chocolate-frosting", label: "Chocolate", low: 0, high: 0, sortOrder: 1 },
+      { id: "vanilla-frosting", label: "Vanilla", low: 0, high: 0, sortOrder: 2 },
+      { id: "almond-frosting", label: "Almond", low: 0, high: 0, sortOrder: 3 },
+      { id: "lemon-frosting", label: "Lemon", low: 0, high: 0, sortOrder: 4 },
+      { id: "coconut-frosting", label: "Coconut", low: 0, high: 0, sortOrder: 5 },
+      { id: "oreo-crunch", label: "Oreo Crunch", low: 5, high: 5, sortOrder: 6 },
+      { id: "dark-chocolate-ganache", label: "Dark Chocolate Ganache", low: 10, high: 10, sortOrder: 7 },
+      { id: "white-chocolate-ganache", label: "White Chocolate Ganache", low: 10, high: 10, sortOrder: 8 }
+    ]);
+    expect(setSetting).toHaveBeenCalledWith("catalogVersion", "cake-frosting-flavours-v2");
+    expect(audit).toHaveBeenCalledWith("migrateCakeCatalog", "cake-frosting-flavours-v2");
   });
 
   it("is a no-op after the migration version is recorded", () => {
@@ -455,7 +530,7 @@ describe("Apps Script Code.gs cake catalog migration", () => {
     const audit = vi.fn();
     const migrateCakeCatalog = loadMigrateCakeCatalog({
       readObjects: (sheetName) => sheetName === "Settings"
-        ? [{ key: "catalogVersion", value: "cake-only-v1" }]
+        ? [{ key: "catalogVersion", value: "cake-frosting-flavours-v2" }]
         : [{ id: "legacy-row" }],
       patchById,
       upsertById,
@@ -469,6 +544,72 @@ describe("Apps Script Code.gs cake catalog migration", () => {
     expect(upsertById).not.toHaveBeenCalled();
     expect(setSetting).not.toHaveBeenCalled();
     expect(audit).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs canonical contact migration", () => {
+  it("updates populated sender and receiver rows and records its version", () => {
+    const settings = [
+      { key: "defaultSender", value: "legacy-sender@example.com" },
+      { key: "defaultReceiver", value: "legacy-receiver@example.com" }
+    ];
+    const setSetting = vi.fn();
+    const audit = vi.fn();
+    const migrateCanonicalContactEmail = loadMigrateCanonicalContactEmail({
+      readObjects: () => settings,
+      setSetting,
+      audit
+    });
+
+    migrateCanonicalContactEmail();
+
+    expect(setSetting).toHaveBeenCalledWith("defaultSender", "meerascozykitchen@gmail.com");
+    expect(setSetting).toHaveBeenCalledWith("defaultReceiver", "meerascozykitchen@gmail.com");
+    expect(setSetting).toHaveBeenCalledWith("contactSettingsVersion", "canonical-contact-email-v1");
+    expect(audit).toHaveBeenCalledWith("migrateCanonicalContactEmail", "canonical-contact-email-v1");
+  });
+
+  it("does not rewrite settings after the migration version is recorded", () => {
+    const setSetting = vi.fn();
+    const audit = vi.fn();
+    const migrateCanonicalContactEmail = loadMigrateCanonicalContactEmail({
+      readObjects: () => [
+        { key: "contactSettingsVersion", value: "canonical-contact-email-v1" },
+        { key: "defaultSender", value: "meerascozykitchen@gmail.com" },
+        { key: "defaultReceiver", value: "meerascozykitchen@gmail.com" }
+      ],
+      setSetting,
+      audit
+    });
+
+    migrateCanonicalContactEmail();
+
+    expect(setSetting).not.toHaveBeenCalled();
+    expect(audit).not.toHaveBeenCalled();
+  });
+});
+
+describe("Apps Script Code.gs customer inquiry email", () => {
+  it("includes the exact payment policy when a legacy summary does not contain it", () => {
+    const sendMail = vi.fn();
+    const sendInquiryEmails = loadSendInquiryEmails(sendMail);
+
+    sendInquiryEmails(
+      { name: "Amina", email: "amina@example.com" },
+      "Meera's Cozy Kitchen inquiry\nName: Amina",
+      "ord_email_policy"
+    );
+
+    expect(sendMail).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      "amina@example.com",
+      "We received your Meera's Cozy Kitchen inquiry",
+      expect.stringContaining(
+        "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash."
+      ),
+      "meerascozykitchen@gmail.com"
+    );
   });
 });
 
@@ -584,11 +725,30 @@ describe("Apps Script Code.gs submitOrder", () => {
     const summary = appendObject.mock.calls[0][1].summary;
     expect(summary).toContain("Pickup time: 12:00-14:00");
     expect(summary).toContain("Cake size: 8-inch cake");
-    expect(summary).toContain("Flavour: Vanilla");
-    expect(summary).toContain("Frosting: Oreo Crunch");
+    expect(summary).toContain("Cake flavour: Vanilla");
+    expect(summary).toContain("Frosting flavour: Oreo Crunch");
     expect(summary).toContain("Fillings: Raspberry");
     expect(summary).toContain("Toppings: Fresh Strawberry");
     expect(summary).toContain("Starting price: $90");
+  });
+
+  it("keeps historical blank frosting values readable in fallback summaries", () => {
+    const appendObject = vi.fn();
+    const submitOrder = loadSubmitOrder(appendObject, (sheetName) => {
+      if (sheetName === "Offerings") {
+        return [
+          { id: "eight-inch", category: "cake-size", label: "8-inch cake", low: 75, high: 75 },
+          { id: "vanilla", category: "flavour", label: "Vanilla", low: 0, high: 0 }
+        ];
+      }
+      return [];
+    });
+
+    submitOrder({
+      inquiry: { ...validInquiry, frostingId: "" }
+    });
+
+    expect(appendObject.mock.calls[0][1].summary).toContain("Frosting flavour: Not recorded");
   });
 
   it("collapses copied Sheet-backed fallback labels", () => {
@@ -610,8 +770,8 @@ describe("Apps Script Code.gs submitOrder", () => {
 
     const summary = appendObject.mock.calls[0][1].summary;
     expect(summary).toContain("Cake size: 8-inch cake");
-    expect(summary).toContain("Flavour: Vanilla bean");
-    expect(summary).toContain("Frosting: Oreo Crunch");
+    expect(summary).toContain("Cake flavour: Vanilla bean");
+    expect(summary).toContain("Frosting flavour: Oreo Crunch");
     expect(summary).toContain("Fillings: Raspberry filling");
     expect(summary).toContain("Toppings: Fresh Strawberry");
     expect(summary).not.toContain("\nbean");
@@ -848,8 +1008,8 @@ describe("Apps Script Code.gs updateSettings", () => {
       }
     });
 
-    expect(setSetting).toHaveBeenCalledWith("defaultSender", "batb4016@gmail.com");
-    expect(setSetting).toHaveBeenCalledWith("defaultReceiver", "batb4016@gmail.com");
+    expect(setSetting).toHaveBeenCalledWith("defaultSender", "meerascozykitchen@gmail.com");
+    expect(setSetting).toHaveBeenCalledWith("defaultReceiver", "meerascozykitchen@gmail.com");
     expect(setSetting).toHaveBeenCalledWith("senderName", "Meera's Cozy Kitchen");
     expect(setSetting).toHaveBeenCalledWith(
       "chefNotificationCopy",

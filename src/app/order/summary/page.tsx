@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { CheckCircle2, Copy, Mail, WalletCards } from "lucide-react";
+import { business } from "@/content/business";
 import { pickupTimeLabel } from "@/lib/validation";
 
 type StoredOrder = {
@@ -24,13 +25,13 @@ type StoredOrder = {
   summary: string;
 };
 
-const defaultPaymentEmail = "m.ssethi1123@gmail.com";
+const defaultPaymentEmail = business.orderEmail;
 
 export default function OrderSummaryPage() {
   const order = useStoredOrder();
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
-  const paymentEmail = paymentEmailOrDefault(order?.paymentEmail);
+  const paymentEmail = defaultPaymentEmail;
 
   const transferNote = useMemo(() => {
     if (!order) return "";
@@ -53,9 +54,9 @@ export default function OrderSummaryPage() {
     return (
       <section className="section-wrap grid min-h-[60vh] place-items-center py-16 text-center">
         <div className="surface max-w-xl p-6">
-          <Image className="mx-auto h-20 w-20 rounded-full object-cover" src="/logo.png" alt="" width={80} height={80} />
+          <Image className="mx-auto h-20 w-20 rounded-full object-cover" src="/meeras-logo.jpg" alt="" width={80} height={80} />
           <h1 className="mt-5 text-4xl font-black">No recent inquiry found.</h1>
-          <p className="lede mt-4">Start a fresh quote and this page will show the payment instructions after submission.</p>
+          <p className="lede mt-4">Start a fresh quote and this page will show the inquiry details and post-acceptance payment guidance.</p>
           <Link className="btn-primary mt-6" href="/order">Start a quote</Link>
         </div>
       </section>
@@ -70,9 +71,9 @@ export default function OrderSummaryPage() {
             <CheckCircle2 size={28} aria-hidden="true" />
             <p className="text-sm font-black uppercase tracking-[0.08em]">Inquiry received</p>
           </div>
-          <h1 className="page-title">Here are your payment instructions.</h1>
+          <h1 className="page-title">Your inquiry is in for review.</h1>
           <p className="lede mt-6">
-            Meera will review the details before confirming the order. Use these details if she asks for a deposit or balance payment.
+            Meera will review the details and confirm availability and the final price in writing.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             <button className="btn-primary click-pop" type="button" onClick={copyPaymentDetails}>
@@ -95,8 +96,9 @@ export default function OrderSummaryPage() {
           <article className="surface p-5">
             <div className="flex items-center gap-3">
               <WalletCards className="text-[var(--accent-strong)]" size={24} aria-hidden="true" />
-              <h2 className="text-2xl font-black">Payment methods</h2>
+              <h2 className="text-2xl font-black">Payment guidance after acceptance</h2>
             </div>
+            <p className="mt-4 leading-7 text-[var(--muted)]">{business.depositPolicy}</p>
             <div className="mt-5 grid gap-4">
               <div className="rounded-[8px] bg-[var(--surface-warm)] p-4">
                 <p className="text-sm font-black text-[var(--muted)]">E-transfer</p>
@@ -213,16 +215,6 @@ function normalizeStoredOrder(order: StoredOrder): StoredOrder {
     paymentEmail: normalizeStoredText(order.paymentEmail),
     summary: order.summary.trim()
   };
-}
-
-function paymentEmailOrDefault(value: string | undefined) {
-  const email = value?.trim();
-
-  if (!email || !/^[^\s@?&=]+@[^\s@?&=]+\.[^\s@?&=]+$/.test(email)) {
-    return defaultPaymentEmail;
-  }
-
-  return email;
 }
 
 function readStoredOrder() {

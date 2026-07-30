@@ -6,10 +6,12 @@ import { customerPolicies } from "@/content/policies";
 export default function FaqPage() {
   return (
     <div className="section-wrap py-12 md:py-20">
-      <p className="eyebrow">FAQ</p>
-      <h1 className="page-title">Answers before you message.</h1>
+      <div data-reveal>
+        <p className="eyebrow">FAQ</p>
+        <h1 className="page-title">Answers before you message.</h1>
+      </div>
 
-      <section className="mt-12 grid gap-4" aria-label="Frequently asked questions">
+      <section className="mt-12 grid gap-4" aria-label="Frequently asked questions" data-reveal>
         {faqs.map((item) => (
           <article key={item.question} className="surface p-5">
             <h2 className="text-xl font-black">{item.question}</h2>
@@ -18,7 +20,7 @@ export default function FaqPage() {
         ))}
       </section>
 
-      <section id="food-safety" className="scroll-mt-32 pt-16">
+      <section id="food-safety" className="scroll-mt-32 pt-16" data-reveal>
         <p className="eyebrow">Food safety and pickup</p>
         <h2 className="mt-2 text-4xl font-black">Clear details before the cake.</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -31,7 +33,7 @@ export default function FaqPage() {
         </div>
       </section>
 
-      <section id="contact" className="mt-16 rounded-[8px] border border-[var(--line)] bg-[var(--surface-alt)] p-6">
+      <section id="contact" className="mt-16 rounded-[8px] border border-[var(--line)] bg-[var(--surface-alt)] p-6" data-reveal>
         <p className="eyebrow">Contact</p>
         <h2 className="mt-2 text-3xl font-black">How to contact me</h2>
         <p className="mt-3 max-w-2xl leading-7 text-[var(--muted)]">

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { defaultPublicCatalog } from "./catalog";
 import { loadPublicCatalog, resetPublicCatalogSyncForTests } from "./public-catalog-sync";
 
-const cacheKey = "meera:public-catalog:cake-v1";
+const cacheKey = "meera:public-catalog:cake-v2";
 
 describe("public catalog sync", () => {
   afterEach(() => {
@@ -28,6 +28,10 @@ describe("public catalog sync", () => {
   });
 
   it("uses only the versioned cake-menu cache key", async () => {
+    sessionStorage.setItem("meera:public-catalog:cake-v1", JSON.stringify({
+      savedAt: Date.now(),
+      catalog: defaultPublicCatalog
+    }));
     sessionStorage.setItem("meera:public-catalog", JSON.stringify({
       savedAt: Date.now(),
       catalog: defaultPublicCatalog

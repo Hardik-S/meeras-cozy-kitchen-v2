@@ -21,7 +21,8 @@ const inquiry: InquiryInput = {
     allergens: true,
     address: true,
     certification: true,
-    inspiration: true
+    inspiration: true,
+    payment: true
   },
   website: ""
 };
@@ -119,8 +120,8 @@ describe("Apps Script integration", () => {
         ok: true,
         data: {
           settings: {
-            defaultSender: "batb4016@gmail.com",
-            defaultReceiver: "batb4016@gmail.com",
+            defaultSender: "meerascozykitchen@gmail.com",
+            defaultReceiver: "meerascozykitchen@gmail.com",
             senderName: "Meera's Cozy Kitchen",
             chefNotificationCopy: "New inquiry"
           },
@@ -146,8 +147,8 @@ describe("Apps Script integration", () => {
         ok: true,
         data: {
           settings: {
-            defaultSender: "batb4016@gmail.com",
-            defaultReceiver: "batb4016@gmail.com",
+            defaultSender: "meerascozykitchen@gmail.com",
+            defaultReceiver: "meerascozykitchen@gmail.com",
             senderName: "Meera's Cozy Kitchen",
             chefNotificationCopy: "New inquiry"
           },

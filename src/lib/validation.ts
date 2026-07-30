@@ -43,8 +43,8 @@ export function createInquirySchema(today = new Date()) {
       { error: "Please choose a pickup time." }
     ),
     cakeSizeId: catalogId("Please choose a cake size."),
-    flavourId: catalogId("Please choose a flavour."),
-    frostingId: catalogId("Please choose a frosting.").optional(),
+    flavourId: catalogId("Please choose a cake flavour."),
+    frostingId: catalogId("Please choose a frosting flavour."),
     fillingIds: catalogIds("Please choose a filling."),
     toppingIds: catalogIds("Please choose a topping."),
     message: z.string().trim().min(10, "Please share a few design details.").max(1200),
@@ -53,7 +53,8 @@ export function createInquirySchema(today = new Date()) {
       allergens: z.literal(true, { error: "Please confirm the allergen note." }),
       address: z.literal(true, { error: "Please confirm pickup details are shared after booking." }),
       certification: z.literal(true, { error: "Please confirm the certification note." }),
-      inspiration: z.literal(true, { error: "Please confirm that inspiration photos may require slight adjustments." })
+      inspiration: z.literal(true, { error: "Please confirm that inspiration photos may require slight adjustments." }),
+      payment: z.literal(true, { error: "Please confirm the payment policy." })
     }),
     website: z.string().trim().max(0, "Spam check failed.").optional().default("")
   }).superRefine((value, context) => {

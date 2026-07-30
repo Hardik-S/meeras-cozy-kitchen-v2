@@ -20,7 +20,8 @@ const inquiry: InquiryInput = {
     allergens: true,
     address: true,
     certification: true,
-    inspiration: true
+    inspiration: true,
+    payment: true
   },
   website: ""
 };
@@ -31,11 +32,14 @@ describe("buildInquirySummary", () => {
 
     expect(summary).toContain("Pickup time: 12pm-2pm");
     expect(summary).toContain("Cake size: 8-inch cake");
-    expect(summary).toContain("Flavour: Vanilla");
-    expect(summary).toContain("Frosting: White Chocolate Ganache");
+    expect(summary).toContain("Cake flavour: Vanilla");
+    expect(summary).toContain("Frosting flavour: White Chocolate Ganache");
     expect(summary).toContain("Fillings: Raspberry, Apricot");
     expect(summary).toContain("Toppings: Fresh Strawberry, Chopped Pistachio");
     expect(summary).toContain("Starting at $105");
+    expect(summary).toContain(
+      "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash."
+    );
     expect(summary).not.toContain("Product:");
     expect(summary).not.toContain("Servings:");
     expect(summary).not.toContain("Budget:");
@@ -82,8 +86,8 @@ describe("buildInquirySummary", () => {
     );
 
     expect(summary).toContain("Cake size: Sheet eight inch");
-    expect(summary).toContain("Flavour: Mango cake");
-    expect(summary).toContain("Frosting: No paid upgrade");
+    expect(summary).toContain("Cake flavour: Mango cake");
+    expect(summary).toContain("Frosting flavour: Not recorded");
     expect(summary).toContain("Starting at $80");
   });
 });

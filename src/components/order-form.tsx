@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Copy, Mail, Send } from "lucide-react";
+import { ChevronDown, Copy, Mail, Send } from "lucide-react";
 import { business } from "@/content/business";
 import { defaultPublicCatalog, type AdminOffering, type PublicCatalog } from "@/lib/catalog";
 import { loadPublicCatalog, schedulePublicCatalogSync } from "@/lib/public-catalog-sync";
-import { calculateQuoteEstimate, quoteRangeLabel, startingPriceLabel } from "@/lib/pricing";
+import { calculateQuoteEstimate, optionPriceLabel, quoteRangeLabel, startingPriceLabel } from "@/lib/pricing";
 import { getMinimumPickupDate } from "@/lib/dates";
 import { buildInquirySummary } from "@/lib/inquiry-summary";
 import { createInquirySchema, pickupTimeOptions, type InquiryInput } from "@/lib/validation";
@@ -29,6 +29,7 @@ type FormState = {
     address: boolean;
     certification: boolean;
     inspiration: boolean;
+    payment: boolean;
   };
   website: string;
 };
@@ -40,7 +41,8 @@ const acknowledgementItems: Array<{ key: AcknowledgementKey; label: string }> = 
   { key: "allergens", label: business.allergenNotice },
   { key: "address", label: business.pickupPolicy },
   { key: "certification", label: business.ingredientPositioning },
-  { key: "inspiration", label: "Slight adjustments may be made compared to the inspiration photo." }
+  { key: "inspiration", label: "Slight adjustments may be made compared to the inspiration photo." },
+  { key: "payment", label: business.depositPolicy }
 ];
 
 type SubmittedOrder = {
@@ -78,19 +80,11 @@ const initialForm: FormState = {
     allergens: false,
     address: false,
     certification: false,
-    inspiration: false
+    inspiration: false,
+    payment: false
   },
   website: ""
 };
-
-function toPayload(form: FormState) {
-  const { frostingId, ...rest } = form;
-
-  return {
-    ...rest,
-    ...(frostingId ? { frostingId } : {})
-  };
-}
 
 function mailtoLink(summary: string) {
   const subject = encodeURIComponent(`Cake inquiry for ${business.name}`);
@@ -98,7 +92,6 @@ function mailtoLink(summary: string) {
 
   return `mailto:${business.orderEmail}?subject=${subject}&body=${body}`;
 }
-
 function storeSubmittedOrder(order: SubmittedOrder) {
   try {
     sessionStorage.setItem("meera:last-order", JSON.stringify(order));
@@ -195,7 +188,7 @@ function buildPendingOrder(data: InquiryInput, summary: string): SubmittedOrder 
     fillingIds: data.fillingIds,
     toppingIds: data.toppingIds,
     message: data.message,
-    paymentEmail: "m.ssethi1123@gmail.com",
+    paymentEmail: business.orderEmail,
     summary
   };
 }
@@ -224,11 +217,16 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error" | "copied" | "copy-error">("idle");
   const [summary, setSummary] = useState("");
-  const [confettiKey, setConfettiKey] = useState(0);
+  const [acknowledgementsOpen, setAcknowledgementsOpen] = useState(true);
+  const acknowledgementRefs = useRef<Partial<Record<AcknowledgementKey, HTMLInputElement | null>>>({});
   const acknowledgementsAccepted = acknowledgementItems.every(({ key }) => form.acknowledgements[key]);
+  const firstUncheckedAcknowledgement = acknowledgementItems.find(
+    ({ key }) => !form.acknowledgements[key]
+  )?.key;
   const estimate = useMemo(
     () => calculateQuoteEstimate(form, {
       cakeSizes: liveCatalog.cakeSizes,
+      flavours: liveCatalog.flavours,
       frostings: liveCatalog.frostings,
       fillings: liveCatalog.fillings,
       toppings: liveCatalog.toppings
@@ -244,7 +242,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
     pickupTime: (form.pickupTime || pickupTimeOptions[0].value) as InquiryInput["pickupTime"],
     cakeSizeId: form.cakeSizeId,
     flavourId: form.flavourId,
-    ...(form.frostingId ? { frostingId: form.frostingId } : {}),
+    frostingId: form.frostingId,
     fillingIds: form.fillingIds,
     toppingIds: form.toppingIds,
     message: form.message || "Not provided yet.",
@@ -253,7 +251,8 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       allergens: true,
       address: true,
       certification: true,
-      inspiration: true
+      inspiration: true,
+      payment: true
     },
     website: ""
   };
@@ -306,10 +305,9 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
   async function submitInquiry(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("submitting");
-    setConfettiKey((value) => value + 1);
     setErrors({});
 
-    const parsed = createInquirySchema().safeParse(toPayload(form));
+    const parsed = createInquirySchema().safeParse(form);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       setErrors(
@@ -317,6 +315,14 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
           Object.entries(fieldErrors).map(([key, value]) => [key, value?.[0] ?? "Please review this field."])
         )
       );
+      const acknowledgementIssue = parsed.error.issues.find(
+        (issue) => issue.path[0] === "acknowledgements" && typeof issue.path[1] === "string"
+      );
+      const acknowledgementKey = acknowledgementIssue?.path[1] as AcknowledgementKey | undefined;
+      if (acknowledgementKey) {
+        setAcknowledgementsOpen(true);
+        window.setTimeout(() => acknowledgementRefs.current[acknowledgementKey]?.focus(), 0);
+      }
       setStatus("error");
       return;
     }
@@ -354,7 +360,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-      <form className="surface grid gap-5 p-5 md:p-6" onSubmit={submitInquiry}>
+      <form className="surface grid gap-5 p-5 md:p-6" onSubmit={submitInquiry} data-reveal>
         <div className="grid gap-4 md:grid-cols-2">
           <FormField label="Name" error={errors.name}>
             <input className="form-control" value={form.name} onChange={(event) => update("name", event.target.value)} />
@@ -401,19 +407,19 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
         </fieldset>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Flavour" error={errors.flavourId}>
+          <FormField label="Cake Flavour" error={errors.flavourId}>
             <select className="form-control" value={form.flavourId} onChange={(event) => update("flavourId", event.target.value)}>
               {liveCatalog.flavours.map((flavour) => (
                 <option key={flavour.id} value={flavour.id}>{flavour.label}</option>
               ))}
             </select>
           </FormField>
-          <FormField label="Frosting upgrade" error={errors.frostingId}>
+          <FormField label="Frosting Flavours" error={errors.frostingId}>
             <select className="form-control" value={form.frostingId} onChange={(event) => update("frostingId", event.target.value)}>
-              <option value="">No paid frosting upgrade</option>
+              <option value="" disabled>Choose a frosting flavour</option>
               {liveCatalog.frostings.map((frosting) => (
                 <option key={frosting.id} value={frosting.id}>
-                  {frosting.label} (+{quoteRangeLabel(frosting)})
+                  {frosting.label} ({optionPriceLabel(frosting)})
                 </option>
               ))}
             </select>
@@ -445,47 +451,97 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
           />
         </FormField>
 
-        <fieldset className="grid gap-3">
-          <legend className="text-sm font-black">Required acknowledgements</legend>
-          <label className="acknowledgement">
-            <input
-              type="checkbox"
-              checked={acknowledgementsAccepted}
-              aria-describedby="required-acknowledgement-details"
-              onChange={(event) => {
-                const accepted = event.target.checked;
-                update("acknowledgements", {
-                  notice: accepted,
-                  allergens: accepted,
-                  address: accepted,
-                  certification: accepted,
-                  inspiration: accepted
-                });
-              }}
-            />
-            Accept required acknowledgements
-          </label>
-          <details className="acknowledgement-details" id="required-acknowledgement-details">
-            <summary>View all required acknowledgements</summary>
-            <ul>
-              {acknowledgementItems.map(({ key, label }) => (
-                <li key={key}>{label}</li>
-              ))}
-            </ul>
-          </details>
-          {errors.acknowledgements ? <ErrorText>{errors.acknowledgements}</ErrorText> : null}
+        <fieldset
+          aria-describedby={errors.acknowledgements ? "acknowledgement-error" : undefined}
+          className="acknowledgement-panel"
+        >
+          <legend className="sr-only">Required acknowledgements</legend>
+          <button
+            aria-controls="required-acknowledgement-details"
+            aria-expanded={acknowledgementsOpen}
+            aria-label={acknowledgementsOpen ? "Hide required acknowledgements" : "Show required acknowledgements"}
+            className="acknowledgement-toggle"
+            type="button"
+            onClick={() => setAcknowledgementsOpen((open) => !open)}
+          >
+            <span>
+              <strong>Required acknowledgements</strong>
+              <span>{acknowledgementsOpen ? "Hide required acknowledgements" : "Show required acknowledgements"}</span>
+            </span>
+            <ChevronDown className="acknowledgement-chevron" size={20} aria-hidden="true" />
+          </button>
+          <div
+            aria-hidden={!acknowledgementsOpen}
+            className={`acknowledgement-panel-body ${acknowledgementsOpen ? "acknowledgement-panel-open" : ""}`}
+            id="required-acknowledgement-details"
+            inert={!acknowledgementsOpen}
+          >
+            <div className="acknowledgement-panel-inner">
+              <div className="grid gap-3 p-3 pt-0">
+                <button
+                  className="btn-secondary acknowledgement-accept-all"
+                  disabled={acknowledgementsAccepted}
+                  type="button"
+                  onClick={() => update("acknowledgements", {
+                    notice: true,
+                    allergens: true,
+                    address: true,
+                    certification: true,
+                    inspiration: true,
+                    payment: true
+                  })}
+                >
+                  {acknowledgementsAccepted ? "All acknowledgements accepted" : "Accept all acknowledgements"}
+                </button>
+                {acknowledgementItems.map(({ key, label }) => (
+                  <label className="acknowledgement" key={key}>
+                    <input
+                      aria-describedby={
+                        errors.acknowledgements && firstUncheckedAcknowledgement === key
+                          ? "acknowledgement-error"
+                          : undefined
+                      }
+                      aria-invalid={Boolean(
+                        errors.acknowledgements && firstUncheckedAcknowledgement === key
+                      )}
+                      checked={form.acknowledgements[key]}
+                      ref={(node) => {
+                        acknowledgementRefs.current[key] = node;
+                      }}
+                      type="checkbox"
+                      onChange={(event) => {
+                        update("acknowledgements", {
+                          ...form.acknowledgements,
+                          [key]: event.target.checked
+                        });
+                      }}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+          {errors.acknowledgements ? (
+            <span
+              className="px-3 pb-3 text-sm font-bold text-[var(--accent)]"
+              id="acknowledgement-error"
+              role="alert"
+            >
+              {errors.acknowledgements}
+            </span>
+          ) : null}
         </fieldset>
 
         <button className="btn-primary click-pop" type="submit" disabled={status === "submitting"}>
           <Send size={18} aria-hidden="true" />
           {status === "submitting" ? "Sending..." : "Submit inquiry"}
-          {confettiKey > 0 ? <ButtonConfetti key={confettiKey} testId="submit-confetti" /> : null}
         </button>
         {status === "error" ? <ErrorText>Please review the highlighted details.</ErrorText> : null}
         {status === "sent" ? <p className="text-sm font-bold text-[var(--muted)]">Inquiry received. Meera will review the details before confirming your order.</p> : null}
       </form>
 
-      <aside className="grid content-start gap-5">
+      <aside className="grid content-start gap-5" data-reveal>
         <div className="surface p-5">
           <p className="eyebrow">Starting price</p>
           <p className="mt-3 text-5xl font-black text-[var(--accent)]">{startingPriceLabel(estimate).replace("Starting at ", "")}</p>
@@ -494,7 +550,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
             {estimate.lines.map((line) => (
               <div key={`${line.kind}-${line.label}`} className="flex justify-between gap-3 border-b border-[var(--line)] py-2 text-sm font-bold">
                 <span>{line.label}</span>
-                <span>{line.kind === "size" ? startingPriceLabel(line) : quoteRangeLabel(line)}</span>
+                <span>{line.kind === "size" ? startingPriceLabel(line) : optionPriceLabel(line)}</span>
               </div>
             ))}
           </div>
@@ -567,17 +623,5 @@ function OptionGroup({
       </div>
       {error ? <ErrorText>{error}</ErrorText> : null}
     </fieldset>
-  );
-}
-
-function ButtonConfetti({ testId }: { testId?: string }) {
-  return (
-    <span className="button-confetti" aria-hidden="true" data-testid={testId}>
-      <span />
-      <span />
-      <span />
-      <span />
-      <span />
-    </span>
   );
 }

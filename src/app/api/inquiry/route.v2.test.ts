@@ -10,6 +10,7 @@ const validPayload = {
   pickupTime: "12:00-14:00",
   cakeSizeId: "eight-inch",
   flavourId: "vanilla",
+  frostingId: "chocolate-frosting",
   fillingIds: [],
   toppingIds: [],
   message: "Birthday cake with soft florals.",
@@ -18,7 +19,8 @@ const validPayload = {
     allergens: true,
     address: true,
     certification: true,
-    inspiration: true
+    inspiration: true,
+    payment: true
   },
   website: ""
 };
@@ -59,7 +61,9 @@ describe("POST /api/inquiry response metadata", () => {
       pickupTime: "12:00-14:00",
       productType: "cake",
       cakeSizeId: "eight-inch",
-      paymentEmail: "m.ssethi1123@gmail.com"
+      flavourId: "vanilla",
+      frostingId: "chocolate-frosting",
+      paymentEmail: "meerascozykitchen@gmail.com"
     });
   });
 });

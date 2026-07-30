@@ -77,6 +77,45 @@ describe("AdminDashboard", () => {
     expect(await screen.findByText("Admin login could not be reached.")).toBeInTheDocument();
   });
 
+  it("shows historical blank frosting values as not recorded", async () => {
+    const data: AdminData = {
+      ...defaultAdminData,
+      orders: [{
+        id: "ord_legacy",
+        createdAt: "2026-05-01T12:00:00.000Z",
+        name: "Amina",
+        email: "amina@example.com",
+        phone: "4165550101",
+        eventDate: "2099-05-20",
+        productType: "cake",
+        cakeSizeId: "eight-inch",
+        flavourId: "vanilla",
+        message: "Birthday cake",
+        estimateLow: 75,
+        estimateHigh: 75,
+        status: "new",
+        hearted: false,
+        pinned: false,
+        summary: "Legacy order"
+      }]
+    };
+
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/admin/session")) {
+        return Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ok: true, source: "live", data }), { status: 200 }));
+    }));
+
+    render(<AdminDashboard />);
+    fireEvent.change(screen.getByLabelText("Admin PIN"), { target: { value: "149149" } });
+    fireEvent.click(screen.getByRole("button", { name: /open admin/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /Amina/i }));
+
+    expect(screen.getByText("Not recorded")).toBeInTheDocument();
+  });
+
   it("updates order status locally before the sheet mutation resolves", async () => {
     const data: AdminData = {
       ...defaultAdminData,

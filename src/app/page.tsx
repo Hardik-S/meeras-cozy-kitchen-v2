@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { CalendarDays, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { business } from "@/content/business";
 import { customerPolicies } from "@/content/policies";
@@ -8,7 +9,7 @@ export default function HomePage() {
   return (
     <>
       <section className="section-wrap grid min-h-[calc(100vh-8rem)] items-center gap-10 py-12 md:min-h-[calc(100vh-5rem)] md:grid-cols-[1.05fr_0.95fr] md:py-20">
-        <div>
+        <div data-reveal>
           <p className="eyebrow">Custom cakes in Brampton</p>
           <h1 className="page-title">{business.tagline}</h1>
           <p className="lede mt-6 max-w-xl">
@@ -34,13 +35,21 @@ export default function HomePage() {
             </span>
           </div>
         </div>
-        <div className="surface overflow-hidden">
+        <div className="surface overflow-hidden" data-reveal>
           <div className="aspect-[4/5] bg-[var(--surface-alt)] p-5">
-            <div className="flex h-full flex-col justify-end rounded-[8px] border border-[var(--line)] bg-[url('https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=1100&q=80')] bg-cover bg-center p-5 text-[var(--background)]">
-              <div className="rounded-[8px] bg-[var(--foreground)] p-4">
-                <p className="text-sm font-black">Cake inspiration</p>
+            <div className="portfolio-image relative flex h-full flex-col justify-end overflow-hidden rounded-[8px] border border-[var(--line)] p-5 text-[var(--background)]">
+              <Image
+                alt="Raspberry ring cake photographed from the front"
+                className="object-cover"
+                fill
+                priority
+                sizes="(max-width: 767px) calc(100vw - 64px), 42vw"
+                src="/portfolio/raspberry-ring-cake-front.jpeg"
+              />
+              <div className="relative rounded-[8px] bg-[var(--foreground)] p-4">
+                <p className="text-sm font-black">Meera&apos;s cake portfolio</p>
                 <p className="mt-1 text-sm leading-5 text-[var(--background)]">
-                  Explore cake photos, then share the details you would like Meera to adapt.
+                  Explore finished cakes, then share the details you would like Meera to adapt.
                 </p>
               </div>
             </div>
@@ -49,7 +58,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[var(--surface-alt)] py-14">
-        <div className="section-wrap grid gap-6 md:grid-cols-3">
+        <div className="section-wrap grid gap-6 md:grid-cols-3" data-reveal>
           {cakeSizes.map((size) => (
             <article key={size.id} className="surface p-5">
               <p className="eyebrow">Cake size</p>
@@ -62,7 +71,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section-wrap grid gap-10 py-16 md:grid-cols-[0.9fr_1.1fr]">
+      <section className="section-wrap grid gap-10 py-16 md:grid-cols-[0.9fr_1.1fr]" data-reveal>
         <div>
           <p className="eyebrow">Cake flavours</p>
           <h2 className="mt-2 text-4xl font-black leading-tight md:text-5xl">Simple choices for a cake that feels personal.</h2>
@@ -81,7 +90,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[var(--surface-warm)] py-14">
-        <div className="section-wrap grid gap-5 md:grid-cols-5">
+        <div className="section-wrap grid gap-5 md:grid-cols-3" data-reveal>
           {customerPolicies.map((policy) => (
             <article key={policy.title} className="rounded-[8px] border border-[var(--line)] bg-[var(--background)] p-4">
               <h2 className="font-black">{policy.title}</h2>

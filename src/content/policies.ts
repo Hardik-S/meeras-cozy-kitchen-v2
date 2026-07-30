@@ -1,3 +1,5 @@
+import { business } from "./business";
+
 export const customerPolicies = [
   {
     title: "Notice",
@@ -17,6 +19,6 @@ export const customerPolicies = [
   },
   {
     title: "Payments",
-    body: "The site does not collect card details. Payment and deposit instructions are confirmed directly with the customer."
+    body: business.depositPolicy
   }
 ];

@@ -18,6 +18,7 @@ export type CakeOption = PriceRange & {
 
 export type QuoteInput = {
   cakeSizeId?: string;
+  flavourId?: string;
   frostingId?: string;
   fillingIds?: string[];
   toppingIds?: string[];
@@ -25,7 +26,7 @@ export type QuoteInput = {
 
 export type QuoteLine = PriceRange & {
   label: string;
-  kind: "size" | "extra";
+  kind: "size" | "included" | "extra";
 };
 
 export type QuoteEstimate = PriceRange & {
@@ -42,15 +43,20 @@ export const productBasePrices: Record<string, PriceRange & { label: string }> =
   cake: { label: "Custom cake", low: 35, high: 75 }
 };
 
-export const flavours = [
-  { id: "chocolate", label: "Chocolate" },
-  { id: "vanilla", label: "Vanilla" },
-  { id: "almond", label: "Almond" },
-  { id: "lemon", label: "Lemon" },
-  { id: "coconut", label: "Coconut" }
+export const flavours: CakeOption[] = [
+  { id: "chocolate", label: "Chocolate", low: 0, high: 0 },
+  { id: "vanilla", label: "Vanilla", low: 0, high: 0 },
+  { id: "almond", label: "Almond", low: 0, high: 0 },
+  { id: "lemon", label: "Lemon", low: 0, high: 0 },
+  { id: "coconut", label: "Coconut", low: 0, high: 0 }
 ];
 
 export const frostings: CakeOption[] = [
+  { id: "chocolate-frosting", label: "Chocolate", low: 0, high: 0 },
+  { id: "vanilla-frosting", label: "Vanilla", low: 0, high: 0 },
+  { id: "almond-frosting", label: "Almond", low: 0, high: 0 },
+  { id: "lemon-frosting", label: "Lemon", low: 0, high: 0 },
+  { id: "coconut-frosting", label: "Coconut", low: 0, high: 0 },
   { id: "oreo-crunch", label: "Oreo Crunch", low: 5, high: 5 },
   { id: "dark-chocolate-ganache", label: "Dark Chocolate Ganache", low: 10, high: 10 },
   { id: "white-chocolate-ganache", label: "White Chocolate Ganache", low: 10, high: 10 }
@@ -106,6 +112,7 @@ export function calculateQuoteEstimate(
   input: QuoteInput,
   catalog?: {
     cakeSizes?: CakeSize[];
+    flavours?: CakeOption[];
     frostings?: CakeOption[];
     fillings?: CakeOption[];
     toppings?: CakeOption[];
@@ -113,14 +120,22 @@ export function calculateQuoteEstimate(
 ): QuoteEstimate {
   const lines: QuoteLine[] = [];
   const selectedSize = findOption(catalog?.cakeSizes ?? cakeSizes, input.cakeSizeId);
+  const selectedFlavour = findOption(catalog?.flavours ?? flavours, input.flavourId);
   const selectedFrosting = findOption(catalog?.frostings ?? frostings, input.frostingId);
 
   if (selectedSize) {
     lines.push(normalizeQuoteLine({ ...selectedSize, kind: "size" }));
   }
 
+  if (selectedFlavour) {
+    lines.push(normalizeQuoteLine({ ...selectedFlavour, kind: "included" }));
+  }
+
   if (selectedFrosting) {
-    lines.push(normalizeQuoteLine({ ...selectedFrosting, kind: "extra" }));
+    lines.push(normalizeQuoteLine({
+      ...selectedFrosting,
+      kind: selectedFrosting.low === 0 && selectedFrosting.high === 0 ? "included" : "extra"
+    }));
   }
 
   for (const fillingId of input.fillingIds ?? []) {
@@ -154,6 +169,12 @@ export function quoteRangeLabel(price: PriceRange) {
   return low === high
     ? formatCurrency(low)
     : `${formatCurrency(low)}-${formatCurrency(high)}`;
+}
+
+export function optionPriceLabel(price: PriceRange) {
+  return price.low === 0 && price.high === 0
+    ? "Included"
+    : `+${quoteRangeLabel(price)}`;
 }
 
 export function startingPriceLabel(price: PriceRange) {

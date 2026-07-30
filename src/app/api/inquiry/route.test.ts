@@ -27,7 +27,8 @@ const validPayload = {
     allergens: true,
     address: true,
     certification: true,
-    inspiration: true
+    inspiration: true,
+    payment: true
   },
   website: ""
 };
@@ -67,6 +68,8 @@ describe("POST /api/inquiry", () => {
     expect(body.ok).toBe(true);
     expect(body.email.status).toBe("skipped");
     expect(body.summary).toContain("Pickup time: 12pm-2pm");
+    expect(body.summary).toContain("Cake flavour: Vanilla");
+    expect(body.summary).toContain("Frosting flavour: White Chocolate Ganache");
     expect(body.summary).toContain("Fillings: Raspberry, Apricot");
     expect(body.summary).toContain("Starting at $100");
     expect(body.order).toMatchObject({
@@ -75,7 +78,8 @@ describe("POST /api/inquiry", () => {
       cakeSizeId: "eight-inch",
       frostingId: "white-chocolate-ganache",
       fillingIds: ["raspberry-filling", "apricot-filling"],
-      toppingIds: ["fresh-strawberry"]
+      toppingIds: ["fresh-strawberry"],
+      paymentEmail: "meerascozykitchen@gmail.com"
     });
   });
 
@@ -183,6 +187,38 @@ describe("POST /api/inquiry", () => {
       fillingIds: ["raspberry-filling"],
       toppingIds: ["fresh-strawberry"]
     });
+  });
+
+  it.each([
+    {
+      payload: (() => {
+        const withoutFrosting: Partial<typeof validPayload> = { ...validPayload };
+        delete withoutFrosting.frostingId;
+        return withoutFrosting;
+      })(),
+      field: "frostingId",
+      issue: undefined
+    },
+    {
+      payload: {
+        ...validPayload,
+        acknowledgements: {
+          ...validPayload.acknowledgements,
+          payment: false
+        }
+      },
+      field: "acknowledgements",
+      issue: "Please confirm the payment policy."
+    }
+  ])("rejects a missing required $field contract", async ({ payload, field, issue }) => {
+    const response = await POST(request(payload));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.issues[field]).toEqual(expect.any(Array));
+    if (issue) {
+      expect(body.issues[field]).toContain(issue);
+    }
   });
 
   it("rejects honeypots and removed legacy fields", async () => {

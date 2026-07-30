@@ -5,7 +5,7 @@ type CatalogSyncResult = {
   source: "default" | "cached" | "live" | "fallback";
 };
 
-const cacheKey = "meera:public-catalog:cake-v1";
+const cacheKey = "meera:public-catalog:cake-v2";
 const cacheTtlMs = 10 * 60 * 1000;
 let inFlight: Promise<CatalogSyncResult> | undefined;
 

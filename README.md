@@ -10,10 +10,10 @@ V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Ap
 
 - Public navigation is exactly Home, Menu, Photos, FAQ, and Quote.
 - Canonical sizes are 4-inch at $35, 6-inch at $60, and 8-inch at $75, all shown as starting prices.
-- The public catalogue contains only cake sizes, flavours, one optional frosting upgrade, multiple fillings, and multiple toppings.
-- Quote submissions require a pickup date, one of seven two-hour pickup windows, and all five acknowledgements.
+- The public catalogue contains only cake sizes, five cake flavours, eight independently selectable frosting flavours, multiple fillings, and multiple toppings.
+- Quote submissions require a pickup date, one of seven two-hour pickup windows, a frosting flavour, and all six acknowledgements.
 - Client submissions do not accept product, servings, budget, or legacy add-on fields. The server writes `productType: "cake"` only for historical order compatibility.
-- The Apps Script migration version is `cake-only-v1`. It upserts the canonical menu and disables obsolete catalogue rows without deleting orders, ledger rows, settings, or historical columns.
+- The Apps Script catalogue migration version is `cake-frosting-flavours-v2`; the contact-settings migration is `canonical-contact-email-v1`. Both are idempotent and preserve orders, ledger rows, settings, and historical columns.
 - The browser catalogue cache key is versioned so pre-migration products and pricing cannot reappear.
 - `/photos` is canonical; `/portfolio` redirects there. Food-safety guidance lives at `/faq#food-safety`; `/food-safety` redirects there.
 - Brand colours are `#9A1E1E`, `#FFF4E8`, `#E7D3C1`, `#60442E`, and `#3B2F2F`. The UI intentionally uses no box shadows.
@@ -217,9 +217,18 @@ npm run build
 
 The v2 Apps Script copy is in `docs/apps-script/Code.gs`. It adds a `quantity` column to the Ledger sheet without clearing existing data, so it is safer for upgrading an existing sheet than the original v1 setup routine.
 
-Payment instructions shown after inquiry submission:
+Canonical business contact and e-transfer address: `meerascozykitchen@gmail.com`.
+Set Vercel `ORDER_NOTIFY_EMAIL` to that same address. The technical Resend
+sender remains `Meera's Cozy Kitchen <orders@resend.dev>` until the business has
+a verified sending domain.
 
-- E-transfer: `m.ssethi1123@gmail.com`
-- Cash: arranged directly with Meera
+Payment guidance shown after inquiry submission:
+
+> Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash.
+
+`setupMeeraCozyKitchen` runs the idempotent `canonical-contact-email-v1`
+migration. On its first run, populated `defaultSender` and `defaultReceiver`
+settings are updated to the canonical Gmail address; later runs leave them
+untouched once the migration marker is present.
 
 hello

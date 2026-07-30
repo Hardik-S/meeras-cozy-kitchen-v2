@@ -24,7 +24,7 @@ export function SiteHeader() {
     <header className="site-header sticky top-0 z-10 border-b border-[var(--line)]">
       <div className="section-wrap site-header-inner">
         <Link href="/" className="brand-link" aria-label="Meera's Cozy Kitchen home">
-          <Image className="brand-logo" src="/logo.png" alt="" width={44} height={44} priority />
+          <Image className="brand-logo" src="/meeras-logo.jpg" alt="" width={44} height={44} priority />
           <span className="leading-tight">
             <span className="block text-base font-black">Meera&apos;s Cozy Kitchen</span>
             <span className="block text-xs font-bold text-[var(--muted)]">Brampton home bakery</span>

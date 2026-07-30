@@ -116,8 +116,8 @@ function offering(
 
 export const defaultAdminData: AdminData = {
   settings: {
-    defaultSender: "batb4016@gmail.com",
-    defaultReceiver: "batb4016@gmail.com",
+    defaultSender: "meerascozykitchen@gmail.com",
+    defaultReceiver: "meerascozykitchen@gmail.com",
     senderName: "Meera's Cozy Kitchen",
     chefNotificationCopy: "New bakery inquiry received. Reply from the admin dashboard or your inbox."
   },

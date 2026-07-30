@@ -20,11 +20,13 @@
 const SETTINGS = {
   sharedSecretProperty: "MEERA_SHARED_SECRET",
   spreadsheetIdProperty: "MEERA_SPREADSHEET_ID",
-  defaultEmail: "batb4016@gmail.com",
+  defaultEmail: "meerascozykitchen@gmail.com",
   senderName: "Meera's Cozy Kitchen"
 };
 
-const CATALOG_VERSION = "cake-only-v1";
+const CATALOG_VERSION = "cake-frosting-flavours-v2";
+const CONTACT_SETTINGS_VERSION = "canonical-contact-email-v1";
+const PAYMENT_POLICY = "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash.";
 
 const SHEETS = {
   Settings: ["key", "value", "updatedAt"],
@@ -52,9 +54,14 @@ const DEFAULT_OFFERINGS = [
   { id: "almond", productId: "cake", category: "flavour", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
   { id: "lemon", productId: "cake", category: "flavour", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
   { id: "coconut", productId: "cake", category: "flavour", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
-  { id: "oreo-crunch", productId: "cake", category: "frosting", label: "Oreo Crunch", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
-  { id: "dark-chocolate-ganache", productId: "cake", category: "frosting", label: "Dark Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 2 },
-  { id: "white-chocolate-ganache", productId: "cake", category: "frosting", label: "White Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 3 },
+  { id: "chocolate-frosting", productId: "cake", category: "frosting", label: "Chocolate", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
+  { id: "vanilla-frosting", productId: "cake", category: "frosting", label: "Vanilla", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
+  { id: "almond-frosting", productId: "cake", category: "frosting", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
+  { id: "lemon-frosting", productId: "cake", category: "frosting", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
+  { id: "coconut-frosting", productId: "cake", category: "frosting", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
+  { id: "oreo-crunch", productId: "cake", category: "frosting", label: "Oreo Crunch", low: 5, high: 5, servings: "", enabled: true, sortOrder: 6 },
+  { id: "dark-chocolate-ganache", productId: "cake", category: "frosting", label: "Dark Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 7 },
+  { id: "white-chocolate-ganache", productId: "cake", category: "frosting", label: "White Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 8 },
   { id: "raspberry-filling", productId: "cake", category: "filling", label: "Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
   { id: "blueberry-filling", productId: "cake", category: "filling", label: "Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
   { id: "cherry-filling", productId: "cake", category: "filling", label: "Cherry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
@@ -120,6 +127,7 @@ function setupMeeraCozyKitchen() {
   seedSettings();
   seedProductsAndOfferings();
   migrateCakeCatalog();
+  migrateCanonicalContactEmail();
   return { ok: true, data: listAdminData({}) .data };
 }
 
@@ -641,6 +649,20 @@ function settingValue(key) {
   return row ? clean(row.value) : "";
 }
 
+function migrateCanonicalContactEmail() {
+  if (settingValue("contactSettingsVersion") === CONTACT_SETTINGS_VERSION) {
+    return;
+  }
+
+  ["defaultSender", "defaultReceiver"].forEach(function(key) {
+    if (settingValue(key)) {
+      setSetting(key, SETTINGS.defaultEmail);
+    }
+  });
+  setSetting("contactSettingsVersion", CONTACT_SETTINGS_VERSION);
+  audit("migrateCanonicalContactEmail", CONTACT_SETTINGS_VERSION);
+}
+
 function migrateCakeCatalog() {
   if (settingValue("catalogVersion") === CATALOG_VERSION) {
     return;
@@ -686,7 +708,8 @@ function sendInquiryEmails(inquiry, summary, orderId) {
   const settings = settingsObject();
   const customerSubject = "We received your Meera's Cozy Kitchen inquiry";
   const chefSubject = "New Meera's Cozy Kitchen order inquiry: " + cleanSingleLine(inquiry.name);
-  const customerBody = "Hi " + cleanSingleLine(inquiry.name) + ",\n\nThanks for your inquiry. Meera will review the details and reply soon.\n\n" + summary;
+  const paymentGuidance = summary.indexOf(PAYMENT_POLICY) >= 0 ? "" : "Payment policy:\n" + PAYMENT_POLICY + "\n\n";
+  const customerBody = "Hi " + cleanSingleLine(inquiry.name) + ",\n\nThanks for your inquiry. Meera will review the details and reply soon.\n\n" + paymentGuidance + summary;
   const chefBody = settings.chefNotificationCopy + "\n\nOrder ID: " + orderId + "\n\n" + summary;
 
   sendMail(settings, cleanSingleLine(inquiry.email), customerSubject, customerBody, settings.defaultReceiver);
@@ -784,8 +807,8 @@ function buildSummary(inquiry, estimate) {
     "Pickup date: " + cleanSingleLine(inquiry.eventDate),
     "Pickup time: " + cleanSingleLine(inquiry.pickupTime),
     "Cake size: " + cakeSizeLabel,
-    "Flavour: " + flavourLabel,
-    "Frosting: " + (frostingLabel || "No paid upgrade"),
+    "Cake flavour: " + flavourLabel,
+    "Frosting flavour: " + (frostingLabel || "Not recorded"),
     "Starting price: $" + estimate.low,
     "",
     clean(inquiry.message)

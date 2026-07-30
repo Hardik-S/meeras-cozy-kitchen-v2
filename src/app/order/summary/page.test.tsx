@@ -18,21 +18,21 @@ describe("OrderSummaryPage", () => {
 
     render(<OrderSummaryPage />);
 
-    expect(screen.getByRole("heading", { name: "Here are your payment instructions." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your inquiry is in for review." })).toBeInTheDocument();
     expect(screen.getAllByText("ord_storage_blocked")[0]).toBeInTheDocument();
-    expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
+    expect(screen.getByText("meerascozykitchen@gmail.com")).toBeInTheDocument();
   });
 
   it("falls back to the URL id when stored order data is malformed", () => {
     window.history.replaceState(null, "", "/order/summary?id=ord_valid_url");
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: 123,
-      paymentEmail: "m.ssethi1123@gmail.com"
+      paymentEmail: "meerascozykitchen@gmail.com"
     }));
 
     render(<OrderSummaryPage />);
 
-    expect(screen.getByRole("heading", { name: "Here are your payment instructions." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your inquiry is in for review." })).toBeInTheDocument();
     expect(screen.getAllByText("ord_valid_url")[0]).toBeInTheDocument();
     expect(screen.getByText("Your inquiry was received. Meera will confirm the details directly.")).toBeInTheDocument();
   });
@@ -48,11 +48,11 @@ describe("OrderSummaryPage", () => {
 
     render(<OrderSummaryPage />);
 
-    expect(screen.getByRole("heading", { name: "Here are your payment instructions." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your inquiry is in for review." })).toBeInTheDocument();
     expect(screen.getAllByText("ord_fresh_link")[0]).toBeInTheDocument();
     expect(screen.queryByText("ord_previous_session")).not.toBeInTheDocument();
     expect(screen.queryByText("Name: Amina")).not.toBeInTheDocument();
-    expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
+    expect(screen.getByText("meerascozykitchen@gmail.com")).toBeInTheDocument();
   });
 
   it("normalizes copied stored order ids before matching the summary URL", () => {
@@ -69,14 +69,15 @@ describe("OrderSummaryPage", () => {
     expect(screen.getByText("Name: Amina from stored payment metadata")).toBeInTheDocument();
     expect(screen.getAllByText("ord_copied_storage")[0]).toBeInTheDocument();
     expect(screen.queryByText(" ord_copied_storage ")).not.toBeInTheDocument();
-    expect(screen.getByText("payments@example.com")).toBeInTheDocument();
+    expect(screen.getByText("meerascozykitchen@gmail.com")).toBeInTheDocument();
+    expect(screen.queryByText("payments@example.com")).not.toBeInTheDocument();
   });
 
   it("shows a payment copy fallback when clipboard access is blocked", async () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_clipboard_blocked",
       name: "Amina",
-      paymentEmail: "m.ssethi1123@gmail.com",
+      paymentEmail: "meerascozykitchen@gmail.com",
       summary: "Name: Amina"
     }));
     const writeTextMock = vi.fn(async () => {
@@ -93,10 +94,10 @@ describe("OrderSummaryPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Copy failed. Use the email button or select the payment details manually.")).toBeInTheDocument();
     });
-    expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_clipboard_blocked - Amina");
+    expect(writeTextMock).toHaveBeenCalledWith("E-transfer: meerascozykitchen@gmail.com\nMemo: Meera order ord_clipboard_blocked - Amina");
   });
 
-  it("uses the stored payment email in visible and copied payment details", async () => {
+  it("ignores a legacy stored payment email in visible and copied payment details", async () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_custom_payment",
       name: "Amina",
@@ -112,10 +113,11 @@ describe("OrderSummaryPage", () => {
     render(<OrderSummaryPage />);
     fireEvent.click(screen.getByRole("button", { name: /copy e-transfer details/i }));
 
-    expect(screen.getByText("payments@example.com")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /email meera/i })).toHaveAttribute("href", expect.stringContaining("mailto:payments@example.com"));
+    expect(screen.getByText("meerascozykitchen@gmail.com")).toBeInTheDocument();
+    expect(screen.queryByText("payments@example.com")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /email meera/i })).toHaveAttribute("href", expect.stringContaining("mailto:meerascozykitchen@gmail.com"));
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: payments@example.com\nMemo: Meera order ord_custom_payment - Amina");
+      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: meerascozykitchen@gmail.com\nMemo: Meera order ord_custom_payment - Amina");
     });
   });
 
@@ -123,7 +125,7 @@ describe("OrderSummaryPage", () => {
     sessionStorage.setItem("meera:last-order", JSON.stringify({
       id: "ord_multiline_name",
       name: "  Amina\nMemo: redirected  ",
-      paymentEmail: "m.ssethi1123@gmail.com",
+      paymentEmail: "meerascozykitchen@gmail.com",
       summary: "Name: Amina"
     }));
     const writeTextMock = vi.fn(async () => undefined);
@@ -137,7 +139,7 @@ describe("OrderSummaryPage", () => {
 
     expect(screen.getByText("Amina Memo: redirected")).toBeInTheDocument();
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_multiline_name - Amina Memo: redirected");
+      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: meerascozykitchen@gmail.com\nMemo: Meera order ord_multiline_name - Amina Memo: redirected");
     });
   });
 
@@ -154,7 +156,7 @@ describe("OrderSummaryPage", () => {
 
     expect(screen.getAllByText("ord_multiline Memo: redirected")[0]).toBeInTheDocument();
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: m.ssethi1123@gmail.com\nMemo: Meera order ord_multiline Memo: redirected");
+      expect(writeTextMock).toHaveBeenCalledWith("E-transfer: meerascozykitchen@gmail.com\nMemo: Meera order ord_multiline Memo: redirected");
     });
   });
 
@@ -168,8 +170,23 @@ describe("OrderSummaryPage", () => {
 
     render(<OrderSummaryPage />);
 
-    expect(screen.getByText("m.ssethi1123@gmail.com")).toBeInTheDocument();
+    expect(screen.getByText("meerascozykitchen@gmail.com")).toBeInTheDocument();
     expect(screen.queryByText("payments@example.com?cc=someone@example.com")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /email meera/i })).toHaveAttribute("href", expect.stringContaining("mailto:m.ssethi1123@gmail.com"));
+    expect(screen.getByRole("link", { name: /email meera/i })).toHaveAttribute("href", expect.stringContaining("mailto:meerascozykitchen@gmail.com"));
+  });
+
+  it("shows payment only as post-acceptance guidance using the canonical policy", () => {
+    sessionStorage.setItem("meera:last-order", JSON.stringify({
+      id: "ord_payment_policy",
+      name: "Amina",
+      summary: "Name: Amina"
+    }));
+
+    render(<OrderSummaryPage />);
+
+    expect(screen.getByRole("heading", { name: "Payment guidance after acceptance" })).toBeInTheDocument();
+    expect(screen.getByText(
+      "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash."
+    )).toBeInTheDocument();
   });
 });

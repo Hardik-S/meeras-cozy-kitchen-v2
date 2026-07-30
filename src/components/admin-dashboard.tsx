@@ -66,6 +66,16 @@ function slug(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+function offeringLabel(
+  offerings: AdminOffering[],
+  id: string | undefined,
+  category: AdminOffering["category"]
+) {
+  if (!id) return "Not recorded";
+
+  return offerings.find((offering) => offering.id === id && offering.category === category)?.label ?? id;
+}
+
 function csvEscape(value: unknown) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
@@ -247,7 +257,7 @@ export function AdminDashboard() {
     return (
       <section className="admin-shell section-wrap py-12 md:py-20">
         <div className="admin-lock">
-          <Image className="brand-logo mx-auto" src="/logo.png" alt="" width={64} height={64} priority />
+          <Image className="brand-logo mx-auto" src="/meeras-logo.jpg" alt="" width={64} height={64} priority />
           <h1>Kitchen admin</h1>
           <p>Enter the private PIN to manage orders, products, reports, and email settings.</p>
           <form onSubmit={login} className="mt-6 grid gap-3">
@@ -336,8 +346,9 @@ export function AdminDashboard() {
                 {expandedOrderId === order.id ? (
                   <div className="note-detail">
                     <p>{order.message}</p>
-                    <p><strong>Cake:</strong> {order.cakeSizeId} · {order.flavourId}</p>
-                    <p><strong>Frosting:</strong> {order.frostingId || "No paid upgrade"}</p>
+                    <p><strong>Cake size:</strong> {order.cakeSizeId}</p>
+                    <p><strong>Cake flavour:</strong> {offeringLabel(data.offerings, order.flavourId, "flavour")}</p>
+                    <p><strong>Frosting flavour:</strong> {offeringLabel(data.offerings, order.frostingId, "frosting")}</p>
                     <p><strong>Fillings:</strong> {order.fillingIds?.length ? order.fillingIds.join(", ") : "None"}</p>
                     <p><strong>Toppings:</strong> {order.toppingIds?.length ? order.toppingIds.join(", ") : "None"}</p>
                     <p><strong>Email:</strong> {order.email}</p>

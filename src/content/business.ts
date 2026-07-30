@@ -6,12 +6,12 @@ export const business = {
   tagline: "Warm celebration cakes, planned with care.",
   minimumNoticeDays: 7,
   launchMode: true,
-  orderEmail: "hello@meerascozykitchen.ca",
+  orderEmail: "meerascozykitchen@gmail.com",
   instagramHandle: "@meerascozykitchen",
   pickupPolicy:
     "Pickup location and timing are confirmed after the order is accepted. Exact home address is not posted publicly.",
   depositPolicy:
-    "A deposit may be requested to reserve custom cake orders. Final balance and pickup timing are confirmed in writing.",
+    "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash.",
   ingredientPositioning:
     "No alcohol or pork-derived ingredients are intentionally used. Meera's Cozy Kitchen is not halal certified.",
   allergenNotice:

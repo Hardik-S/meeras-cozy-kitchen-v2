@@ -20,7 +20,8 @@ const baseInquiry = {
     allergens: true,
     address: true,
     certification: true,
-    inspiration: true
+    inspiration: true,
+    payment: true
   },
   website: ""
 };
@@ -40,6 +41,7 @@ describe("inquirySchema", () => {
       email: "  amina@example.com  ",
       cakeSizeId: " Eight-Inch ",
       flavourId: " Vanilla ",
+      frostingId: " Oreo-Crunch ",
       fillingIds: [" raspberry-filling ", "raspberry-filling", " apricot-filling "],
       toppingIds: [" Fresh-Strawberry "],
       website: "   "
@@ -51,22 +53,42 @@ describe("inquirySchema", () => {
       email: "amina@example.com",
       cakeSizeId: "eight-inch",
       flavourId: "vanilla",
+      frostingId: "oreo-crunch",
       fillingIds: ["raspberry-filling", "apricot-filling"],
       toppingIds: ["fresh-strawberry"],
       website: ""
     });
   });
 
-  it("allows no frosting, fillings, or toppings", () => {
-    const withoutFrosting: Partial<typeof baseInquiry> = { ...baseInquiry };
-    delete withoutFrosting.frostingId;
+  it("allows no fillings or toppings when a frosting is selected", () => {
     const parsed = createInquirySchema(fixtureToday).safeParse({
-      ...withoutFrosting,
+      ...baseInquiry,
       fillingIds: [],
       toppingIds: []
     });
 
     expect(parsed.success).toBe(true);
+  });
+
+  it.each([undefined, ""])("rejects missing frosting selection %s", (frostingId) => {
+    expect(createInquirySchema(fixtureToday).safeParse({
+      ...baseInquiry,
+      frostingId
+    }).success).toBe(false);
+  });
+
+  it("keeps cake and frosting flavours independent", () => {
+    const parsed = createInquirySchema(fixtureToday).safeParse({
+      ...baseInquiry,
+      flavourId: "vanilla",
+      frostingId: "chocolate-frosting"
+    });
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data).toMatchObject({
+      flavourId: "vanilla",
+      frostingId: "chocolate-frosting"
+    });
   });
 
   it.each([undefined, "", "09:00-11:00"])("rejects missing or invalid pickup time %s", (pickupTime) => {
@@ -82,6 +104,16 @@ describe("inquirySchema", () => {
       acknowledgements: {
         ...baseInquiry.acknowledgements,
         inspiration: false
+      }
+    }).success).toBe(false);
+  });
+
+  it("enforces the payment-policy acknowledgement", () => {
+    expect(createInquirySchema(fixtureToday).safeParse({
+      ...baseInquiry,
+      acknowledgements: {
+        ...baseInquiry.acknowledgements,
+        payment: false
       }
     }).success).toBe(false);
   });

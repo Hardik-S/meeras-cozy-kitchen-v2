@@ -12,11 +12,13 @@ describe("MenuContent", () => {
     expect(screen.getByText("Starting at $35")).toBeInTheDocument();
     expect(screen.getByText("Starting at $60")).toBeInTheDocument();
     expect(screen.getByText("Starting at $75")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Flavours" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Frostings" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Cake Flavours" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Frosting Flavours" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Fillings" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Toppings" })).toBeInTheDocument();
     expect(screen.getByText("Oreo Crunch")).toBeInTheDocument();
+    expect(screen.getAllByText("Included")).toHaveLength(10);
+    expect(screen.queryByText("+$0")).not.toBeInTheDocument();
     expect(screen.getByText("Apricot")).toBeInTheDocument();
     expect(screen.getByText("Chopped Pistachio")).toBeInTheDocument();
     expect(screen.getAllByText("+$5").length).toBeGreaterThan(0);

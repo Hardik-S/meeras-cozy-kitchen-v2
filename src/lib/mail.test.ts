@@ -27,7 +27,8 @@ const inquiry: InquiryInput = {
     allergens: true,
     address: true,
     certification: true,
-    inspiration: true
+    inspiration: true,
+    payment: true
   },
   website: ""
 };
