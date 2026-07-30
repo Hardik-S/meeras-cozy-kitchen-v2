@@ -664,18 +664,32 @@ function migrateCanonicalContactEmail() {
 }
 
 function migrateCakeCatalog() {
-  if (settingValue("catalogVersion") === CATALOG_VERSION) {
+  const productIds = DEFAULT_PRODUCTS.map(function(item) { return item.id; });
+  const offeringSignatures = DEFAULT_OFFERINGS.map(function(item) {
+    return item.id + "\n" + item.category;
+  });
+  const hasEnabledNonCanonicalProduct = readObjects("Products").some(function(row) {
+    return row.enabled === true && productIds.indexOf(clean(row.id).toLowerCase()) < 0;
+  });
+  const hasEnabledNonCanonicalOffering = readObjects("Offerings").some(function(row) {
+    const signature = clean(row.id).toLowerCase() + "\n" + clean(row.category).toLowerCase();
+    return row.enabled === true && offeringSignatures.indexOf(signature) < 0;
+  });
+
+  if (
+    settingValue("catalogVersion") === CATALOG_VERSION
+    && !hasEnabledNonCanonicalProduct
+    && !hasEnabledNonCanonicalOffering
+  ) {
     return;
   }
 
-  const productIds = DEFAULT_PRODUCTS.map(function(item) { return item.id; });
-  const offeringIds = DEFAULT_OFFERINGS.map(function(item) { return item.id; });
   const updatedAt = nowIso();
 
   readObjects("Products").forEach(function(row) {
     const id = clean(row.id).toLowerCase();
-    if (id && productIds.indexOf(id) < 0) {
-      patchById("Products", id, { enabled: false, updatedAt: updatedAt });
+    if (id && row.enabled === true && productIds.indexOf(id) < 0) {
+      patchCatalogRow("Products", id, "", { enabled: false, updatedAt: updatedAt });
     }
   });
   DEFAULT_PRODUCTS.forEach(function(product) {
@@ -684,8 +698,10 @@ function migrateCakeCatalog() {
 
   readObjects("Offerings").forEach(function(row) {
     const id = clean(row.id).toLowerCase();
-    if (id && offeringIds.indexOf(id) < 0) {
-      patchById("Offerings", id, { enabled: false, updatedAt: updatedAt });
+    const category = clean(row.category).toLowerCase();
+    const signature = id + "\n" + category;
+    if (id && row.enabled === true && offeringSignatures.indexOf(signature) < 0) {
+      patchCatalogRow("Offerings", id, category, { enabled: false, updatedAt: updatedAt });
     }
   });
   DEFAULT_OFFERINGS.forEach(function(offering) {
@@ -900,6 +916,30 @@ function patchById(sheetName, id, patch) {
     return Object.prototype.hasOwnProperty.call(patch, header) ? patch[header] : current[index];
   });
   range.setValues([next]);
+}
+
+function patchCatalogRow(sheetName, id, category, patch) {
+  const sheet = spreadsheet().getSheetByName(sheetName);
+  const headers = SHEETS[sheetName];
+  const idIndex = headers.indexOf("id");
+  const categoryIndex = headers.indexOf("category");
+  const values = sheet.getDataRange().getValues();
+  const normalizedId = clean(id).toLowerCase();
+  const normalizedCategory = clean(category).toLowerCase();
+
+  for (let index = 1; index < values.length; index += 1) {
+    const rowId = clean(values[index][idIndex]).toLowerCase();
+    const rowCategory = categoryIndex < 0 ? "" : clean(values[index][categoryIndex]).toLowerCase();
+    if (rowId !== normalizedId || rowCategory !== normalizedCategory) continue;
+
+    const next = headers.map(function(header, columnIndex) {
+      return Object.prototype.hasOwnProperty.call(patch, header) ? patch[header] : values[index][columnIndex];
+    });
+    sheet.getRange(index + 1, 1, 1, headers.length).setValues([next]);
+    return;
+  }
+
+  throw new Error(sheetName + " catalog row not found: " + id + " (" + category + ")");
 }
 
 function deleteById(sheetName, id) {

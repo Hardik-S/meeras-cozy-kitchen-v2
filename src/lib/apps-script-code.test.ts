@@ -356,13 +356,13 @@ function extractConstDeclaration(source: string, name: string) {
 
 function loadMigrateCakeCatalog({
   readObjects,
-  patchById,
+  patchCatalogRow,
   upsertById,
   setSetting,
   audit
 }: {
   readObjects: (sheetName: string) => Array<Record<string, unknown>>;
-  patchById: ReturnType<typeof vi.fn>;
+  patchCatalogRow: ReturnType<typeof vi.fn>;
   upsertById: ReturnType<typeof vi.fn>;
   setSetting: ReturnType<typeof vi.fn>;
   audit: ReturnType<typeof vi.fn>;
@@ -380,7 +380,7 @@ function loadMigrateCakeCatalog({
 
   return runInNewContext(script, {
     readObjects,
-    patchById,
+    patchCatalogRow,
     upsertById,
     setSetting,
     audit,
@@ -476,18 +476,25 @@ describe("Apps Script Code.gs estimateInquiry", () => {
 
 describe("Apps Script Code.gs cake catalog migration", () => {
   it("disables obsolete rows, upserts canonical rows, and records its version without deleting history", () => {
-    const patchById = vi.fn();
+    const patchCatalogRow = vi.fn();
     const upsertById = vi.fn();
     const setSetting = vi.fn();
     const audit = vi.fn();
     const migrateCakeCatalog = loadMigrateCakeCatalog({
       readObjects: (sheetName) => {
         if (sheetName === "Settings") return [];
-        if (sheetName === "Products") return [{ id: "cake" }, { id: "cupcakes" }];
-        if (sheetName === "Offerings") return [{ id: "four-inch" }, { id: "legacy-addon" }];
+        if (sheetName === "Products") {
+          return [{ id: "cake", enabled: true }, { id: "cupcakes", enabled: true }];
+        }
+        if (sheetName === "Offerings") {
+          return [
+            { id: "four-inch", category: "cake-size", enabled: true },
+            { id: "legacy-addon", category: "add-on", enabled: true }
+          ];
+        }
         return [];
       },
-      patchById,
+      patchCatalogRow,
       upsertById,
       setSetting,
       audit
@@ -495,8 +502,18 @@ describe("Apps Script Code.gs cake catalog migration", () => {
 
     migrateCakeCatalog();
 
-    expect(patchById).toHaveBeenCalledWith("Products", "cupcakes", expect.objectContaining({ enabled: false }));
-    expect(patchById).toHaveBeenCalledWith("Offerings", "legacy-addon", expect.objectContaining({ enabled: false }));
+    expect(patchCatalogRow).toHaveBeenCalledWith(
+      "Products",
+      "cupcakes",
+      "",
+      expect.objectContaining({ enabled: false })
+    );
+    expect(patchCatalogRow).toHaveBeenCalledWith(
+      "Offerings",
+      "legacy-addon",
+      "add-on",
+      expect.objectContaining({ enabled: false })
+    );
     expect(upsertById).toHaveBeenCalledWith("Products", expect.objectContaining({ id: "cake", enabled: true }));
     expect(upsertById).toHaveBeenCalledWith("Offerings", expect.objectContaining({ id: "four-inch", enabled: true }));
     const upsertedFrostings = upsertById.mock.calls
@@ -524,15 +541,15 @@ describe("Apps Script Code.gs cake catalog migration", () => {
   });
 
   it("is a no-op after the migration version is recorded", () => {
-    const patchById = vi.fn();
+    const patchCatalogRow = vi.fn();
     const upsertById = vi.fn();
     const setSetting = vi.fn();
     const audit = vi.fn();
     const migrateCakeCatalog = loadMigrateCakeCatalog({
       readObjects: (sheetName) => sheetName === "Settings"
         ? [{ key: "catalogVersion", value: "cake-frosting-flavours-v2" }]
-        : [{ id: "legacy-row" }],
-      patchById,
+        : [{ id: "legacy-row", enabled: false }],
+      patchCatalogRow,
       upsertById,
       setSetting,
       audit
@@ -540,10 +557,47 @@ describe("Apps Script Code.gs cake catalog migration", () => {
 
     migrateCakeCatalog();
 
-    expect(patchById).not.toHaveBeenCalled();
+    expect(patchCatalogRow).not.toHaveBeenCalled();
     expect(upsertById).not.toHaveBeenCalled();
     expect(setSetting).not.toHaveBeenCalled();
     expect(audit).not.toHaveBeenCalled();
+  });
+
+  it("repairs an already-versioned catalog when duplicate legacy categories remain enabled", () => {
+    const patchCatalogRow = vi.fn();
+    const upsertById = vi.fn();
+    const setSetting = vi.fn();
+    const audit = vi.fn();
+    const migrateCakeCatalog = loadMigrateCakeCatalog({
+      readObjects: (sheetName) => {
+        if (sheetName === "Settings") {
+          return [{ key: "catalogVersion", value: "cake-frosting-flavours-v2" }];
+        }
+        if (sheetName === "Products") return [{ id: "cake", enabled: true }];
+        if (sheetName === "Offerings") {
+          return [
+            { id: "lemon", category: "flavour", enabled: true },
+            { id: "lemon", category: "frosting flavour", enabled: true }
+          ];
+        }
+        return [];
+      },
+      patchCatalogRow,
+      upsertById,
+      setSetting,
+      audit
+    });
+
+    migrateCakeCatalog();
+
+    expect(patchCatalogRow).toHaveBeenCalledWith(
+      "Offerings",
+      "lemon",
+      "frosting flavour",
+      expect.objectContaining({ enabled: false })
+    );
+    expect(setSetting).toHaveBeenCalledWith("catalogVersion", "cake-frosting-flavours-v2");
+    expect(audit).toHaveBeenCalledWith("migrateCakeCatalog", "cake-frosting-flavours-v2");
   });
 });
 

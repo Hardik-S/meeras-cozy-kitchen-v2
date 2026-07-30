@@ -139,6 +139,58 @@ describe("Apps Script integration", () => {
     });
   });
 
+  it("tolerates disabled historical offerings with legacy categories", async () => {
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
+    vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({
+        ok: true,
+        data: {
+          settings: {
+            defaultSender: "meerascozykitchen@gmail.com",
+            defaultReceiver: "meerascozykitchen@gmail.com",
+            senderName: "Meera's Cozy Kitchen",
+            chefNotificationCopy: "New inquiry"
+          },
+          products: [{
+            id: "cake",
+            label: "Custom cake",
+            low: 35,
+            high: 75,
+            enabled: true,
+            sortOrder: 1
+          }],
+          offerings: [{
+            id: "legacy-addon",
+            productId: "cake",
+            category: "add-on",
+            label: "Legacy add-on",
+            low: 5,
+            high: 5,
+            servings: "",
+            enabled: false,
+            sortOrder: 1
+          }],
+          orders: [],
+          ledger: []
+        }
+      }), { status: 200 })
+    ));
+
+    const result = await listAdminDataFromAppsScript();
+
+    expect(result.status).toBe("live");
+    if (result.status !== "live") return;
+    expect(result.data.offerings).toEqual([
+      expect.objectContaining({
+        id: "legacy-addon",
+        category: "topping",
+        enabled: false
+      })
+    ]);
+    expect(getPublicCatalogFromAdminData(result.data).offerings).toEqual([]);
+  });
+
   it("rejects blank live catalog labels before public catalog mapping", async () => {
     vi.stubEnv("GOOGLE_APPS_SCRIPT_URL", "https://script.google.com/macros/s/test/exec");
     vi.stubEnv("GOOGLE_APPS_SCRIPT_SECRET", "shared-secret");

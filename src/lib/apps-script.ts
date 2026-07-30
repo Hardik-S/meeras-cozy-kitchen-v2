@@ -125,10 +125,10 @@ function isAdminOffering(value: unknown) {
   return isRecord(value)
     && hasNonEmptyStringFields(value, ["id", "productId", "label"])
     && hasStringFields(value, ["servings"])
-    && isOfferingCategory(value.category)
     && hasCatalogPriceRange(value)
     && hasCatalogSortOrder(value)
-    && isBoolean(value.enabled);
+    && isBoolean(value.enabled)
+    && (value.enabled === false || isOfferingCategory(value.category));
 }
 
 function normalizeOrderStatus(value: unknown): OrderStatus | undefined {
@@ -213,7 +213,7 @@ function normalizeAdminOffering(offering: AdminData["offerings"][number]): Admin
     ...offering,
     id: normalizeCatalogProductId(offering.id),
     productId: normalizeCatalogProductId(offering.productId),
-    category: normalizeOfferingCategory(offering.category) ?? offering.category,
+    category: normalizeOfferingCategory(offering.category) ?? "topping",
     label: normalizeAdminDisplayText(offering.label),
     servings: normalizeAdminDisplayText(offering.servings)
   };
