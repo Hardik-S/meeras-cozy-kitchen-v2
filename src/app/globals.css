@@ -224,6 +224,7 @@ img {
 }
 
 .form-control:focus-visible,
+.pickup-date-trigger:focus-visible,
 .choice-card:focus-visible,
 .option-row:focus-within,
 .acknowledgement:focus-within {
@@ -233,6 +234,105 @@ img {
 
 input[type="checkbox"] {
   accent-color: var(--accent);
+}
+
+.pickup-date-picker {
+  position: relative;
+}
+
+.pickup-date-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.pickup-date-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.5rem);
+  width: min(22rem, calc(100vw - 2rem));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--background);
+  box-shadow: 0 14px 32px rgb(59 47 47 / 18%);
+  padding: 0.75rem;
+}
+
+.pickup-date-calendar-header {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pickup-date-calendar-header h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.pickup-date-month-button,
+.pickup-date-day {
+  display: grid;
+  min-height: 40px;
+  min-width: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+}
+
+.pickup-date-month-button:hover,
+.pickup-date-day:not(:disabled):hover {
+  background: var(--surface-alt);
+}
+
+.pickup-date-month-button:focus-visible,
+.pickup-date-day:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pickup-date-month-button:disabled,
+.pickup-date-day:disabled {
+  cursor: not-allowed;
+  color: var(--line);
+}
+
+.pickup-date-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+}
+
+.pickup-date-weekday {
+  display: grid;
+  min-height: 28px;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.pickup-date-day-selected {
+  background: var(--accent);
+  color: var(--background);
+}
+
+.pickup-date-day-selected:not(:disabled):hover {
+  background: var(--accent-strong);
+}
+
+.pickup-date-selection {
+  margin: 0.7rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 .choice-card {

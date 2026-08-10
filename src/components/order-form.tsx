@@ -10,6 +10,7 @@ import { calculateQuoteEstimate, optionPriceLabel, quoteRangeLabel, startingPric
 import { getMinimumPickupDate } from "@/lib/dates";
 import { buildInquirySummary } from "@/lib/inquiry-summary";
 import { createInquirySchema, pickupTimeOptions, type InquiryInput } from "@/lib/validation";
+import { PickupDatePicker } from "./pickup-date-picker";
 
 type FormState = {
   name: string;
@@ -368,7 +369,13 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
             <input className="form-control" value={form.phone} onChange={(event) => update("phone", event.target.value)} />
           </FormField>
           <FormField label="Pickup date" error={errors.eventDate}>
-            <input className="form-control" min={minimumDate} type="date" value={form.eventDate} onChange={(event) => update("eventDate", event.target.value)} />
+            <PickupDatePicker
+              aria-label="Pickup date"
+              aria-invalid={Boolean(errors.eventDate)}
+              min={minimumDate}
+              value={form.eventDate}
+              onChange={(value) => update("eventDate", value)}
+            />
           </FormField>
           <FormField label="Pickup time" error={errors.pickupTime}>
             <select className="form-control" value={form.pickupTime} onChange={(event) => update("pickupTime", event.target.value)}>
@@ -443,7 +450,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
             className="form-control min-h-32"
             value={form.message}
             onChange={(event) => update("message", event.target.value)}
-            placeholder="Occasion, colours, inspiration photo details, and allergy notes..."
+            placeholder="Occasion, colours, inspiration photo details, and allergy notes... (photo inspiration can be sent to Meera in follow-up emails)"
           />
         </FormField>
 
@@ -476,9 +483,14 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
               <div className="acknowledgement-panel-content">
                 <button
                   className="btn-secondary acknowledgement-accept-all"
-                  disabled={acknowledgementsAccepted}
                   type="button"
-                  onClick={() => update("acknowledgements", {
+                  onClick={() => update("acknowledgements", acknowledgementsAccepted ? {
+                    notice: false,
+                    allergens: false,
+                    address: false,
+                    inspiration: false,
+                    payment: false
+                  } : {
                     notice: true,
                     allergens: true,
                     address: true,
@@ -486,7 +498,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
                     payment: true
                   })}
                 >
-                  {acknowledgementsAccepted ? "All acknowledgements accepted" : "Accept all acknowledgements"}
+                  {acknowledgementsAccepted ? "Clear all acknowledgements" : "Accept all acknowledgements"}
                 </button>
                 <div className="acknowledgement-list">
                   {acknowledgementItems.map(({ key, label }) => {

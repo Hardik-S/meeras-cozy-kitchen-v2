@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { business } from "@/content/business";
 import { defaultPublicCatalog } from "@/lib/catalog";
+import { getMinimumPickupDate } from "@/lib/dates";
 import { resetPublicCatalogSyncForTests } from "@/lib/public-catalog-sync";
 import { OrderForm } from "./order-form";
 
@@ -16,11 +17,25 @@ function acknowledgeAll() {
   fireEvent.click(screen.getByRole("button", { name: "Accept all acknowledgements" }));
 }
 
+function selectMinimumPickupDate() {
+  const minimumDate = getMinimumPickupDate();
+  const date = new Date(`${minimumDate}T00:00:00`);
+  const label = new Intl.DateTimeFormat("en-CA", {
+    weekday: "short",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(date);
+
+  fireEvent.click(screen.getByRole("button", { name: "Pickup date" }));
+  fireEvent.click(screen.getByRole("gridcell", { name: label }));
+}
+
 function fillValidInquiry() {
   fireEvent.change(screen.getByLabelText("Name"), { target: { value: "Amina" } });
   fireEvent.change(screen.getByLabelText("Email"), { target: { value: "amina@example.com" } });
   fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "4165550101" } });
-  fireEvent.change(screen.getByLabelText("Pickup date"), { target: { value: "2099-05-20" } });
+  selectMinimumPickupDate();
   fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "12:00-14:00" } });
   fireEvent.change(screen.getByLabelText("Cake Flavour"), { target: { value: "vanilla" } });
   fireEvent.change(screen.getByLabelText("Frosting Flavours"), {
@@ -126,7 +141,7 @@ describe("OrderForm cake-only flow", () => {
     render(<OrderForm />);
 
     acknowledgeAll();
-    expect(screen.getByRole("button", { name: "All acknowledgements accepted" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Clear all acknowledgements" })).toBeEnabled();
     expect(screen.getByLabelText(business.noticeCopy)).toBeChecked();
     expect(screen.getByLabelText(business.allergenNotice)).toBeChecked();
     expect(screen.getByLabelText(business.pickupPolicy)).toBeChecked();
@@ -145,6 +160,11 @@ describe("OrderForm cake-only flow", () => {
     expect(screen.getByLabelText(business.depositPolicy)).not.toBeChecked();
     expect(screen.getByLabelText(business.noticeCopy)).toBeChecked();
     expect(screen.getByRole("button", { name: "Accept all acknowledgements" })).toBeEnabled();
+
+    acknowledgeAll();
+    fireEvent.click(screen.getByRole("button", { name: "Clear all acknowledgements" }));
+    expect(screen.getByLabelText(business.noticeCopy)).not.toBeChecked();
+    expect(screen.getByLabelText(business.depositPolicy)).not.toBeChecked();
   });
 
   it("submits pickup time and all selected cake options without legacy fields", async () => {
