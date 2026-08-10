@@ -105,10 +105,6 @@ export default function OrderSummaryPage() {
                 <p className="mt-1 text-xl font-black">{paymentEmail}</p>
                 <p className="mt-2 text-sm font-bold text-[var(--muted)]">Suggested memo: {transferNote}</p>
               </div>
-              <div className="rounded-[8px] bg-[var(--background)] p-4">
-                <p className="text-sm font-black text-[var(--muted)]">Cash</p>
-                <p className="mt-1 font-bold">Cash can be arranged directly with Meera for pickup.</p>
-              </div>
             </div>
           </article>
 

@@ -101,7 +101,7 @@ describe("OrderForm cake-only flow", () => {
     expect(within(frostingSelect).getByRole("option", { name: "Choose a frosting flavour" })).toBeDisabled();
   });
 
-  it("starts with six individually checkable acknowledgements expanded", () => {
+  it("starts with five individually checkable acknowledgements expanded", () => {
     render(<OrderForm />);
 
     const toggle = screen.getByRole("button", { name: /hide required acknowledgements/i });
@@ -111,7 +111,6 @@ describe("OrderForm cake-only flow", () => {
       business.noticeCopy,
       business.allergenNotice,
       business.pickupPolicy,
-      business.ingredientPositioning,
       "Slight adjustments may be made compared to the inspiration photo.",
       business.depositPolicy
     ];
@@ -131,7 +130,6 @@ describe("OrderForm cake-only flow", () => {
     expect(screen.getByLabelText(business.noticeCopy)).toBeChecked();
     expect(screen.getByLabelText(business.allergenNotice)).toBeChecked();
     expect(screen.getByLabelText(business.pickupPolicy)).toBeChecked();
-    expect(screen.getByLabelText(business.ingredientPositioning)).toBeChecked();
     expect(screen.getByLabelText("Slight adjustments may be made compared to the inspiration photo.")).toBeChecked();
     expect(screen.getByLabelText(business.depositPolicy)).toBeChecked();
 
@@ -182,7 +180,6 @@ describe("OrderForm cake-only flow", () => {
         notice: true,
         allergens: true,
         address: true,
-        certification: true,
         inspiration: true,
         payment: true
       }

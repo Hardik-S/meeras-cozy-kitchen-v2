@@ -26,7 +26,6 @@ const validPayload = {
     notice: true,
     allergens: true,
     address: true,
-    certification: true,
     inspiration: true,
     payment: true
   },

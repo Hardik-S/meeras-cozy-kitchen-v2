@@ -271,25 +271,56 @@ input[type="checkbox"] {
 }
 
 .option-row:has(input:checked),
-.acknowledgement:has(input:checked) {
+.option-row:has(input:checked) {
   border-color: var(--accent);
   background: var(--surface-alt);
 }
 
 .acknowledgement {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  border-radius: 8px;
-  background: var(--surface-alt);
-  padding: 0.8rem;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  min-height: 44px;
   color: var(--muted);
-  font-size: 0.875rem;
-  font-weight: 800;
-  line-height: 1.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.38;
   transition:
     border-color var(--motion-fast) var(--motion-ease),
-    background-color var(--motion-fast) var(--motion-ease);
+    color var(--motion-fast) var(--motion-ease);
+}
+
+.acknowledgement + .acknowledgement {
+  border-top: 1px solid var(--line);
+}
+
+.acknowledgement-control {
+  display: flex;
+  min-height: 44px;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.75rem;
+}
+
+.acknowledgement-control input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.acknowledgement-copy {
+  padding-block: 0.7rem;
+}
+
+.acknowledgement:has(input:checked) {
+  color: var(--foreground);
+}
+
+.acknowledgement-invalid {
+  border-color: var(--accent);
+}
+
+.acknowledgement-invalid + .acknowledgement {
+  border-top-color: var(--accent);
 }
 
 .acknowledgement-panel {
@@ -303,14 +334,14 @@ input[type="checkbox"] {
 .acknowledgement-toggle {
   display: flex;
   width: 100%;
-  min-height: 58px;
+  min-height: 52px;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   border: 0;
-  background: var(--surface-alt);
+  background: var(--background);
   color: var(--foreground);
-  padding: 0.8rem;
+  padding: 0.65rem 0.8rem;
   text-align: left;
 }
 
@@ -321,8 +352,12 @@ input[type="checkbox"] {
 
 .acknowledgement-toggle span span {
   color: var(--muted);
-  font-size: 0.875rem;
-  font-weight: 800;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.acknowledgement-toggle[aria-expanded="true"] {
+  border-bottom: 1px solid var(--line);
 }
 
 .acknowledgement-chevron {
@@ -356,14 +391,43 @@ input[type="checkbox"] {
   overflow: hidden;
 }
 
+.acknowledgement-panel-content {
+  padding: 0.25rem 0.8rem 0.65rem;
+}
+
 .acknowledgement-accept-all {
+  min-height: 44px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  padding: 0.5rem 0.25rem;
+  color: var(--accent-strong);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
   justify-self: start;
+}
+
+.acknowledgement-accept-all:hover {
+  background: transparent;
+  color: var(--foreground);
+  transform: none;
 }
 
 .acknowledgement-accept-all:disabled {
   cursor: default;
   opacity: 0.7;
   transform: none;
+}
+
+.acknowledgement-validation-error {
+  display: block;
+  padding: 0 0.8rem 0.65rem;
+  color: var(--accent);
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .summary-preview {

@@ -131,7 +131,7 @@ function loadSettingsObject(readObjects: (sheetName: string) => Array<Record<str
 function loadSendInquiryEmails(sendMail: ReturnType<typeof vi.fn>) {
   const source = readFileSync(join(process.cwd(), "docs/apps-script/Code.gs"), "utf8");
   const script = [
-    "const PAYMENT_POLICY = 'Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash.';",
+    "const PAYMENT_POLICY = 'Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup by e-transfer.';",
     extractFunction(source, "clean"),
     extractFunction(source, "cleanSingleLine"),
     extractFunction(source, "sendInquiryEmails"),
@@ -660,7 +660,7 @@ describe("Apps Script Code.gs customer inquiry email", () => {
       "amina@example.com",
       "We received your Meera's Cozy Kitchen inquiry",
       expect.stringContaining(
-        "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash."
+        "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup by e-transfer."
       ),
       "meerascozykitchen@gmail.com"
     );

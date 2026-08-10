@@ -186,7 +186,7 @@ describe("OrderSummaryPage", () => {
 
     expect(screen.getByRole("heading", { name: "Payment guidance after acceptance" })).toBeInTheDocument();
     expect(screen.getByText(
-      "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash."
+      "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup by e-transfer."
     )).toBeInTheDocument();
   });
 });

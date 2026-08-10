@@ -27,7 +27,6 @@ type FormState = {
     notice: boolean;
     allergens: boolean;
     address: boolean;
-    certification: boolean;
     inspiration: boolean;
     payment: boolean;
   };
@@ -40,7 +39,6 @@ const acknowledgementItems: Array<{ key: AcknowledgementKey; label: string }> = 
   { key: "notice", label: business.noticeCopy },
   { key: "allergens", label: business.allergenNotice },
   { key: "address", label: business.pickupPolicy },
-  { key: "certification", label: business.ingredientPositioning },
   { key: "inspiration", label: "Slight adjustments may be made compared to the inspiration photo." },
   { key: "payment", label: business.depositPolicy }
 ];
@@ -79,7 +77,6 @@ const initialForm: FormState = {
     notice: false,
     allergens: false,
     address: false,
-    certification: false,
     inspiration: false,
     payment: false
   },
@@ -250,7 +247,6 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
       notice: true,
       allergens: true,
       address: true,
-      certification: true,
       inspiration: true,
       payment: true
     },
@@ -477,7 +473,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
             inert={!acknowledgementsOpen}
           >
             <div className="acknowledgement-panel-inner">
-              <div className="grid gap-3 p-3 pt-0">
+              <div className="acknowledgement-panel-content">
                 <button
                   className="btn-secondary acknowledgement-accept-all"
                   disabled={acknowledgementsAccepted}
@@ -486,45 +482,51 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
                     notice: true,
                     allergens: true,
                     address: true,
-                    certification: true,
                     inspiration: true,
                     payment: true
                   })}
                 >
                   {acknowledgementsAccepted ? "All acknowledgements accepted" : "Accept all acknowledgements"}
                 </button>
-                {acknowledgementItems.map(({ key, label }) => (
-                  <label className="acknowledgement" key={key}>
-                    <input
-                      aria-describedby={
-                        errors.acknowledgements && firstUncheckedAcknowledgement === key
-                          ? "acknowledgement-error"
-                          : undefined
-                      }
-                      aria-invalid={Boolean(
-                        errors.acknowledgements && firstUncheckedAcknowledgement === key
-                      )}
-                      checked={form.acknowledgements[key]}
-                      ref={(node) => {
-                        acknowledgementRefs.current[key] = node;
-                      }}
-                      type="checkbox"
-                      onChange={(event) => {
-                        update("acknowledgements", {
-                          ...form.acknowledgements,
-                          [key]: event.target.checked
-                        });
-                      }}
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
+                <div className="acknowledgement-list">
+                  {acknowledgementItems.map(({ key, label }) => {
+                    const hasAcknowledgementError = Boolean(
+                      errors.acknowledgements && firstUncheckedAcknowledgement === key
+                    );
+
+                    return (
+                      <label
+                        className={`acknowledgement${hasAcknowledgementError ? " acknowledgement-invalid" : ""}`}
+                        key={key}
+                      >
+                        <span className="acknowledgement-control">
+                          <input
+                            aria-describedby={hasAcknowledgementError ? "acknowledgement-error" : undefined}
+                            aria-invalid={hasAcknowledgementError}
+                            checked={form.acknowledgements[key]}
+                            ref={(node) => {
+                              acknowledgementRefs.current[key] = node;
+                            }}
+                            type="checkbox"
+                            onChange={(event) => {
+                              update("acknowledgements", {
+                                ...form.acknowledgements,
+                                [key]: event.target.checked
+                              });
+                            }}
+                          />
+                        </span>
+                        <span className="acknowledgement-copy">{label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
           {errors.acknowledgements ? (
             <span
-              className="px-3 pb-3 text-sm font-bold text-[var(--accent)]"
+              className="acknowledgement-validation-error"
               id="acknowledgement-error"
               role="alert"
             >

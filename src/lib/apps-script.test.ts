@@ -20,7 +20,6 @@ const inquiry: InquiryInput = {
     notice: true,
     allergens: true,
     address: true,
-    certification: true,
     inspiration: true,
     payment: true
   },

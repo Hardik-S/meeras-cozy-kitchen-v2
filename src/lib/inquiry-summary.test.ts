@@ -19,7 +19,6 @@ const inquiry: InquiryInput = {
     notice: true,
     allergens: true,
     address: true,
-    certification: true,
     inspiration: true,
     payment: true
   },
@@ -38,7 +37,7 @@ describe("buildInquirySummary", () => {
     expect(summary).toContain("Toppings: Fresh Strawberry, Chopped Pistachio");
     expect(summary).toContain("Starting at $105");
     expect(summary).toContain(
-      "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup and may be paid by e-transfer or cash."
+      "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup by e-transfer."
     );
     expect(summary).not.toContain("Product:");
     expect(summary).not.toContain("Servings:");

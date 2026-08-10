@@ -52,7 +52,6 @@ export function createInquirySchema(today = new Date()) {
       notice: z.literal(true, { error: "Please confirm the notice policy." }),
       allergens: z.literal(true, { error: "Please confirm the allergen note." }),
       address: z.literal(true, { error: "Please confirm pickup details are shared after booking." }),
-      certification: z.literal(true, { error: "Please confirm the certification note." }),
       inspiration: z.literal(true, { error: "Please confirm that inspiration photos may require slight adjustments." }),
       payment: z.literal(true, { error: "Please confirm the payment policy." })
     }),
