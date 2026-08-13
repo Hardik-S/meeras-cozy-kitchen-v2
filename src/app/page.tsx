@@ -46,12 +46,16 @@ export default function HomePage() {
                 sizes="(max-width: 767px) calc(100vw - 64px), 42vw"
                 src="/portfolio/raspberry-ring-cake-front.jpeg"
               />
-              <div className="relative rounded-[8px] bg-[var(--foreground)] p-4">
+              <Link
+                aria-label="Explore Meera's cake portfolio"
+                className="portfolio-card relative rounded-[8px] bg-[var(--foreground)] p-4"
+                href="/photos"
+              >
                 <p className="text-sm font-black">Meera&apos;s cake portfolio</p>
                 <p className="mt-1 text-sm leading-5 text-[var(--background)]">
                   Explore finished cakes, then share the details you would like Meera to adapt.
                 </p>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
