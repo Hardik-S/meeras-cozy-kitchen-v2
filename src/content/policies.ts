@@ -3,19 +3,15 @@ import { business } from "./business";
 export const customerPolicies = [
   {
     title: "Notice",
-    body: "Custom cakes need at least 7 days of notice. Rush orders are not part of the launch offer."
+    body: "Custom cakes need at least 7 days of notice. Rush orders may only be possible depending on Meera's availability."
   },
   {
     title: "Pickup",
-    body: "Pickup is coordinated privately after booking. The public site does not list a home address."
-  },
-  {
-    title: "Ingredients",
-    body: "No alcohol or pork-derived ingredients are intentionally used. The business is not halal certified."
+    body: "Pickup is coordinated privately after booking. The public site does not provide a home address."
   },
   {
     title: "Allergens",
-    body: "Orders are prepared in a home kitchen that may handle wheat, milk, soy, peanuts, tree nuts, and sesame."
+    body: "Orders are prepared in a home kitchen that may handle wheat, milk, soy, peanuts, tree nuts, and sesame. Meera's Cozy Kitchen is not halal certified."
   },
   {
     title: "Payments",

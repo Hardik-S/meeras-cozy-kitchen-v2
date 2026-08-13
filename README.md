@@ -12,6 +12,7 @@ V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Ap
 - Canonical sizes are 4-inch at $35, 6-inch at $60, and 8-inch at $75, all shown as starting prices.
 - The public catalogue contains only cake sizes, five cake flavours, eight independently selectable frosting flavours, multiple fillings, and multiple toppings.
 - Quote submissions require a pickup date, one of seven two-hour pickup windows, a frosting flavour, and all six acknowledgements.
+- Homepage customer policies use four compact 230px cards in one desktop row; halal-certification wording appears with the allergen notice.
 - Client submissions do not accept product, servings, budget, or legacy add-on fields. The server writes `productType: "cake"` only for historical order compatibility.
 - The Apps Script catalogue migration version is `cake-frosting-flavours-v2`; the contact-settings migration is `canonical-contact-email-v1`. Both are idempotent and preserve orders, ledger rows, settings, and historical columns.
 - The browser catalogue cache key is versioned so pre-migration products and pricing cannot reappear.

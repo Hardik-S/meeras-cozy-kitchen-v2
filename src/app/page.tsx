@@ -90,7 +90,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[var(--surface-warm)] py-14">
-        <div className="section-wrap grid gap-5 md:grid-cols-3" data-reveal>
+        <div className="section-wrap grid gap-5 md:grid-cols-2 lg:grid-cols-[repeat(4,230px)] lg:justify-center" data-reveal>
           {customerPolicies.map((policy) => (
             <article key={policy.title} className="rounded-[8px] border border-[var(--line)] bg-[var(--background)] p-4">
               <h2 className="font-black">{policy.title}</h2>
