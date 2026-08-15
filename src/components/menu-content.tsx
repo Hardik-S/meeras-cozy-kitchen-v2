@@ -7,7 +7,6 @@ import { optionPriceLabel, startingPriceLabel } from "@/lib/pricing";
 
 export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog }) {
   const [catalog, setCatalog] = useState(initialCatalog);
-  const [source, setSource] = useState<"default" | "cached" | "live" | "fallback">("default");
 
   useEffect(() => {
     let active = true;
@@ -16,7 +15,6 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
       void loadPublicCatalog(initialCatalog).then((result) => {
         if (active) {
           setCatalog(result.catalog);
-          setSource(result.source);
         }
       });
     });
@@ -29,10 +27,6 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
 
   return (
     <>
-      <p className="mt-3 text-sm font-bold text-[var(--muted)]" aria-live="polite">
-        {source === "live" ? "Live menu refreshed." : source === "cached" ? "Showing recently refreshed menu." : "Showing saved cake menu."}
-      </p>
-
       <section className="mt-12 grid gap-5 md:grid-cols-3" aria-label="Cake sizes" data-reveal>
         {catalog.cakeSizes.map((size) => (
           <article key={size.id} className="surface p-5">
@@ -50,7 +44,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
         <MenuGroup title="Toppings" items={catalog.toppings} />
       </section>
 
-      <p className="mt-12 max-w-3xl rounded-[8px] border border-[var(--line)] bg-[var(--surface-alt)] p-5 font-bold leading-7 text-[var(--muted)]" data-reveal>
+      <p className="mt-12 rounded-[8px] border border-[var(--line)] bg-[var(--surface-alt)] p-5 font-bold leading-7 text-[var(--muted)]" data-reveal>
         Starting prices include the selected cake size and any frosting marked Included. Paid frosting upgrades, fillings, toppings, and design complexity are added before Meera confirms the final quote.
       </p>
     </>

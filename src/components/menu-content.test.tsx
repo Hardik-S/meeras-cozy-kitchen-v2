@@ -24,5 +24,8 @@ describe("MenuContent", () => {
     expect(screen.getAllByText("+$5").length).toBeGreaterThan(0);
     expect(screen.queryByText(/cupcake/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/dessert box/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/showing saved cake menu/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/showing recently refreshed menu/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/live menu refreshed/i)).not.toBeInTheDocument();
   });
 });

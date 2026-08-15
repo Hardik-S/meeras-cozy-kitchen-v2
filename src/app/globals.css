@@ -577,6 +577,11 @@ input[type="checkbox"] {
   line-height: 1.65;
 }
 
+.menu-intro {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
 .surface {
   border: 1px solid var(--line);
   border-radius: 8px;
