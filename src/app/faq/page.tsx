@@ -34,8 +34,7 @@ export default function FaqPage() {
       </section>
 
       <section id="contact" className="mt-16 rounded-[8px] border border-[var(--line)] bg-[var(--surface-alt)] p-6" data-reveal>
-        <p className="eyebrow">Contact</p>
-        <h2 className="mt-2 text-3xl font-black">How to contact me</h2>
+        <h2 className="text-3xl font-black">How to contact me</h2>
         <p className="mt-3 max-w-2xl leading-7 text-[var(--muted)]">
           The quote form is the best place to share a date, size, flavour, and inspiration. You can also email or message Meera on Instagram.
         </p>

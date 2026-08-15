@@ -7,17 +7,17 @@ export const faqs: FaqItem[] = [
   {
     question: "How much notice do you need?",
     answer:
-      "Please send custom cake inquiries at least 7 days before pickup. Shorter timelines may not be possible during launch."
+      "Please send custom cake inquiries at least 7 days before pickup. Shorter timelines may only be possible depending on Meera's availability."
   },
   {
     question: "Do you deliver?",
     answer:
-      "The launch offer is pickup-first in Brampton. Pickup details are shared after the order is confirmed."
+      "No, pickup is only available at the moment. Pickup details are shared after the order is confirmed."
   },
   {
     question: "Are the cakes halal certified?",
     answer:
-      "No. No alcohol or pork-derived ingredients are intentionally used, but the business is not halal certified."
+      "No, certain ingredients like extracts and flavourings may contain small amounts of alcohol."
   },
   {
     question: "Can you handle allergies?",
