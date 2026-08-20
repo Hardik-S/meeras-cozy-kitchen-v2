@@ -2,51 +2,87 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { statSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import PhotosPage from "./page";
 
-const portfolioImages = [
+const portfolioItems = [
   {
-    filename: "raspberry-ring-cake-front.jpeg",
-    alt: "Front view of a raspberry cake topped with raspberries arranged in a ring"
+    filename: "rainbow-sprinkle-overload-cake-spinning.mp4",
+    caption: "Rainbow sprinkle overload cake",
+    kind: "video",
+    alt: "Rainbow sprinkle overload cake spinning on display"
   },
   {
-    filename: "raspberry-ring-cake-overhead.jpeg",
-    alt: "Overhead view of a raspberry cake topped with raspberries arranged in a ring"
+    filename: "death-by-chocolate-cake-top-view.jpeg",
+    caption: "Death by chocolate cake",
+    kind: "image",
+    alt: "Top view of a death by chocolate cake with chocolate frosting and piped rosettes"
   },
   {
-    filename: "raspberry-ring-cake-detail.jpeg",
-    alt: "Detail view of the piped finish and raspberry ring on a raspberry cake"
+    filename: "lemon-poppyseed-cake-close-up.jpeg",
+    caption: "Lemon poppyseed cake",
+    kind: "image",
+    alt: "Close-up of a lemon poppyseed cake with lemon decorations"
   },
   {
-    filename: "raspberry-dollop-cake-front.jpeg",
-    alt: "Front view of a raspberry cake topped with raspberries and piped dollops"
+    filename: "custom-cake-shooters-front-view.jpeg",
+    caption: "Custom cake shooters",
+    kind: "image",
+    alt: "Custom cake shooters arranged on a serving tray"
   },
   {
-    filename: "raspberry-dollop-cake-overhead.jpeg",
-    alt: "Overhead view of a raspberry cake topped with raspberries and piped dollops"
+    filename: "sunset-birthday-cake-front-view.jpeg",
+    caption: "Sunset birthday cake",
+    kind: "image",
+    alt: "Sunset birthday cake with orange frosting, mauve piping, gold pearls, and pink ribbons"
   },
   {
-    filename: "raspberry-dollop-cake-detail.jpeg",
-    alt: "Detail view of the piped dollops and raspberries on a raspberry cake"
+    filename: "lemon-raspberry-cake-spinning.mp4",
+    caption: "Lemon raspberry cake",
+    kind: "video",
+    alt: "Lemon raspberry cake spinning on display"
   }
-];
+] as const;
 
 describe("PhotosPage", () => {
-  it("ships the complete local portfolio and brand assets", () => {
-    for (const image of portfolioImages) {
-      expect(statSync(join(process.cwd(), "public", "portfolio", image.filename)).size).toBeGreaterThan(0);
+  beforeEach(() => {
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("ships all replacement portfolio media and brand assets", () => {
+    for (const item of portfolioItems) {
+      expect(statSync(join(process.cwd(), "public", "portfolio", item.filename)).size).toBeGreaterThan(0);
     }
     expect(statSync(join(process.cwd(), "public", "meeras-logo.jpg")).size).toBeGreaterThan(0);
   });
 
-  it("renders all six local portfolio photographs with distinct descriptive alt text", () => {
+  it("renders the stable shuffled order with exact captions", () => {
     render(<PhotosPage />);
 
-    expect(screen.getAllByRole("img")).toHaveLength(6);
-    for (const image of portfolioImages) {
-      expect(screen.getByAltText(image.alt)).toHaveAttribute("src", expect.stringContaining(image.filename));
+    const cards = screen.getAllByRole("article");
+    expect(cards).toHaveLength(6);
+    expect(cards.map((card) => card.querySelector("h2")?.textContent)).toEqual(
+      portfolioItems.map((item) => item.caption)
+    );
+  });
+
+  it("renders four descriptive images and two video sources", () => {
+    render(<PhotosPage />);
+
+    expect(screen.getAllByRole("img")).toHaveLength(4);
+    for (const item of portfolioItems.filter((item) => item.kind === "image")) {
+      expect(screen.getByAltText(item.alt)).toHaveAttribute("src", expect.stringContaining(item.filename));
     }
+
+    const videos = document.querySelectorAll("video");
+    expect(videos).toHaveLength(2);
+    expect(Array.from(videos, (video) => video.querySelector("source")?.getAttribute("src"))).toEqual(
+      portfolioItems.filter((item) => item.kind === "video").map((item) => item.filename).map((filename) => `/portfolio/${filename}`)
+    );
   });
 
   it("keeps the inspiration-photo adjustment disclaimer", () => {

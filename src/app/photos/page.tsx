@@ -1,41 +1,41 @@
-import Image from "next/image";
+import { PortfolioMediaCard, type PortfolioMediaItem } from "@/components/portfolio-media-card";
 
-const photoCards = [
+const photoCards: PortfolioMediaItem[] = [
   {
-    title: "Raspberry ring cake",
-    note: "Front view",
-    image: "/portfolio/raspberry-ring-cake-front.jpeg",
-    alt: "Front view of a raspberry cake topped with raspberries arranged in a ring"
+    caption: "Rainbow sprinkle overload cake",
+    src: "/portfolio/rainbow-sprinkle-overload-cake-spinning.mp4",
+    alt: "Rainbow sprinkle overload cake spinning on display",
+    kind: "video"
   },
   {
-    title: "Raspberry ring cake",
-    note: "Overhead view",
-    image: "/portfolio/raspberry-ring-cake-overhead.jpeg",
-    alt: "Overhead view of a raspberry cake topped with raspberries arranged in a ring"
+    caption: "Death by chocolate cake",
+    src: "/portfolio/death-by-chocolate-cake-top-view.jpeg",
+    alt: "Top view of a death by chocolate cake with chocolate frosting and piped rosettes",
+    kind: "image"
   },
   {
-    title: "Raspberry ring cake",
-    note: "Detail view",
-    image: "/portfolio/raspberry-ring-cake-detail.jpeg",
-    alt: "Detail view of the piped finish and raspberry ring on a raspberry cake"
+    caption: "Lemon poppyseed cake",
+    src: "/portfolio/lemon-poppyseed-cake-close-up.jpeg",
+    alt: "Close-up of a lemon poppyseed cake with lemon decorations",
+    kind: "image"
   },
   {
-    title: "Raspberry dollop cake",
-    note: "Front view",
-    image: "/portfolio/raspberry-dollop-cake-front.jpeg",
-    alt: "Front view of a raspberry cake topped with raspberries and piped dollops"
+    caption: "Custom cake shooters",
+    src: "/portfolio/custom-cake-shooters-front-view.jpeg",
+    alt: "Custom cake shooters arranged on a serving tray",
+    kind: "image"
   },
   {
-    title: "Raspberry dollop cake",
-    note: "Overhead view",
-    image: "/portfolio/raspberry-dollop-cake-overhead.jpeg",
-    alt: "Overhead view of a raspberry cake topped with raspberries and piped dollops"
+    caption: "Sunset birthday cake",
+    src: "/portfolio/sunset-birthday-cake-front-view.jpeg",
+    alt: "Sunset birthday cake with orange frosting, mauve piping, gold pearls, and pink ribbons",
+    kind: "image"
   },
   {
-    title: "Raspberry dollop cake",
-    note: "Detail view",
-    image: "/portfolio/raspberry-dollop-cake-detail.jpeg",
-    alt: "Detail view of the piped dollops and raspberries on a raspberry cake"
+    caption: "Lemon raspberry cake",
+    src: "/portfolio/lemon-raspberry-cake-spinning.mp4",
+    alt: "Lemon raspberry cake spinning on display",
+    kind: "video"
   }
 ];
 
@@ -52,26 +52,7 @@ export default function PhotosPage() {
 
       <section className="mt-12 grid gap-5 sm:grid-cols-2" data-reveal>
         {photoCards.map((card) => (
-          <article
-            aria-label={`${card.title}, ${card.note}`}
-            className="portfolio-card surface overflow-hidden"
-            key={card.image}
-            tabIndex={0}
-          >
-            <div className="portfolio-image relative aspect-[3/4] overflow-hidden">
-              <Image
-                src={card.image}
-                alt={card.alt}
-                fill
-                className="object-cover"
-                sizes="(min-width: 640px) 50vw, 100vw"
-              />
-            </div>
-            <div className="p-5">
-              <p className="eyebrow">{card.note}</p>
-              <h2 className="mt-2 text-2xl font-black">{card.title}</h2>
-            </div>
-          </article>
+          <PortfolioMediaCard key={card.src} {...card} />
         ))}
       </section>
 

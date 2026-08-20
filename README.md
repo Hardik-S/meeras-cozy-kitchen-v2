@@ -20,6 +20,8 @@ V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Ap
 - `/reviews` accepts a required 1-5 star rating, public display name, private email, and 10-1000 character description. New reviews stay pending until Meera publishes them from the private admin dashboard.
 - Brand colours are `#9A1E1E`, `#FFF4E8`, `#E7D3C1`, `#60442E`, and `#3B2F2F`. The UI intentionally uses no box shadows.
 - Nunito is self-hosted from `src/app/fonts` so the site's typography does not fall back to Arial when an external font fetch or local build cache is unavailable.
+- The Photos gallery uses six cake media items in a fixed shuffled order with Instagram-derived first-line captions, emoji-free sentence casing, and contain-style media fitting inside the existing 3:4 cards.
+- Gallery videos are muted, inline, non-looping, and autoplay once on first reveal unless reduced motion is preferred; the centered accessible button fades after one second of playback and reappears on pointer movement or video press.
 
 ## Version Boundary
 
