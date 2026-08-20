@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Download, Heart, Lock, Pin, Plus, Printer, RefreshCcw, Save, Trash2 } from "lucide-react";
+import { Download, Heart, Lock, Pin, Plus, Printer, RefreshCcw, Save, Star, Trash2 } from "lucide-react";
 import { defaultAdminData, type AdminData, type AdminOffering, type AdminOrder, type AdminProduct, type LedgerEntry, type OrderStatus } from "@/lib/catalog";
 import { buildLedgerCsvRows, calculateMonthlyFinanceReport, currentMonthKey, ledgerEntryTotal } from "@/lib/finance";
+import type { ReviewStatus } from "@/lib/reviews";
 import { pickupTimeLabel } from "@/lib/validation";
 
-type Tab = "orders" | "products" | "finances" | "settings";
+type Tab = "orders" | "reviews" | "products" | "finances" | "settings";
 
 const statuses: OrderStatus[] = ["new", "replied", "confirmed", "completed", "cancelled"];
 
@@ -88,7 +89,8 @@ function isAdminData(value: unknown): value is AdminData {
     && Array.isArray(data.products)
     && Array.isArray(data.offerings)
     && Array.isArray(data.orders)
-    && Array.isArray(data.ledger);
+    && Array.isArray(data.ledger)
+    && Array.isArray(data.reviews);
 }
 
 function recordFromJson(value: unknown): Record<string, unknown> {
@@ -233,6 +235,13 @@ export function AdminDashboard() {
     () => [...data.orders].sort((left, right) => Number(right.pinned) - Number(left.pinned) || left.eventDate.localeCompare(right.eventDate)),
     [data.orders]
   );
+  const sortedReviews = useMemo(
+    () => [...data.reviews].sort((left, right) => {
+      const priority: Record<ReviewStatus, number> = { pending: 0, published: 1, hidden: 2 };
+      return priority[left.status] - priority[right.status] || right.createdAt.localeCompare(left.createdAt);
+    }),
+    [data.reviews]
+  );
   const financeReport = useMemo(
     () => calculateMonthlyFinanceReport(data.ledger, data.orders, financeMonth),
     [data.ledger, data.orders, financeMonth]
@@ -259,7 +268,7 @@ export function AdminDashboard() {
         <div className="admin-lock">
           <Image className="brand-logo mx-auto" src="/meeras-logo.jpg" alt="" width={64} height={64} priority />
           <h1>Kitchen admin</h1>
-          <p>Enter the private PIN to manage orders, products, reports, and email settings.</p>
+          <p>Enter the private PIN to manage orders, reviews, products, reports, and email settings.</p>
           <form onSubmit={login} className="mt-6 grid gap-3">
             <label className="grid gap-2 text-sm font-black">
               Admin PIN
@@ -290,7 +299,7 @@ export function AdminDashboard() {
       </div>
 
       <nav className="admin-tabs" aria-label="Admin tabs">
-        {(["orders", "products", "finances", "settings"] as Tab[]).map((tab) => (
+        {(["orders", "reviews", "products", "finances", "settings"] as Tab[]).map((tab) => (
           <button key={tab} type="button" className={activeTab === tab ? "active" : ""} onClick={() => setActiveTab(tab)}>
             {tab}
           </button>
@@ -358,6 +367,77 @@ export function AdminDashboard() {
                 ) : null}
               </article>
             )) : <div className="admin-panel"><h2>No notes yet</h2><p>Submitted inquiries will appear here as note blocks.</p></div>}
+          </div>
+        </div>
+      ) : null}
+
+      {activeTab === "reviews" ? (
+        <div className="grid gap-5 lg:grid-cols-[0.7fr_1.3fr]">
+          <div className="admin-panel">
+            <h2>Review moderation</h2>
+            <p className="text-sm leading-6 text-[var(--muted)]">Publish customer reviews, hide them from the public page, or permanently delete them.</p>
+            <div className="mt-4 grid gap-3">
+              <div className="trend-row"><span>Pending</span><strong>{data.reviews.filter((review) => review.status === "pending").length}</strong></div>
+              <div className="trend-row"><span>Published</span><strong>{data.reviews.filter((review) => review.status === "published").length}</strong></div>
+              <div className="trend-row"><span>Hidden</span><strong>{data.reviews.filter((review) => review.status === "hidden").length}</strong></div>
+            </div>
+          </div>
+          <div className="admin-list">
+            {sortedReviews.length ? sortedReviews.map((review) => (
+              <article className="admin-panel admin-review-card" key={review.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <span>
+                    <strong className="block text-lg">{review.name}</strong>
+                    <small className="block text-[var(--muted)]">{review.email} · {review.createdAt.slice(0, 10)}</small>
+                  </span>
+                  <span className="note-status">{review.status}</span>
+                </div>
+                <div className="review-stars review-stars-static mt-3" aria-label={`${review.rating} out of 5 stars`}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      aria-hidden="true"
+                      className={star <= review.rating ? "review-star-filled" : "review-star-empty"}
+                      key={star}
+                      size={20}
+                    />
+                  ))}
+                </div>
+                <p className="review-description mt-3 leading-6 text-[var(--muted)]">{review.description}</p>
+                <div className="row-actions mt-4 flex flex-wrap gap-2">
+                  {review.status !== "published" ? (
+                    <button type="button" onClick={() => mutate("updateReviewStatus", { id: review.id, status: "published" }, (current) => ({
+                      ...current,
+                      reviews: current.reviews.map((item) => item.id === review.id ? { ...item, status: "published" } : item)
+                    }))}>Publish</button>
+                  ) : null}
+                  {review.status !== "hidden" ? (
+                    <button type="button" onClick={() => mutate("updateReviewStatus", { id: review.id, status: "hidden" }, (current) => ({
+                      ...current,
+                      reviews: current.reviews.map((item) => item.id === review.id ? { ...item, status: "hidden" } : item)
+                    }))}>Hide</button>
+                  ) : null}
+                  <button
+                    aria-label={`Delete review from ${review.name}`}
+                    type="button"
+                    onClick={() => {
+                      if (!window.confirm(`Permanently delete the review from ${review.name}?`)) return;
+                      void mutate("deleteReview", { id: review.id }, (current) => ({
+                        ...current,
+                        reviews: current.reviews.filter((item) => item.id !== review.id)
+                      }));
+                    }}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Delete
+                  </button>
+                </div>
+              </article>
+            )) : (
+              <div className="admin-panel">
+                <h2>No reviews yet</h2>
+                <p className="mt-2 text-[var(--muted)]">New review submissions will appear here for approval.</p>
+              </div>
+            )}
           </div>
         </div>
       ) : null}

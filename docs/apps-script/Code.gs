@@ -37,6 +37,7 @@ const SHEETS = {
     "budget", "message", "estimateLow", "estimateHigh", "status", "hearted", "pinned", "summary",
     "pickupTime", "frostingId", "fillingIds", "toppingIds"
   ],
+  Reviews: ["id", "createdAt", "name", "email", "rating", "description", "status", "publishedAt", "updatedAt"],
   Ledger: ["id", "date", "type", "category", "description", "amount", "orderId", "updatedAt", "quantity"],
   AuditLog: ["id", "createdAt", "action", "actor", "details"]
 };
@@ -88,6 +89,8 @@ function doPost(e) {
 
     const actions = {
       submitOrder,
+      submitReview,
+      listPublicReviews,
       listAdminData,
       updateSettings,
       upsertProduct,
@@ -98,7 +101,9 @@ function doPost(e) {
       deleteOffering,
       upsertLedgerEntry,
       updateOrderFlags,
-      updateOrderStatus
+      updateOrderStatus,
+      updateReviewStatus,
+      deleteReview
     };
     const handler = actions[payload.action];
 
@@ -167,6 +172,89 @@ function submitOrder(payload) {
   audit("submitOrder", id);
 
   return { ok: true, orderId: id };
+}
+
+function submitReview(payload) {
+  const review = requireReviewPayload(payload.review);
+  const now = nowIso();
+  const id = makeId("rev");
+
+  appendObject("Reviews", {
+    id: id,
+    createdAt: now,
+    name: review.name,
+    email: review.email,
+    rating: review.rating,
+    description: review.description,
+    status: "pending",
+    publishedAt: "",
+    updatedAt: now
+  });
+  audit("submitReview", id);
+
+  return {
+    ok: true,
+    reviewId: id,
+    notifications: sendReviewEmails(review, id)
+  };
+}
+
+function requireReviewPayload(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("Unsupported review payload.");
+  }
+
+  const allowed = ["name", "email", "rating", "description", "website"];
+  Object.keys(value).forEach(function(key) {
+    if (allowed.indexOf(key) < 0) {
+      throw new Error("Unsupported review field.");
+    }
+  });
+
+  if (typeof value.name !== "string" || typeof value.email !== "string" || typeof value.description !== "string") {
+    throw new Error("Unsupported review text value.");
+  }
+  if (value.website !== undefined && (typeof value.website !== "string" || clean(value.website) !== "")) {
+    throw new Error("Spam check failed.");
+  }
+
+  const name = cleanSingleLine(value.name);
+  const email = cleanSingleLine(value.email).toLowerCase();
+  const description = clean(value.description);
+  const rating = value.rating;
+
+  if (name.length < 2 || name.length > 80) {
+    throw new Error("Unsupported review name.");
+  }
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Unsupported review email.");
+  }
+  if (typeof rating !== "number" || !isFinite(rating) || rating % 1 !== 0 || rating < 1 || rating > 5) {
+    throw new Error("Unsupported review rating.");
+  }
+  if (description.length < 10 || description.length > 1000) {
+    throw new Error("Unsupported review description.");
+  }
+
+  return { name: name, email: email, rating: rating, description: description };
+}
+
+function listPublicReviews() {
+  const reviews = readObjects("Reviews").filter(function(row) {
+    return normalizeReviewStatus(row.status) === "published" && isReviewRating(row.rating);
+  }).map(function(row) {
+    return {
+      id: cleanSingleLine(row.id),
+      createdAt: cleanSingleLine(row.createdAt),
+      name: cleanSingleLine(row.name),
+      rating: Number(row.rating),
+      description: clean(row.description)
+    };
+  }).sort(function(left, right) {
+    return right.createdAt.localeCompare(left.createdAt);
+  });
+
+  return { ok: true, reviews: reviews };
 }
 
 function requireInquiryPayload(value) {
@@ -290,6 +378,19 @@ function listAdminData() {
           amount: toNumber(row.amount),
           quantity: toPositiveNumber(row.quantity, 1),
           orderId: cleanSingleLine(row.orderId)
+        };
+      }),
+      reviews: readObjects("Reviews").map(function(row) {
+        return {
+          id: cleanSingleLine(row.id),
+          createdAt: cleanSingleLine(row.createdAt),
+          name: cleanSingleLine(row.name),
+          email: cleanSingleLine(row.email).toLowerCase(),
+          rating: reviewRatingOrDefault(row.rating),
+          description: clean(row.description),
+          status: reviewStatusOrDefault(row.status),
+          publishedAt: cleanSingleLine(row.publishedAt),
+          updatedAt: cleanSingleLine(row.updatedAt)
         };
       })
     }
@@ -604,6 +705,59 @@ function updateOrderStatus(payload) {
   return patchByIdAndReturn("Orders", id, { status: status }, "updateOrderStatus");
 }
 
+function normalizeReviewStatus(value) {
+  return clean(value).toLowerCase();
+}
+
+function isReviewStatus(value) {
+  const status = normalizeReviewStatus(value);
+  return status === "pending" || status === "published" || status === "hidden";
+}
+
+function reviewStatusOrDefault(value) {
+  const status = normalizeReviewStatus(value);
+  return isReviewStatus(status) ? status : "hidden";
+}
+
+function isReviewRating(value) {
+  const rating = Number(value);
+  return Number.isFinite(rating) && rating % 1 === 0 && rating >= 1 && rating <= 5;
+}
+
+function reviewRatingOrDefault(value) {
+  return isReviewRating(value) ? Number(value) : 1;
+}
+
+function updateReviewStatus(payload) {
+  const id = requireMutationId(payload.id);
+  const status = normalizeReviewStatus(payload.status);
+  if (status !== "published" && status !== "hidden") {
+    throw new Error("Unsupported review status.");
+  }
+
+  const row = readObjects("Reviews").filter(function(review) {
+    return clean(review.id) === id;
+  })[0];
+  if (!row) {
+    throw new Error("Reviews row not found: " + id);
+  }
+
+  patchById("Reviews", id, {
+    status: status,
+    publishedAt: status === "published" ? cleanSingleLine(row.publishedAt) || nowIso() : cleanSingleLine(row.publishedAt),
+    updatedAt: nowIso()
+  });
+  audit("updateReviewStatus", id + ":" + status);
+  return listAdminData();
+}
+
+function deleteReview(payload) {
+  const id = requireMutationId(payload.id);
+  deleteById("Reviews", id);
+  audit("deleteReview", id);
+  return listAdminData();
+}
+
 function patchByIdAndReturn(sheetName, id, patch, action) {
   patchById(sheetName, id, patch);
   audit(action, id);
@@ -730,6 +884,40 @@ function sendInquiryEmails(inquiry, summary, orderId) {
 
   sendMail(settings, cleanSingleLine(inquiry.email), customerSubject, customerBody, settings.defaultReceiver);
   sendMail(settings, settings.defaultReceiver, chefSubject, chefBody, cleanSingleLine(inquiry.email));
+}
+
+function sendReviewEmails(review, reviewId) {
+  const settings = settingsObject();
+  const ownerSubject = "New customer review awaiting approval: " + review.name;
+  const ownerBody = "Review ID: " + reviewId
+    + "\nRating: " + review.rating + "/5"
+    + "\nName: " + review.name
+    + "\nEmail: " + review.email
+    + "\n\n" + review.description;
+  const reviewerSubject = "We received your Meera's Cozy Kitchen review";
+  const reviewerBody = "Hi " + review.name
+    + ",\n\nThank you for sharing your experience. Your " + review.rating
+    + "-star review has been received and is awaiting approval before it appears on the website."
+    + "\n\nYour review:\n" + review.description;
+
+  return {
+    owner: sendReviewMailSafely(settings, settings.defaultReceiver, ownerSubject, ownerBody, review.email, reviewId, "owner"),
+    reviewer: sendReviewMailSafely(settings, review.email, reviewerSubject, reviewerBody, settings.defaultReceiver, reviewId, "reviewer")
+  };
+}
+
+function sendReviewMailSafely(settings, to, subject, body, replyTo, reviewId, recipient) {
+  try {
+    sendMail(settings, to, subject, body, replyTo);
+    return true;
+  } catch (error) {
+    try {
+      audit("reviewEmailFailed", reviewId + ":" + recipient + ":" + String(error && error.message ? error.message : error));
+    } catch (auditError) {
+      // The stored review remains successful even if both email and audit logging fail.
+    }
+    return false;
+  }
 }
 
 function sendMail(settings, to, subject, body, replyTo) {

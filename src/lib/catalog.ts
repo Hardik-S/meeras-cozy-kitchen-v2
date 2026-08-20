@@ -7,6 +7,7 @@ import {
   toppings,
   type ProductType
 } from "./pricing";
+import type { AdminReview } from "./reviews";
 
 export type AdminSettings = {
   defaultSender: string;
@@ -84,6 +85,7 @@ export type AdminData = {
   offerings: AdminOffering[];
   orders: AdminOrder[];
   ledger: LedgerEntry[];
+  reviews: AdminReview[];
 };
 
 export type PublicCatalog = {
@@ -138,7 +140,8 @@ export const defaultAdminData: AdminData = {
     ...toppings.map((item, index) => offering("topping", item, index + 1))
   ],
   orders: [],
-  ledger: []
+  ledger: [],
+  reviews: []
 };
 
 export function sortByOrder<T extends { sortOrder: number; label: string }>(items: T[]) {

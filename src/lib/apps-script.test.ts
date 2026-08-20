@@ -171,7 +171,8 @@ describe("Apps Script integration", () => {
             sortOrder: 1
           }],
           orders: [],
-          ledger: []
+          ledger: [],
+          reviews: []
         }
       }), { status: 200 })
     ));

@@ -1,12 +1,33 @@
 import { buildInquirySummary } from "./inquiry-summary";
 import { defaultAdminData, type AdminData, type LedgerEntryType, type OfferingCategory, type OrderStatus } from "./catalog";
 import { normalizeLedgerEntry } from "./finance";
+import {
+  isReviewStatus,
+  type AdminReview,
+  type PublicReview,
+  type ReviewStatus,
+  type ReviewSubmission
+} from "./reviews";
 import type { InquiryInput } from "./validation";
 
 export type AppsScriptSkippedResult = { status: "skipped"; reason: "missing-env" };
 export type AppsScriptSentResult = { status: "sent"; orderId?: string };
 export type AppsScriptErrorResult = { status: "error"; message: string };
 export type AppsScriptSubmitResult = AppsScriptSkippedResult | AppsScriptSentResult | AppsScriptErrorResult;
+
+export type AppsScriptReviewSubmitResult =
+  | AppsScriptSkippedResult
+  | {
+    status: "sent";
+    reviewId: string;
+    notifications: { owner: boolean; reviewer: boolean };
+  }
+  | AppsScriptErrorResult;
+
+export type AppsScriptPublicReviewsResult =
+  | { status: "live"; reviews: PublicReview[] }
+  | AppsScriptSkippedResult
+  | AppsScriptErrorResult;
 
 export type AppsScriptDataResult =
   | { status: "live"; data: AdminData }
@@ -183,6 +204,25 @@ function isLedgerEntry(value: unknown) {
     && (value.quantity === undefined || (isIntegerNumber(value.quantity) && value.quantity > 0));
 }
 
+function isReviewRating(value: unknown): value is number {
+  return isIntegerNumber(value) && value >= 1 && value <= 5;
+}
+
+function isAdminReview(value: unknown): value is AdminReview {
+  return isRecord(value)
+    && hasNonEmptyStringFields(value, ["id", "createdAt", "name", "email", "description"])
+    && hasStringFields(value, ["publishedAt", "updatedAt"])
+    && isReviewRating(value.rating)
+    && isReviewStatus(value.status);
+}
+
+function isPublicReview(value: unknown): value is PublicReview {
+  return isRecord(value)
+    && !("email" in value)
+    && hasNonEmptyStringFields(value, ["id", "createdAt", "name", "description"])
+    && isReviewRating(value.rating);
+}
+
 function isAdminData(value: unknown): value is AdminData {
   if (!isRecord(value)) {
     return false;
@@ -198,7 +238,9 @@ function isAdminData(value: unknown): value is AdminData {
     && Array.isArray(data.orders)
     && data.orders.every(isAdminOrder)
     && Array.isArray(data.ledger)
-    && data.ledger.every(isLedgerEntry);
+    && data.ledger.every(isLedgerEntry)
+    && Array.isArray(data.reviews)
+    && data.reviews.every(isAdminReview);
 }
 
 function normalizeOrderId(value: unknown) {
@@ -275,6 +317,34 @@ function normalizeAdminOrder(order: AdminData["orders"][number]): AdminData["ord
   };
 }
 
+function normalizeReviewStatus(value: string): ReviewStatus {
+  return value.trim().toLowerCase() as ReviewStatus;
+}
+
+function normalizeAdminReview(review: AdminReview): AdminReview {
+  return {
+    ...review,
+    id: normalizeAdminDisplayText(review.id),
+    createdAt: review.createdAt.trim(),
+    name: normalizeAdminDisplayText(review.name),
+    email: review.email.trim().toLowerCase(),
+    description: review.description.trim(),
+    status: normalizeReviewStatus(review.status),
+    publishedAt: review.publishedAt.trim(),
+    updatedAt: review.updatedAt.trim()
+  };
+}
+
+function normalizePublicReview(review: PublicReview): PublicReview {
+  return {
+    id: normalizeAdminDisplayText(review.id),
+    createdAt: review.createdAt.trim(),
+    name: normalizeAdminDisplayText(review.name),
+    rating: review.rating,
+    description: review.description.trim()
+  };
+}
+
 function normalizeAdminData(data: AdminData): AdminData {
   return {
     ...data,
@@ -282,7 +352,8 @@ function normalizeAdminData(data: AdminData): AdminData {
     products: data.products.map(normalizeAdminProduct),
     offerings: data.offerings.map(normalizeAdminOffering),
     orders: data.orders.map(normalizeAdminOrder),
-    ledger: data.ledger.map(normalizeLedgerEntry)
+    ledger: data.ledger.map(normalizeLedgerEntry),
+    reviews: data.reviews.map(normalizeAdminReview)
   };
 }
 
@@ -339,6 +410,60 @@ export async function submitInquiryToAppsScript(
     return {
       status: "error",
       message: error instanceof Error ? error.message : "Apps Script submission failed."
+    };
+  }
+}
+
+export async function submitReviewToAppsScript(review: ReviewSubmission): Promise<AppsScriptReviewSubmitResult> {
+  try {
+    const response = await postAppsScript<{
+      ok: true;
+      reviewId?: string;
+      notifications?: { owner?: boolean; reviewer?: boolean };
+    }>("submitReview", { review });
+
+    if (isSkippedResult(response)) {
+      return response;
+    }
+
+    const reviewId = normalizeOrderId(response.reviewId);
+    if (!reviewId) {
+      throw new Error("Apps Script returned a malformed review id.");
+    }
+
+    return {
+      status: "sent",
+      reviewId,
+      notifications: {
+        owner: response.notifications?.owner === true,
+        reviewer: response.notifications?.reviewer === true
+      }
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Review submission failed."
+    };
+  }
+}
+
+export async function listPublicReviewsFromAppsScript(): Promise<AppsScriptPublicReviewsResult> {
+  try {
+    const response = await postAppsScript<{ ok: true; reviews: PublicReview[] }>("listPublicReviews");
+
+    if (isSkippedResult(response)) {
+      return response;
+    }
+
+    if (!Array.isArray(response.reviews) || !response.reviews.every(isPublicReview)) {
+      throw new Error("Apps Script returned malformed public reviews.");
+    }
+
+    return { status: "live", reviews: response.reviews.map(normalizePublicReview) };
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Published reviews could not be loaded."
     };
   }
 }

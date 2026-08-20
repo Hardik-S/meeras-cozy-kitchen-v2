@@ -13,10 +13,13 @@ const allowedMutations = new Set([
   "deleteOffering",
   "upsertLedgerEntry",
   "updateOrderFlags",
-  "updateOrderStatus"
+  "updateOrderStatus",
+  "updateReviewStatus",
+  "deleteReview"
 ]);
 
 const allowedOrderStatuses = new Set(["new", "replied", "confirmed", "completed", "cancelled"]);
+const allowedReviewStatuses = new Set(["published", "hidden"]);
 const allowedLedgerEntryTypes = new Set(["income", "expense"]);
 const allowedOfferingCategories = new Set(["cake-size", "flavour", "frosting", "filling", "topping"]);
 const allowedSettingKeys = new Set(["defaultSender", "defaultReceiver", "senderName", "chefNotificationCopy"]);
@@ -27,7 +30,9 @@ const idRequiredMutations = new Set([
   "toggleOffering",
   "deleteOffering",
   "updateOrderFlags",
-  "updateOrderStatus"
+  "updateOrderStatus",
+  "updateReviewStatus",
+  "deleteReview"
 ]);
 const catalogIdRequiredMutations = new Set([
   "toggleProduct",
@@ -252,6 +257,16 @@ export async function POST(request: Request) {
 
     if (!status) {
       return NextResponse.json({ ok: false, error: "Unsupported order status." }, { status: 400 });
+    }
+
+    payload.status = status;
+  }
+
+  if (action === "updateReviewStatus") {
+    const status = typeof payload.status === "string" ? payload.status.trim().toLowerCase() : "";
+
+    if (!allowedReviewStatuses.has(status)) {
+      return NextResponse.json({ ok: false, error: "Unsupported review status." }, { status: 400 });
     }
 
     payload.status = status;

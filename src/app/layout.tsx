@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
-import { Nunito, Playfair_Display } from "next/font/google";
+import localFont from "next/font/local";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { MotionObserver } from "@/components/motion-observer";
 import "./globals.css";
 
-const nunito = Nunito({
-  subsets: ["latin"],
+const nunito = localFont({
+  src: "./fonts/Nunito-Variable.ttf",
   variable: "--font-sans",
-  display: "swap"
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: "--font-serif",
+  weight: "200 1000",
   display: "swap"
 });
 
@@ -37,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${nunito.variable} ${playfair.variable}`} data-scroll-behavior="smooth">
+    <html lang="en" className={nunito.variable} data-scroll-behavior="smooth">
       <body>
         <MotionObserver />
         <a className="skip-link" href="#main">

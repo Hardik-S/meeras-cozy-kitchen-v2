@@ -8,7 +8,7 @@ V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Ap
 
 ## Current cake-only contract
 
-- Public navigation is exactly Home, Menu, Photos, FAQ, and Quote.
+- Public navigation is exactly Home, Menu, Photos, Reviews, FAQ, and Quote.
 - Canonical sizes are 4-inch at $35, 6-inch at $60, and 8-inch at $75, all shown as starting prices.
 - The public catalogue contains only cake sizes, five cake flavours, eight independently selectable frosting flavours, multiple fillings, and multiple toppings.
 - Quote submissions require a pickup date, one of seven two-hour pickup windows, a frosting flavour, and all six acknowledgements.
@@ -17,7 +17,9 @@ V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Ap
 - The Apps Script catalogue migration version is `cake-frosting-flavours-v2`; the contact-settings migration is `canonical-contact-email-v1`. Both are idempotent and preserve orders, ledger rows, settings, and historical columns.
 - The browser catalogue cache key is versioned so pre-migration products and pricing cannot reappear.
 - `/photos` is canonical; `/portfolio` redirects there. Food-safety guidance lives at `/faq#food-safety`; `/food-safety` redirects there.
+- `/reviews` accepts a required 1-5 star rating, public display name, private email, and 10-1000 character description. New reviews stay pending until Meera publishes them from the private admin dashboard.
 - Brand colours are `#9A1E1E`, `#FFF4E8`, `#E7D3C1`, `#60442E`, and `#3B2F2F`. The UI intentionally uses no box shadows.
+- Nunito is self-hosted from `src/app/fonts` so the site's typography does not fall back to Arial when an external font fetch or local build cache is unavailable.
 
 ## Version Boundary
 
@@ -216,7 +218,9 @@ npm run build
 
 ## Backend Notes
 
-The v2 Apps Script copy is in `docs/apps-script/Code.gs`. It adds a `quantity` column to the Ledger sheet without clearing existing data, so it is safer for upgrading an existing sheet than the original v1 setup routine.
+The v2 Apps Script copy is in `docs/apps-script/Code.gs`. It adds a `quantity` column to the Ledger sheet and creates the moderated Reviews sheet without clearing existing data, so it is safer for upgrading an existing sheet than the original v1 setup routine.
+
+After changing `Code.gs`, paste the complete file into the existing Apps Script project, create a new web-app deployment version, and keep the same `/exec` URL in `GOOGLE_APPS_SCRIPT_URL`. The next proxy request runs `setupMeeraCozyKitchen`, which creates the Reviews sheet and missing headers idempotently. Review submissions are stored before notification emails are attempted; failed email delivery does not turn a stored submission into a browser error. Only published review fields are returned publicly, and reviewer emails remain available exclusively through the authenticated admin data route.
 
 Canonical business contact and e-transfer address: `meerascozykitchen@gmail.com`.
 Set Vercel `ORDER_NOTIFY_EMAIL` to that same address. The technical Resend
