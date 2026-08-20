@@ -116,9 +116,15 @@ img {
 
 .btn-primary:disabled,
 .btn-secondary:disabled {
-  cursor: wait;
-  opacity: 0.72;
-  transform: translateY(1px);
+  cursor: not-allowed;
+  opacity: 0.82;
+  transform: none;
+}
+
+.btn-primary:disabled {
+  border-color: var(--line);
+  background: var(--surface-alt);
+  color: var(--muted);
 }
 
 .btn-primary:focus-visible,
@@ -354,6 +360,10 @@ input[type="checkbox"] {
   background: var(--surface-alt);
 }
 
+.choice-card-size-selected {
+  border-width: 2px;
+}
+
 .option-row,
 .menu-row {
   display: flex;
@@ -528,6 +538,13 @@ input[type="checkbox"] {
   color: var(--accent);
   font-size: 0.8125rem;
   font-weight: 700;
+}
+
+.acknowledgement-submit-note {
+  margin: -0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 
 .summary-preview {

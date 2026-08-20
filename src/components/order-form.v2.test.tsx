@@ -90,6 +90,7 @@ describe("OrderForm cake-only flow", () => {
     expect(screen.getByRole("button", { name: "8-inch cake, Starting at $75" })).toBeInTheDocument();
     expect(screen.getByLabelText("Pickup time")).toBeInTheDocument();
     expect(screen.getByLabelText("Cake Flavour")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cake Flavour")).toHaveValue("");
     expect(screen.getByLabelText("Frosting Flavours")).toHaveValue("");
     expect(screen.queryByLabelText(/product/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/servings/i)).not.toBeInTheDocument();
@@ -99,7 +100,9 @@ describe("OrderForm cake-only flow", () => {
   it("requires an independent frosting choice and shows all eight options in canonical order", () => {
     render(<OrderForm />);
 
-    expect(screen.getByLabelText("Cake Flavour")).toHaveValue("chocolate");
+    const cakeFlavourSelect = screen.getByLabelText("Cake Flavour");
+    expect(cakeFlavourSelect).toHaveValue("");
+    expect(within(cakeFlavourSelect).getByRole("option", { name: "Choose a cake flavour" })).toBeDisabled();
     const frostingSelect = screen.getByLabelText("Frosting Flavours");
     expect(frostingSelect).toHaveValue("");
     expect(within(frostingSelect).getAllByRole("option").map((option) => option.textContent)).toEqual([
@@ -165,6 +168,17 @@ describe("OrderForm cake-only flow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear all acknowledgements" }));
     expect(screen.getByLabelText(business.noticeCopy)).not.toBeChecked();
     expect(screen.getByLabelText(business.depositPolicy)).not.toBeChecked();
+  });
+
+  it("keeps submission disabled until every acknowledgement is accepted", () => {
+    render(<OrderForm />);
+
+    const submitButton = screen.getByRole("button", { name: "Submit inquiry" });
+    expect(submitButton).toBeDisabled();
+    expect(screen.getByText("Accept all required acknowledgements to submit your inquiry.")).toBeInTheDocument();
+
+    acknowledgeAll();
+    expect(submitButton).toBeEnabled();
   });
 
   it("submits pickup time and all selected cake options without legacy fields", async () => {
@@ -252,7 +266,7 @@ describe("OrderForm cake-only flow", () => {
     });
   });
 
-  it("requires pickup time, a frosting, and every acknowledgement", async () => {
+  it("requires pickup time and a frosting after acknowledgements are accepted", async () => {
     const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(async () => new Response(JSON.stringify({
       ok: true,
       source: "fallback",
@@ -263,36 +277,21 @@ describe("OrderForm cake-only flow", () => {
     fillValidInquiry();
     fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "" } });
     fireEvent.change(screen.getByLabelText("Frosting Flavours"), { target: { value: "" } });
-    fireEvent.click(screen.getByLabelText(business.noticeCopy));
 
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
     expect(await screen.findByText("Please choose a pickup time.")).toBeInTheDocument();
     expect(screen.getByText("Please choose a frosting flavour.")).toBeInTheDocument();
-    expect(screen.getByText("Please confirm the notice policy.")).toBeInTheDocument();
     expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/inquiry")).toBe(false);
   });
 
-  it("reopens the acknowledgement panel and focuses the first unchecked term after invalid submit", async () => {
-    const fetchMock = vi.fn<(input: RequestInfo | URL) => Promise<Response>>(async () => new Response(JSON.stringify({
-      ok: true,
-      source: "fallback",
-      catalog: defaultPublicCatalog
-    }), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+  it("locks submission again when an acknowledgement is cleared", () => {
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.click(screen.getByLabelText(business.noticeCopy));
-    fireEvent.click(screen.getByRole("button", { name: /hide required acknowledgements/i }));
 
-    fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /hide required acknowledgements/i })).toHaveAttribute("aria-expanded", "true");
-      expect(screen.getByLabelText(business.noticeCopy)).toHaveFocus();
-    });
-    expect(screen.getByText("Please confirm the notice policy.")).toBeInTheDocument();
-    expect(fetchMock.mock.calls.some(([url]) => String(url) === "/api/inquiry")).toBe(false);
+    expect(screen.getByRole("button", { name: "Submit inquiry" })).toBeDisabled();
+    expect(screen.getByText("Accept all required acknowledgements to submit your inquiry.")).toBeInTheDocument();
   });
 
   it("does not render or trigger submit confetti", () => {

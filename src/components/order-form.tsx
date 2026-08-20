@@ -69,7 +69,7 @@ const initialForm: FormState = {
   eventDate: "",
   pickupTime: "",
   cakeSizeId: "four-inch",
-  flavourId: "chocolate",
+  flavourId: "",
   frostingId: "",
   fillingIds: [],
   toppingIds: [],
@@ -195,11 +195,15 @@ function availableId<T extends { id: string }>(items: T[], currentId: string) {
   return items.some((item) => item.id === currentId) ? currentId : items[0]?.id ?? currentId;
 }
 
+function availableOptionalId<T extends { id: string }>(items: T[], currentId: string) {
+  return currentId && items.some((item) => item.id === currentId) ? currentId : "";
+}
+
 function reconcileFormWithCatalog(form: FormState, catalog: PublicCatalog): FormState {
   return {
     ...form,
     cakeSizeId: availableId(catalog.cakeSizes, form.cakeSizeId),
-    flavourId: availableId(catalog.flavours, form.flavourId),
+    flavourId: availableOptionalId(catalog.flavours, form.flavourId),
     frostingId: form.frostingId && catalog.frostings.some((item) => item.id === form.frostingId)
       ? form.frostingId
       : "",
@@ -396,7 +400,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
               <button
                 aria-label={`${size.label}, ${startingPriceLabel(size)}`}
                 aria-pressed={form.cakeSizeId === size.id}
-                className={`choice-card ${form.cakeSizeId === size.id ? "choice-card-selected" : ""}`}
+                className={`choice-card ${form.cakeSizeId === size.id ? "choice-card-selected choice-card-size-selected" : ""}`}
                 key={size.id}
                 type="button"
                 onClick={() => update("cakeSizeId", size.id)}
@@ -412,6 +416,7 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
         <div className="grid gap-4 md:grid-cols-2">
           <FormField label="Cake Flavour" error={errors.flavourId}>
             <select className="form-control" value={form.flavourId} onChange={(event) => update("flavourId", event.target.value)}>
+              <option value="" disabled>Choose a cake flavour</option>
               {liveCatalog.flavours.map((flavour) => (
                 <option key={flavour.id} value={flavour.id}>{flavour.label}</option>
               ))}
@@ -547,10 +552,20 @@ export function OrderForm({ catalog = defaultPublicCatalog }: { catalog?: Public
           ) : null}
         </fieldset>
 
-        <button className="btn-primary click-pop" type="submit" disabled={status === "submitting"}>
+        <button
+          aria-describedby={!acknowledgementsAccepted ? "acknowledgement-submit-note" : undefined}
+          className="btn-primary click-pop"
+          disabled={status === "submitting" || !acknowledgementsAccepted}
+          type="submit"
+        >
           <Send size={18} aria-hidden="true" />
           {status === "submitting" ? "Sending..." : "Submit inquiry"}
         </button>
+        {!acknowledgementsAccepted ? (
+          <p className="acknowledgement-submit-note" id="acknowledgement-submit-note">
+            Accept all required acknowledgements to submit your inquiry.
+          </p>
+        ) : null}
         {status === "error" ? <ErrorText>Please review the highlighted details.</ErrorText> : null}
         {status === "sent" ? <p className="text-sm font-bold text-[var(--muted)]">Inquiry received. Meera will review the details before confirming your order.</p> : null}
       </form>
