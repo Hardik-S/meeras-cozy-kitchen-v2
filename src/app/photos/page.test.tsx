@@ -57,7 +57,7 @@ describe("PhotosPage", () => {
     for (const item of portfolioItems) {
       expect(statSync(join(process.cwd(), "public", "portfolio", item.filename)).size).toBeGreaterThan(0);
     }
-    expect(statSync(join(process.cwd(), "public", "meeras-logo.jpg")).size).toBeGreaterThan(0);
+    expect(statSync(join(process.cwd(), "public", "meeras-logo-2.png")).size).toBeGreaterThan(0);
   });
 
   it("renders the stable shuffled order with exact captions", () => {

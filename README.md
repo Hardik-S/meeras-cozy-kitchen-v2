@@ -23,6 +23,21 @@ V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Ap
 - The Photos gallery uses six cake media items in a fixed shuffled order with Instagram-derived first-line captions, emoji-free sentence casing, and contain-style media fitting inside the existing 3:4 cards.
 - Gallery videos are muted, inline, non-looping, and autoplay once on first reveal unless reduced motion is preferred; the centered accessible button fades after one second of playback and reappears on pointer movement or video press.
 
+## Social assets
+
+- `public/social/meeras-menu-story-1.png` and `public/social/meeras-menu-story-2.png` are the two-slide Instagram Story menu at 1080x1920.
+- `public/social/meeras-menu-highlight.png` is the 1080x1080 Story highlight cover; `public/social/meeras-cake-mark.png` is the transparent cake mark used by both.
+- The layouts reuse the live Nunito font and brand palette, keep menu copy exact, and leave the lower story area intentionally open for a cleaner composition.
+
+## Print assets
+
+- `public/social/meeras-business-card-front.png` and `public/social/meeras-business-card-back.png` are landscape business-card designs at 3.5 x 2 inches, rendered at 1050 x 600 pixels with 300 DPI metadata.
+- The front uses the existing cake mark and menu-inspired red ring; the back presents the site's Instagram, website, email, and Brampton location with small contact-type icons.
+
+## Profile asset
+
+- `public/social/meeras-profile-picture.png` is a 1080 x 1080 profile-picture badge using the enlarged transparent cake mark, arched all-caps Nunito text (`MEERA'S` above and `COZY KITCHEN` below), the live red accent, and the site's light-beige background.
+
 ## Version Boundary
 
 The parent folder contains Meera v1. V1 is considered complete and frozen. Future work should happen here in `v2/` so v1 stays stable as a finished baseline.

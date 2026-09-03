@@ -266,7 +266,7 @@ export function AdminDashboard() {
     return (
       <section className="admin-shell section-wrap py-12 md:py-20">
         <div className="admin-lock">
-          <Image className="brand-logo mx-auto" src="/meeras-logo.jpg" alt="" width={64} height={64} priority />
+          <Image className="brand-logo mx-auto" src="/meeras-logo-2.png" alt="" width={64} height={64} priority />
           <h1>Kitchen admin</h1>
           <p>Enter the private PIN to manage orders, reviews, products, reports, and email settings.</p>
           <form onSubmit={login} className="mt-6 grid gap-3">

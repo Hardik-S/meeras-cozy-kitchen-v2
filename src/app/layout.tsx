@@ -21,8 +21,8 @@ export const metadata: Metadata = {
     "Mobile-first home bakery site for custom celebration cakes in Brampton.",
   metadataBase: new URL("https://meeras-cozy-kitchen-v2.vercel.app"),
   icons: {
-    icon: "/meeras-logo.jpg",
-    apple: "/meeras-logo.jpg"
+    icon: "/meeras-logo-2.png",
+    apple: "/meeras-logo-2.png"
   }
 };
 

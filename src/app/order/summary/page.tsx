@@ -54,7 +54,7 @@ export default function OrderSummaryPage() {
     return (
       <section className="section-wrap grid min-h-[60vh] place-items-center py-16 text-center">
         <div className="surface max-w-xl p-6">
-          <Image className="mx-auto h-20 w-20 rounded-full object-cover" src="/meeras-logo.jpg" alt="" width={80} height={80} />
+          <Image className="mx-auto h-20 w-20 rounded-full object-cover" src="/meeras-logo-2.png" alt="" width={80} height={80} />
           <h1 className="mt-5 text-4xl font-black">No recent inquiry found.</h1>
           <p className="lede mt-4">Start a fresh quote and this page will show the inquiry details and post-acceptance payment guidance.</p>
           <Link className="btn-primary mt-6" href="/order">Start a quote</Link>
