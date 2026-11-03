@@ -62,12 +62,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[var(--surface-alt)] py-14">
-        <div className="section-wrap grid gap-6 md:grid-cols-4" data-reveal>
-          <article className="surface p-5">
-            <p className="eyebrow">Cake shooters</p>
-            <h2 className="mt-2 text-2xl font-black">One dozen shooters</h2>
-            <p className="mt-4 text-sm font-extrabold text-[var(--accent)]">Starting at ${productBasePrices["cake-shooters"].low}</p>
-          </article>
+        <div className="product-display section-wrap" data-reveal>
           {cakeSizes.map((size) => (
             <article key={size.id} className="surface p-5">
               <p className="eyebrow">Cake size</p>
@@ -77,6 +72,11 @@ export default function HomePage() {
               </p>
             </article>
           ))}
+          <article className="surface p-5">
+            <p className="eyebrow">Cake shooters</p>
+            <h2 className="mt-2 text-2xl font-black">One dozen shooters</h2>
+            <p className="mt-4 text-sm font-extrabold text-[var(--accent)]">Starting at ${productBasePrices["cake-shooters"].low}</p>
+          </article>
         </div>
       </section>
 

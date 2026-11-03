@@ -474,6 +474,22 @@ input[type="checkbox"] {
     background-color var(--motion-fast) var(--motion-ease);
 }
 
+.product-display {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .product-display {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .product-display h2 {
+    font-size: 1.35rem;
+    line-height: 1.2;
+  }
+}
+
 .option-row:has(input:checked),
 .option-row:has(input:checked) {
   border-color: var(--accent);

@@ -27,19 +27,19 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
 
   return (
     <>
-      <section className="mt-12 grid gap-5 md:grid-cols-3" aria-label="Products" data-reveal>
-        {catalog.products.filter((product) => product.id === "cake-shooters").map((product) => (
-          <article key={product.id} className="surface p-5">
-            <p className="eyebrow">Cake shooters</p>
-            <h2 className="mt-2 text-2xl font-black">One dozen shooters</h2>
-            <p className="mt-5 text-xl font-black text-[var(--accent)]">{startingPriceLabel(product)}</p>
-          </article>
-        ))}
+      <section className="product-display mt-12" aria-label="Products" data-reveal>
         {catalog.cakeSizes.map((size) => (
           <article key={size.id} className="surface p-5">
             <p className="eyebrow">Cake size</p>
             <h2 className="mt-2 text-2xl font-black">{size.label}</h2>
             <p className="mt-5 text-xl font-black text-[var(--accent)]">{startingPriceLabel(size)}</p>
+          </article>
+        ))}
+        {catalog.products.filter((product) => product.id === "cake-shooters").map((product) => (
+          <article key={product.id} className="surface p-5">
+            <p className="eyebrow">Cake shooters</p>
+            <h2 className="mt-2 text-xl font-black md:text-2xl">One dozen shooters</h2>
+            <p className="mt-5 text-xl font-black text-[var(--accent)]">{startingPriceLabel(product)}</p>
           </article>
         ))}
       </section>
