@@ -37,13 +37,13 @@ function fillValidInquiry() {
   fireEvent.change(screen.getByLabelText("Phone"), { target: { value: "4165550101" } });
   selectMinimumPickupDate();
   fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "12:00-14:00" } });
-  fireEvent.change(screen.getByLabelText("Cake Flavour"), { target: { value: "vanilla" } });
-  fireEvent.change(screen.getByLabelText("Frosting Flavours"), {
+  fireEvent.change(screen.getByLabelText("Cake flavour"), { target: { value: "vanilla" } });
+  fireEvent.change(screen.getByLabelText("Frosting flavour"), {
     target: { value: "chocolate-frosting" }
   });
-  fireEvent.click(screen.getByLabelText("Raspberry, plus $5"));
-  fireEvent.click(screen.getByLabelText("Apricot, plus $5"));
-  fireEvent.click(screen.getByLabelText("Fresh Strawberry, plus $5"));
+  fireEvent.click(screen.getByLabelText("Raspberry+$5"));
+  fireEvent.click(screen.getByLabelText("Apricot+$5"));
+  fireEvent.click(screen.getByLabelText("Fresh Strawberry+$5"));
   fireEvent.change(screen.getByLabelText("Design notes"), {
     target: { value: "Birthday cake with soft floral piping." }
   });
@@ -82,28 +82,32 @@ describe("OrderForm cake-only flow", () => {
     resetPublicCatalogSyncForTests();
   });
 
-  it("shows only cake controls and the three starting prices", () => {
+  it("shows cake controls and serving guidance", () => {
     render(<OrderForm />);
 
-    expect(screen.getByRole("button", { name: "4-inch cake, Starting at $35" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "6-inch cake, Starting at $60" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "8-inch cake, Starting at $75" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "4-inch cake, Approx. 3-6 servings, Starting at $35" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "6-inch cake, Approx. 8-12 servings, Starting at $60" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "8-inch cake, Approx. 14-20 servings, Starting at $75" })).toBeInTheDocument();
+    expect(screen.getByText("You can expect a response within 24 hours.")).toBeInTheDocument();
     expect(screen.getByLabelText("Pickup time")).toBeInTheDocument();
-    expect(screen.getByLabelText("Cake Flavour")).toBeInTheDocument();
-    expect(screen.getByLabelText("Cake Flavour")).toHaveValue("");
-    expect(screen.getByLabelText("Frosting Flavours")).toHaveValue("");
-    expect(screen.queryByLabelText(/product/i)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/servings/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Cake flavour")).toBeInTheDocument();
+    expect(screen.getByLabelText("Cake flavour")).toHaveValue("");
+    expect(screen.getByLabelText("Frosting flavour")).toHaveValue("");
     expect(screen.queryByLabelText(/budget/i)).not.toBeInTheDocument();
+
+    const productSelect = screen.getByLabelText("Product");
+    expect(within(productSelect).getByRole("option", { name: "Cake shooters (1 dozen) (Approx. 12 servings per dozen)" })).toBeInTheDocument();
+    fireEvent.change(productSelect, { target: { value: "cake-shooters" } });
+    expect(screen.getByText("Each Cake shooters item is one dozen (Approx. 12 servings per dozen).")).toBeInTheDocument();
   });
 
   it("requires an independent frosting choice and shows all eight options in canonical order", () => {
     render(<OrderForm />);
 
-    const cakeFlavourSelect = screen.getByLabelText("Cake Flavour");
+    const cakeFlavourSelect = screen.getByLabelText("Cake flavour");
     expect(cakeFlavourSelect).toHaveValue("");
     expect(within(cakeFlavourSelect).getByRole("option", { name: "Choose a cake flavour" })).toBeDisabled();
-    const frostingSelect = screen.getByLabelText("Frosting Flavours");
+    const frostingSelect = screen.getByLabelText("Frosting flavour");
     expect(frostingSelect).toHaveValue("");
     expect(within(frostingSelect).getAllByRole("option").map((option) => option.textContent)).toEqual([
       "Choose a frosting flavour",
@@ -276,7 +280,7 @@ describe("OrderForm cake-only flow", () => {
     render(<OrderForm />);
     fillValidInquiry();
     fireEvent.change(screen.getByLabelText("Pickup time"), { target: { value: "" } });
-    fireEvent.change(screen.getByLabelText("Frosting Flavours"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Frosting flavour"), { target: { value: "" } });
 
     fireEvent.click(screen.getByRole("button", { name: /submit inquiry/i }));
 
@@ -349,7 +353,7 @@ describe("OrderForm cake-only flow", () => {
     });
     render(<OrderForm />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy summary" }));
 
     expect(await screen.findByText(/Copy failed/)).toBeInTheDocument();
   });

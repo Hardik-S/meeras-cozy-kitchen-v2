@@ -12,6 +12,10 @@ describe("MenuContent", () => {
     expect(screen.getByText("Starting at $35")).toBeInTheDocument();
     expect(screen.getByText("Starting at $60")).toBeInTheDocument();
     expect(screen.getByText("Starting at $75")).toBeInTheDocument();
+    expect(screen.getByText("Approx. 3-6 servings")).toBeInTheDocument();
+    expect(screen.getByText("Approx. 8-12 servings")).toBeInTheDocument();
+    expect(screen.getByText("Approx. 14-20 servings")).toBeInTheDocument();
+    expect(screen.getByText("Approx. 12 servings per dozen")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Cake Flavours" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Frosting Flavours" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Fillings" })).toBeInTheDocument();

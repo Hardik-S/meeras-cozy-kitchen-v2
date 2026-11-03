@@ -8,6 +8,7 @@ export const business = {
   launchMode: true,
   orderEmail: "meerascozykitchen@gmail.com",
   instagramHandle: "@meerascozykitchen",
+  instagramUrl: "https://www.instagram.com/meerascozykitchen/",
   pickupPolicy:
     "Pickup location and timing are confirmed after the order is accepted. Exact home address is not posted publicly.",
   depositPolicy:

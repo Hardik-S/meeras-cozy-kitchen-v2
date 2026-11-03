@@ -1,14 +1,26 @@
 import Link from "next/link";
+import { business } from "@/content/business";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-[var(--line)] bg-[var(--background)]">
-      <div className="section-wrap grid gap-8 py-10 md:grid-cols-[1fr_auto]">
+      <div className="section-wrap grid gap-8 py-10 md:grid-cols-[1fr_auto_1fr] md:items-start">
         <div>
           <p className="text-lg font-black">Meera&apos;s Cozy Kitchen</p>
           <p className="mt-3 max-w-md text-sm leading-6 text-[var(--muted)]">
             Custom celebration cakes prepared from a Brampton home kitchen. Pickup details are shared after booking.
           </p>
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-black text-[var(--foreground)]">Instagram</p>
+          <a
+            className="mt-3 inline-block text-sm font-bold text-[var(--muted)]"
+            href={business.instagramUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {business.instagramHandle}
+          </a>
         </div>
         <div className="md:text-right">
           <p className="text-sm font-black text-[var(--foreground)]">Explore</p>

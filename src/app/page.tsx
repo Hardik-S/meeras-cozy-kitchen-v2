@@ -4,6 +4,7 @@ import { CalendarDays, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { business } from "@/content/business";
 import { customerPolicies } from "@/content/policies";
 import { cakeSizes, flavours, productBasePrices } from "@/lib/pricing";
+import { servingLabel } from "@/lib/servings";
 
 export default function HomePage() {
   return (
@@ -70,12 +71,14 @@ export default function HomePage() {
               <p className="mt-4 text-sm font-extrabold text-[var(--accent)]">
                 Starting at ${size.low}
               </p>
+              <p className="mt-1 text-sm font-bold text-[var(--muted)]">{servingLabel(size.id)}</p>
             </article>
           ))}
           <article className="surface p-5">
             <p className="eyebrow">Cake shooters</p>
             <h2 className="mt-2 text-2xl font-black">One dozen shooters</h2>
             <p className="mt-4 text-sm font-extrabold text-[var(--accent)]">Starting at ${productBasePrices["cake-shooters"].low}</p>
+            <p className="mt-1 text-sm font-bold text-[var(--muted)]">{servingLabel("cake-shooters")}</p>
           </article>
         </div>
       </section>
@@ -96,6 +99,29 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="section-wrap py-16" data-reveal>
+        <p className="eyebrow">Ordering</p>
+        <h2 className="mt-2 text-4xl font-black leading-tight md:text-5xl">How to order</h2>
+        <ol className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[
+            "Choose between cake shooters or any size cake.",
+            "Choose your favourite flavour combination.",
+            "Add a filling or topping (if you're feeling fancy).",
+            "Describe any design elements you have in mind.",
+            "Add your contact information and select your pickup window.",
+            "Send your inquiry!"
+          ].map((step, index) => (
+            <li key={step} className="surface flex gap-4 p-5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-black text-[var(--background)]">
+                {index + 1}
+              </span>
+              <p className="font-bold leading-6 text-[var(--muted)]">{step}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-6 font-bold text-[var(--muted)]">You can expect a response within 24 hours.</p>
       </section>
 
       <section className="bg-[var(--surface-warm)] py-14">

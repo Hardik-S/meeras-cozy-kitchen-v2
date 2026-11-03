@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { AdminOffering, PublicCatalog } from "@/lib/catalog";
 import { loadPublicCatalog, schedulePublicCatalogSync } from "@/lib/public-catalog-sync";
 import { optionPriceLabel, startingPriceLabel } from "@/lib/pricing";
+import { servingLabel } from "@/lib/servings";
 
 export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog }) {
   const [catalog, setCatalog] = useState(initialCatalog);
@@ -33,6 +34,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
             <p className="eyebrow">Cake size</p>
             <h2 className="mt-2 text-2xl font-black">{size.label}</h2>
             <p className="mt-5 text-xl font-black text-[var(--accent)]">{startingPriceLabel(size)}</p>
+            <p className="mt-2 text-sm font-bold text-[var(--muted)]">{servingLabel(size.id)}</p>
           </article>
         ))}
         {catalog.products.filter((product) => product.id === "cake-shooters").map((product) => (
@@ -40,6 +42,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
             <p className="eyebrow">Cake shooters</p>
             <h2 className="mt-2 text-xl font-black md:text-2xl">One dozen shooters</h2>
             <p className="mt-5 text-xl font-black text-[var(--accent)]">{startingPriceLabel(product)}</p>
+            <p className="mt-2 text-sm font-bold text-[var(--muted)]">{servingLabel(product.id)}</p>
           </article>
         ))}
       </section>

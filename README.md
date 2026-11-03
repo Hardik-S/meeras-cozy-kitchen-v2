@@ -11,6 +11,7 @@ V2 is the active Next.js app for custom cakes and cake shooters. It has its own 
 - Public navigation is exactly Home, Menu, Photos, Reviews, FAQ, and Quote.
 - Canonical sizes are 4-inch at $35, 6-inch at $60, and 8-inch at $75, all shown as starting prices.
 - Cake shooters are available by the dozen, starting at $40. They share flavours, frostings, fillings, and toppings with custom cakes, while cake sizes remain cake-only.
+- Customer-facing menu and quote selections show approximate servings: 4-inch cakes serve 3-6, 6-inch cakes serve 8-12, 8-inch cakes serve 14-20, and a dozen cake shooters serves 12.
 - Customers can combine up to ten independently configured items in a quote. Each item has a quantity of 1-10, and the total starting price includes every item and quantity.
 - Quote submissions require a pickup date, one of seven two-hour pickup windows, a frosting flavour, and all required acknowledgements.
 - Homepage customer policies use four compact 230px cards in one desktop row; halal-certification wording appears with the allergen notice.

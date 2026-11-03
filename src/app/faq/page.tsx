@@ -42,7 +42,7 @@ export default function FaqPage() {
           <Link href="/order" className="btn-primary">Request a quote</Link>
           <a href={`mailto:${business.orderEmail}`} className="btn-secondary">{business.orderEmail}</a>
           <a
-            href="https://www.instagram.com/meerascozykitchen/"
+            href={business.instagramUrl}
             className="btn-secondary"
             target="_blank"
             rel="noreferrer"
