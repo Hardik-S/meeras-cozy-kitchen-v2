@@ -1,42 +1,31 @@
 import { NextResponse } from "next/server";
 import { listAdminDataFromAppsScript, submitInquiryToAppsScript } from "@/lib/apps-script";
-import { defaultPublicCatalog, getPublicCatalogFromAdminData, type PublicCatalog } from "@/lib/catalog";
-import { buildInquirySummary } from "@/lib/inquiry-summary";
+import { defaultPublicCatalog, getPublicCatalogFromAdminData, offeringsForProduct, type PublicCatalog } from "@/lib/catalog";
+import { buildMultiInquirySummary } from "@/lib/inquiry-summary";
 import { sendInquiryEmail } from "@/lib/mail";
-import { createInquirySchema, type InquiryInput } from "@/lib/validation";
+import { calculateItemsEstimate } from "@/lib/pricing";
+import { createMultiInquirySchema, type MultiInquiryInput } from "@/lib/validation";
 
 const paymentEmail = "meerascozykitchen@gmail.com";
 
-type CatalogIssueKey = "cakeSizeId" | "flavourId" | "frostingId" | "fillingIds" | "toppingIds";
+type CatalogIssueKey = string;
 
-function validateCatalogSelections(inquiry: InquiryInput, catalog: PublicCatalog) {
+function validateCatalogSelections(inquiry: MultiInquiryInput, catalog: PublicCatalog) {
   const issues: Partial<Record<CatalogIssueKey, string[]>> = {};
   const ids = <T extends { id: string }>(items: T[]) => new Set(items.map((item) => item.id));
-  const cakeSizeIds = ids(catalog.cakeSizes);
-  const flavourIds = ids(catalog.flavours);
-  const frostingIds = ids(catalog.frostings);
-  const fillingIds = ids(catalog.fillings);
-  const toppingIds = ids(catalog.toppings);
-
-  if (!cakeSizeIds.has(inquiry.cakeSizeId)) {
-    issues.cakeSizeId = ["Please choose an available cake size."];
-  }
-
-  if (!flavourIds.has(inquiry.flavourId)) {
-    issues.flavourId = ["Please choose an available flavour."];
-  }
-
-  if (!frostingIds.has(inquiry.frostingId)) {
-    issues.frostingId = ["Please choose an available frosting."];
-  }
-
-  if (inquiry.fillingIds.some((id) => !fillingIds.has(id))) {
-    issues.fillingIds = ["Please remove unavailable fillings and try again."];
-  }
-
-  if (inquiry.toppingIds.some((id) => !toppingIds.has(id))) {
-    issues.toppingIds = ["Please remove unavailable toppings and try again."];
-  }
+  inquiry.items.forEach((item, index) => {
+    const prefix = `items.${index}`;
+    const cakeSizeIds = ids(offeringsForProduct(catalog.cakeSizes, item.productId));
+    const flavourIds = ids(offeringsForProduct(catalog.flavours, item.productId));
+    const frostingIds = ids(offeringsForProduct(catalog.frostings, item.productId));
+    const fillingIds = ids(offeringsForProduct(catalog.fillings, item.productId));
+    const toppingIds = ids(offeringsForProduct(catalog.toppings, item.productId));
+    if (item.productId === "cake" && !cakeSizeIds.has(item.cakeSizeId)) issues[prefix] = ["Please choose an available cake size."];
+    if (!flavourIds.has(item.flavourId)) issues[prefix] = ["Please choose an available flavour."];
+    if (!frostingIds.has(item.frostingId)) issues[prefix] = ["Please choose an available frosting."];
+    if (item.fillingIds.some((id) => !fillingIds.has(id))) issues[prefix] = ["Please remove unavailable fillings and try again."];
+    if (item.toppingIds.some((id) => !toppingIds.has(id))) issues[prefix] = ["Please remove unavailable toppings and try again."];
+  });
 
   return issues;
 }
@@ -54,7 +43,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Invalid JSON." }, { status: 400 });
   }
 
-  const parsed = createInquirySchema().safeParse(payload);
+  const parsed = createMultiInquirySchema().safeParse(payload);
 
   if (!parsed.success) {
     return NextResponse.json(
@@ -84,11 +73,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const summary = buildInquirySummary(parsed.data, catalog);
-  const appsScript = await submitInquiryToAppsScript(parsed.data, summary);
+  const summary = buildMultiInquirySummary(parsed.data, catalog);
+  const estimate = calculateItemsEstimate(parsed.data.items, {
+    products: catalog.products,
+    cakeSizes: catalog.cakeSizes,
+    flavours: catalog.flavours,
+    frostings: catalog.frostings,
+    fillings: catalog.fillings,
+    toppings: catalog.toppings
+  });
+  const firstItem = parsed.data.items[0];
+  const legacyPayload = {
+    ...parsed.data,
+    cakeSizeId: firstItem.cakeSizeId,
+    flavourId: firstItem.flavourId,
+    frostingId: firstItem.frostingId,
+    fillingIds: firstItem.fillingIds,
+    toppingIds: firstItem.toppingIds,
+    message: firstItem.message,
+    productType: firstItem.productId,
+    estimateLow: estimate.low,
+    estimateHigh: estimate.high
+  };
+  const appsScript = await submitInquiryToAppsScript(legacyPayload as never, summary);
   const email = appsScript.status === "sent"
     ? { status: "skipped", reason: "apps-script-sent" }
-    : await sendInquiryEmail(parsed.data, summary);
+    : await sendInquiryEmail(legacyPayload as never, summary);
 
   return NextResponse.json({
     ok: true,
@@ -102,13 +112,13 @@ export async function POST(request: Request) {
       phone: parsed.data.phone,
       eventDate: parsed.data.eventDate,
       pickupTime: parsed.data.pickupTime,
-      productType: "cake",
-      cakeSizeId: parsed.data.cakeSizeId,
-      flavourId: parsed.data.flavourId,
-      frostingId: parsed.data.frostingId,
-      fillingIds: parsed.data.fillingIds,
-      toppingIds: parsed.data.toppingIds,
-      message: parsed.data.message,
+      productType: firstItem.productId,
+      cakeSizeId: firstItem.cakeSizeId,
+      flavourId: firstItem.flavourId,
+      frostingId: firstItem.frostingId,
+      fillingIds: firstItem.fillingIds,
+      toppingIds: firstItem.toppingIds,
+      message: firstItem.message,
       paymentEmail,
       summary
     }

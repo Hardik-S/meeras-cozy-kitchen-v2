@@ -3,7 +3,7 @@ import Image from "next/image";
 import { CalendarDays, Heart, ShieldCheck, Sparkles } from "lucide-react";
 import { business } from "@/content/business";
 import { customerPolicies } from "@/content/policies";
-import { cakeSizes, flavours } from "@/lib/pricing";
+import { cakeSizes, flavours, productBasePrices } from "@/lib/pricing";
 
 export default function HomePage() {
   return (
@@ -13,7 +13,7 @@ export default function HomePage() {
           <p className="eyebrow">Custom cakes in Brampton</p>
           <h1 className="page-title">{business.tagline}</h1>
           <p className="lede mt-6 max-w-xl">
-            Custom celebration cakes with clear starting prices, flavours, fillings, frostings, and toppings from a Brampton home kitchen.
+            Custom celebration cakes and cake shooters by the dozen, with clear starting prices, flavours, fillings, frostings, and toppings from a Brampton home kitchen.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link className="btn-primary" href="/order">
@@ -62,7 +62,12 @@ export default function HomePage() {
       </section>
 
       <section className="bg-[var(--surface-alt)] py-14">
-        <div className="section-wrap grid gap-6 md:grid-cols-3" data-reveal>
+        <div className="section-wrap grid gap-6 md:grid-cols-4" data-reveal>
+          <article className="surface p-5">
+            <p className="eyebrow">Cake shooters</p>
+            <h2 className="mt-2 text-2xl font-black">One dozen shooters</h2>
+            <p className="mt-4 text-sm font-extrabold text-[var(--accent)]">Starting at ${productBasePrices["cake-shooters"].low}</p>
+          </article>
           {cakeSizes.map((size) => (
             <article key={size.id} className="surface p-5">
               <p className="eyebrow">Cake size</p>

@@ -17,11 +17,17 @@ export type CakeOption = PriceRange & {
 };
 
 export type QuoteInput = {
+  productId?: string;
   cakeSizeId?: string;
   flavourId?: string;
   frostingId?: string;
   fillingIds?: string[];
   toppingIds?: string[];
+};
+
+export type QuoteItemInput = Required<Pick<QuoteInput, "productId">> & Omit<QuoteInput, "productId"> & {
+  quantity: number;
+  message: string;
 };
 
 export type QuoteLine = PriceRange & {
@@ -40,7 +46,8 @@ export const cakeSizes: CakeSize[] = [
 ];
 
 export const productBasePrices: Record<string, PriceRange & { label: string }> = {
-  cake: { label: "Custom cake", low: 35, high: 75 }
+  cake: { label: "Custom cake", low: 35, high: 75 },
+  "cake-shooters": { label: "Cake shooters (1 dozen)", low: 40, high: 40 }
 };
 
 export const flavours: CakeOption[] = [
@@ -160,6 +167,38 @@ export function calculateQuoteEstimate(
     }),
     { low: 0, high: 0, lines: [] }
   );
+}
+
+export function calculateItemEstimate(
+  input: QuoteItemInput,
+  catalog: {
+    products?: Array<PriceRange & { id: string; label: string }>;
+    cakeSizes?: CakeSize[];
+    flavours?: CakeOption[];
+    frostings?: CakeOption[];
+    fillings?: CakeOption[];
+    toppings?: CakeOption[];
+  }
+): QuoteEstimate {
+  const product = findOption(catalog.products ?? Object.entries(productBasePrices).map(([id, value]) => ({ id, ...value })), input.productId);
+  const optionEstimate = calculateQuoteEstimate(input, catalog);
+  const base = input.productId === "cake" ? { low: 0, high: 0 } : product ?? { low: 0, high: 0 };
+  const quantity = Number.isInteger(input.quantity) && input.quantity > 0 ? input.quantity : 1;
+  const lines = [
+    ...(input.productId === "cake" ? optionEstimate.lines : [{ label: product?.label ?? "Cake shooters (1 dozen)", low: base.low, high: base.high, kind: "size" as const }]),
+    ...(input.productId === "cake" ? [] : optionEstimate.lines.filter((line) => line.kind !== "size"))
+  ];
+  const unitLow = base.low + optionEstimate.low;
+  const unitHigh = base.high + optionEstimate.high;
+
+  return { low: unitLow * quantity, high: unitHigh * quantity, lines };
+}
+
+export function calculateItemsEstimate(items: QuoteItemInput[], catalog: Parameters<typeof calculateItemEstimate>[1]) {
+  return items.reduce<QuoteEstimate>((total, item) => {
+    const estimate = calculateItemEstimate(item, catalog);
+    return { low: total.low + estimate.low, high: total.high + estimate.high, lines: [...total.lines, ...estimate.lines] };
+  }, { low: 0, high: 0, lines: [] });
 }
 
 export function quoteRangeLabel(price: PriceRange) {

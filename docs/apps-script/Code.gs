@@ -24,7 +24,7 @@ const SETTINGS = {
   senderName: "Meera's Cozy Kitchen"
 };
 
-const CATALOG_VERSION = "cake-frosting-flavours-v2";
+const CATALOG_VERSION = "cake-shooters-v3";
 const CONTACT_SETTINGS_VERSION = "canonical-contact-email-v1";
 const PAYMENT_POLICY = "Do not send payment until Meera accepts your order and confirms the final price in writing. Once accepted, 50% of the confirmed final price is due by e-transfer within 48 hours. The remaining 50% is due at pickup by e-transfer.";
 
@@ -43,38 +43,39 @@ const SHEETS = {
 };
 
 const DEFAULT_PRODUCTS = [
-  { id: "cake", label: "Custom cake", low: 35, high: 75, enabled: true, sortOrder: 1 }
+  { id: "cake", label: "Custom cake", low: 35, high: 75, enabled: true, sortOrder: 1 },
+  { id: "cake-shooters", label: "Cake shooters (1 dozen)", low: 40, high: 40, enabled: true, sortOrder: 2 }
 ];
 
 const DEFAULT_OFFERINGS = [
   { id: "four-inch", productId: "cake", category: "cake-size", label: "4-inch cake", low: 35, high: 35, servings: "", enabled: true, sortOrder: 1 },
   { id: "six-inch", productId: "cake", category: "cake-size", label: "6-inch cake", low: 60, high: 60, servings: "", enabled: true, sortOrder: 2 },
   { id: "eight-inch", productId: "cake", category: "cake-size", label: "8-inch cake", low: 75, high: 75, servings: "", enabled: true, sortOrder: 3 },
-  { id: "chocolate", productId: "cake", category: "flavour", label: "Chocolate", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
-  { id: "vanilla", productId: "cake", category: "flavour", label: "Vanilla", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
-  { id: "almond", productId: "cake", category: "flavour", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
-  { id: "lemon", productId: "cake", category: "flavour", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
-  { id: "coconut", productId: "cake", category: "flavour", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
-  { id: "chocolate-frosting", productId: "cake", category: "frosting", label: "Chocolate", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
-  { id: "vanilla-frosting", productId: "cake", category: "frosting", label: "Vanilla", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
-  { id: "almond-frosting", productId: "cake", category: "frosting", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
-  { id: "lemon-frosting", productId: "cake", category: "frosting", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
-  { id: "coconut-frosting", productId: "cake", category: "frosting", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
-  { id: "oreo-crunch", productId: "cake", category: "frosting", label: "Oreo Crunch", low: 5, high: 5, servings: "", enabled: true, sortOrder: 6 },
-  { id: "dark-chocolate-ganache", productId: "cake", category: "frosting", label: "Dark Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 7 },
-  { id: "white-chocolate-ganache", productId: "cake", category: "frosting", label: "White Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 8 },
-  { id: "raspberry-filling", productId: "cake", category: "filling", label: "Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
-  { id: "blueberry-filling", productId: "cake", category: "filling", label: "Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
-  { id: "cherry-filling", productId: "cake", category: "filling", label: "Cherry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
-  { id: "strawberry-filling", productId: "cake", category: "filling", label: "Strawberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 4 },
-  { id: "apricot-filling", productId: "cake", category: "filling", label: "Apricot", low: 5, high: 5, servings: "", enabled: true, sortOrder: 5 },
-  { id: "dark-chocolate-ganache-drip", productId: "cake", category: "topping", label: "Dark Chocolate Ganache Drip", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
-  { id: "white-chocolate-ganache-drip", productId: "cake", category: "topping", label: "White Chocolate Ganache Drip", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
-  { id: "fresh-raspberry", productId: "cake", category: "topping", label: "Fresh Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
-  { id: "fresh-blueberry", productId: "cake", category: "topping", label: "Fresh Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 4 },
-  { id: "fresh-strawberry", productId: "cake", category: "topping", label: "Fresh Strawberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 5 },
-  { id: "chopped-pistachio", productId: "cake", category: "topping", label: "Chopped Pistachio", low: 5, high: 5, servings: "", enabled: true, sortOrder: 6 },
-  { id: "chopped-almonds", productId: "cake", category: "topping", label: "Chopped Almonds", low: 5, high: 5, servings: "", enabled: true, sortOrder: 7 }
+  { id: "chocolate", productId: "all", category: "flavour", label: "Chocolate", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
+  { id: "vanilla", productId: "all", category: "flavour", label: "Vanilla", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
+  { id: "almond", productId: "all", category: "flavour", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
+  { id: "lemon", productId: "all", category: "flavour", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
+  { id: "coconut", productId: "all", category: "flavour", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
+  { id: "chocolate-frosting", productId: "all", category: "frosting", label: "Chocolate", low: 0, high: 0, servings: "", enabled: true, sortOrder: 1 },
+  { id: "vanilla-frosting", productId: "all", category: "frosting", label: "Vanilla", low: 0, high: 0, servings: "", enabled: true, sortOrder: 2 },
+  { id: "almond-frosting", productId: "all", category: "frosting", label: "Almond", low: 0, high: 0, servings: "", enabled: true, sortOrder: 3 },
+  { id: "lemon-frosting", productId: "all", category: "frosting", label: "Lemon", low: 0, high: 0, servings: "", enabled: true, sortOrder: 4 },
+  { id: "coconut-frosting", productId: "all", category: "frosting", label: "Coconut", low: 0, high: 0, servings: "", enabled: true, sortOrder: 5 },
+  { id: "oreo-crunch", productId: "all", category: "frosting", label: "Oreo Crunch", low: 5, high: 5, servings: "", enabled: true, sortOrder: 6 },
+  { id: "dark-chocolate-ganache", productId: "all", category: "frosting", label: "Dark Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 7 },
+  { id: "white-chocolate-ganache", productId: "all", category: "frosting", label: "White Chocolate Ganache", low: 10, high: 10, servings: "", enabled: true, sortOrder: 8 },
+  { id: "raspberry-filling", productId: "all", category: "filling", label: "Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
+  { id: "blueberry-filling", productId: "all", category: "filling", label: "Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
+  { id: "cherry-filling", productId: "all", category: "filling", label: "Cherry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
+  { id: "strawberry-filling", productId: "all", category: "filling", label: "Strawberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 4 },
+  { id: "apricot-filling", productId: "all", category: "filling", label: "Apricot", low: 5, high: 5, servings: "", enabled: true, sortOrder: 5 },
+  { id: "dark-chocolate-ganache-drip", productId: "all", category: "topping", label: "Dark Chocolate Ganache Drip", low: 5, high: 5, servings: "", enabled: true, sortOrder: 1 },
+  { id: "white-chocolate-ganache-drip", productId: "all", category: "topping", label: "White Chocolate Ganache Drip", low: 5, high: 5, servings: "", enabled: true, sortOrder: 2 },
+  { id: "fresh-raspberry", productId: "all", category: "topping", label: "Fresh Raspberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 3 },
+  { id: "fresh-blueberry", productId: "all", category: "topping", label: "Fresh Blueberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 4 },
+  { id: "fresh-strawberry", productId: "all", category: "topping", label: "Fresh Strawberry", low: 5, high: 5, servings: "", enabled: true, sortOrder: 5 },
+  { id: "chopped-pistachio", productId: "all", category: "topping", label: "Chopped Pistachio", low: 5, high: 5, servings: "", enabled: true, sortOrder: 6 },
+  { id: "chopped-almonds", productId: "all", category: "topping", label: "Chopped Almonds", low: 5, high: 5, servings: "", enabled: true, sortOrder: 7 }
 ];
 
 function doGet() {
@@ -142,7 +143,11 @@ function submitOrder(payload) {
 
   const id = makeId("ord");
   const now = nowIso();
-  const estimate = estimateInquiry(inquiry);
+  // The public application calculates multi-item totals from the current catalog
+  // before sending the canonical itemized summary. Older single-item callers do
+  // not send totals, so retain the original server-side estimate as a fallback.
+  const calculatedEstimate = estimateInquiry(inquiry);
+  const estimate = trustedEstimateOrFallback(inquiry, calculatedEstimate);
   const summary = summaryTextOrDefault(payload.summary, buildSummary(inquiry, estimate));
 
   appendObject("Orders", {
@@ -152,7 +157,7 @@ function submitOrder(payload) {
     email: cleanSingleLine(inquiry.email),
     phone: cleanSingleLine(inquiry.phone),
     eventDate: cleanSingleLine(inquiry.eventDate),
-    productType: "cake",
+    productType: cleanSingleLine(inquiry.productType) || "cake",
     cakeSizeId: clean(inquiry.cakeSizeId),
     flavourId: clean(inquiry.flavourId),
     budget: "",
@@ -172,6 +177,15 @@ function submitOrder(payload) {
   audit("submitOrder", id);
 
   return { ok: true, orderId: id };
+}
+
+function trustedEstimateOrFallback(inquiry, fallback) {
+  const low = Number(inquiry.estimateLow);
+  const high = Number(inquiry.estimateHigh);
+  if (Number.isFinite(low) && Number.isFinite(high) && low >= 0 && high >= low) {
+    return { low: low, high: high };
+  }
+  return fallback;
 }
 
 function submitReview(payload) {

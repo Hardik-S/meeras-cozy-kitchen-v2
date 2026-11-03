@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Meera's Cozy Kitchen"
   },
   description:
-    "Mobile-first home bakery site for custom celebration cakes in Brampton.",
+    "Mobile-first home bakery site for custom celebration cakes and cake shooters in Brampton.",
   metadataBase: new URL("https://meeras-cozy-kitchen-v2.vercel.app"),
   icons: {
     icon: "/meeras-logo-2.png",

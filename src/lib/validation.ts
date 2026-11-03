@@ -79,3 +79,44 @@ export function createInquirySchema(today = new Date()) {
 export const inquirySchema = createInquirySchema();
 
 export type InquiryInput = z.infer<typeof inquirySchema>;
+
+const quoteItemSchema = z.object({
+  id: z.string().trim().min(1),
+  productId: z.enum(["cake", "cake-shooters"]),
+  quantity: z.number().int().min(1).max(10),
+  cakeSizeId: z.string().trim().transform((value) => value.toLowerCase()).default(""),
+  flavourId: catalogId("Please choose a cake flavour."),
+  frostingId: catalogId("Please choose a frosting flavour."),
+  fillingIds: catalogIds("Please choose a filling."),
+  toppingIds: catalogIds("Please choose a topping."),
+  message: z.string().trim().min(10, "Please share a few design details.").max(1200)
+}).superRefine((item, context) => {
+  if (item.productId === "cake" && !item.cakeSizeId) {
+    context.addIssue({ code: "custom", path: ["cakeSizeId"], message: "Please choose a cake size." });
+  }
+});
+
+export function createMultiInquirySchema(today = new Date()) {
+  return z.object({
+    name: singleLineText.pipe(z.string().min(2, "Please enter your name.")),
+    email: z.string().trim().pipe(z.email("Please enter a valid email.")),
+    phone: singleLineText.pipe(z.string().min(7, "Please include a phone number.")),
+    eventDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Please choose a pickup date."),
+    pickupTime: z.enum(pickupTimeOptions.map((option) => option.value) as [PickupTime, ...PickupTime[]], { error: "Please choose a pickup time." }),
+    items: z.array(quoteItemSchema).min(1, "Please add an item to your quote.").max(10, "Please submit up to 10 items at a time."),
+    acknowledgements: z.object({
+      notice: z.literal(true, { error: "Please confirm the notice policy." }),
+      allergens: z.literal(true, { error: "Please confirm the allergen note." }),
+      address: z.literal(true, { error: "Please confirm pickup details are shared after booking." }),
+      inspiration: z.literal(true, { error: "Please confirm that inspiration photos may require slight adjustments." }),
+      payment: z.literal(true, { error: "Please confirm the payment policy." })
+    }),
+    website: z.string().trim().max(0, "Spam check failed.").optional().default("")
+  }).superRefine((value, context) => {
+    if (!isValidDateInput(value.eventDate) || !isAtLeastMinimumNotice(value.eventDate, today)) {
+      context.addIssue({ code: "custom", path: ["eventDate"], message: "Please choose a pickup date at least 7 days away." });
+    }
+  });
+}
+
+export type MultiInquiryInput = z.infer<ReturnType<typeof createMultiInquirySchema>>;

@@ -4,17 +4,18 @@ This repository is the isolated workspace for Meera v2: a smoother, mobile-first
 
 ## Status
 
-V2 is the active cake-only Next.js app. It has its own catalogue, quote flow, Apps Script migration, admin compatibility layer, and Vercel deployment. V1 remains frozen in the parent folder.
+V2 is the active Next.js app for custom cakes and cake shooters. It has its own catalogue, quote flow, Apps Script migration, admin compatibility layer, and Vercel deployment. V1 remains frozen in the parent folder.
 
-## Current cake-only contract
+## Current quote contract
 
 - Public navigation is exactly Home, Menu, Photos, Reviews, FAQ, and Quote.
 - Canonical sizes are 4-inch at $35, 6-inch at $60, and 8-inch at $75, all shown as starting prices.
-- The public catalogue contains only cake sizes, five cake flavours, eight independently selectable frosting flavours, multiple fillings, and multiple toppings.
-- Quote submissions require a pickup date, one of seven two-hour pickup windows, a frosting flavour, and all six acknowledgements.
+- Cake shooters are available by the dozen, starting at $40. They share flavours, frostings, fillings, and toppings with custom cakes, while cake sizes remain cake-only.
+- Customers can combine up to ten independently configured items in a quote. Each item has a quantity of 1-10, and the total starting price includes every item and quantity.
+- Quote submissions require a pickup date, one of seven two-hour pickup windows, a frosting flavour, and all required acknowledgements.
 - Homepage customer policies use four compact 230px cards in one desktop row; halal-certification wording appears with the allergen notice.
-- Client submissions do not accept product, servings, budget, or legacy add-on fields. The server writes `productType: "cake"` only for historical order compatibility.
-- The Apps Script catalogue migration version is `cake-frosting-flavours-v2`; the contact-settings migration is `canonical-contact-email-v1`. Both are idempotent and preserve orders, ledger rows, settings, and historical columns.
+- Client submissions use an item array rather than product, servings, budget, or legacy add-on fields. The server retains the first item's legacy fields for compact historical order-list compatibility.
+- The Apps Script catalogue migration version is `cake-shooters-v3`; the contact-settings migration is `canonical-contact-email-v1`. Both are idempotent and preserve orders, ledger rows, settings, and historical columns.
 - The browser catalogue cache key is versioned so pre-migration products and pricing cannot reappear.
 - `/photos` is canonical; `/portfolio` redirects there. Food-safety guidance lives at `/faq#food-safety`; `/food-safety` redirects there.
 - `/reviews` accepts a required 1-5 star rating, public display name, private email, and 10-1000 character description. New reviews stay pending until Meera publishes them from the private admin dashboard.

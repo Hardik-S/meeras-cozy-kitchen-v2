@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateQuoteEstimate,
+  calculateItemEstimate,
+  calculateItemsEstimate,
   cakeSizes,
   fillings,
   flavours,
@@ -11,7 +13,7 @@ import {
   toppings
 } from "./pricing";
 
-describe("cake-only pricing", () => {
+describe("quote pricing", () => {
   it("exposes the canonical menu", () => {
     expect(cakeSizes.map(({ label, low }) => [label, low])).toEqual([
       ["4-inch cake", 35],
@@ -108,5 +110,31 @@ describe("cake-only pricing", () => {
       { label: "Almond", kind: "included" },
       { label: "Vanilla", kind: "included" }
     ]);
+  });
+
+  it("prices each dozen of cake shooters and totals a mixed quote", () => {
+    const shooters = {
+      productId: "cake-shooters" as const,
+      quantity: 2,
+      cakeSizeId: "",
+      flavourId: "chocolate",
+      frostingId: "oreo-crunch",
+      fillingIds: ["raspberry-filling"],
+      toppingIds: ["fresh-strawberry"],
+      message: "Chocolate shooters with raspberry filling."
+    };
+    const cake = {
+      productId: "cake" as const,
+      quantity: 1,
+      cakeSizeId: "four-inch",
+      flavourId: "vanilla",
+      frostingId: "vanilla-frosting",
+      fillingIds: [],
+      toppingIds: [],
+      message: "A simple vanilla birthday cake."
+    };
+
+    expect(calculateItemEstimate(shooters, {}).low).toBe(110);
+    expect(calculateItemsEstimate([shooters, cake], {}).low).toBe(145);
   });
 });

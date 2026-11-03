@@ -484,7 +484,7 @@ export function AdminDashboard() {
                 </div>
               ))}
             </div>
-            <OfferingEditor offering={offeringDraft} onChange={setOfferingDraft} onSave={(offering) => mutate("upsertOffering", { offering: { ...offering, id: slug(offering.label || offering.id) } })} />
+            <OfferingEditor products={data.products} offering={offeringDraft} onChange={setOfferingDraft} onSave={(offering) => mutate("upsertOffering", { offering: { ...offering, id: slug(offering.label || offering.id) } })} />
           </div>
         </div>
       ) : null}
@@ -575,10 +575,14 @@ function ProductEditor({ product, onChange, onSave }: { product: AdminProduct; o
   );
 }
 
-function OfferingEditor({ offering, onChange, onSave }: { offering: AdminOffering; onChange: (offering: AdminOffering) => void; onSave: (offering: AdminOffering) => void }) {
+function OfferingEditor({ offering, products, onChange, onSave }: { offering: AdminOffering; products: AdminProduct[]; onChange: (offering: AdminOffering) => void; onSave: (offering: AdminOffering) => void }) {
   return (
     <div className="admin-form">
       <input className="admin-input" placeholder="Offering name" value={offering.label} onChange={(event) => onChange({ ...offering, label: event.target.value })} />
+      <select className="admin-input" value={offering.productId} onChange={(event) => onChange({ ...offering, productId: event.target.value })}>
+        <option value="all">All products</option>
+        {products.map((product) => <option key={product.id} value={product.id}>{product.label}</option>)}
+      </select>
       <select className="admin-input" value={offering.category} onChange={(event) => onChange({ ...offering, category: event.target.value as AdminOffering["category"] })}>
         <option value="cake-size">Cake size</option>
         <option value="flavour">Flavour</option>

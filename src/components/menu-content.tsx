@@ -27,7 +27,14 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
 
   return (
     <>
-      <section className="mt-12 grid gap-5 md:grid-cols-3" aria-label="Cake sizes" data-reveal>
+      <section className="mt-12 grid gap-5 md:grid-cols-3" aria-label="Products" data-reveal>
+        {catalog.products.filter((product) => product.id === "cake-shooters").map((product) => (
+          <article key={product.id} className="surface p-5">
+            <p className="eyebrow">Cake shooters</p>
+            <h2 className="mt-2 text-2xl font-black">One dozen shooters</h2>
+            <p className="mt-5 text-xl font-black text-[var(--accent)]">{startingPriceLabel(product)}</p>
+          </article>
+        ))}
         {catalog.cakeSizes.map((size) => (
           <article key={size.id} className="surface p-5">
             <p className="eyebrow">Cake size</p>
@@ -45,7 +52,7 @@ export function MenuContent({ initialCatalog }: { initialCatalog: PublicCatalog 
       </section>
 
       <p className="mt-12 rounded-[8px] border border-[var(--line)] bg-[var(--surface-alt)] p-5 font-bold leading-7 text-[var(--muted)]" data-reveal>
-        Starting prices include the selected cake size and any frosting marked Included. Paid frosting upgrades, fillings, toppings, and design complexity are added before Meera confirms the final quote.
+        Cake shooter quantities are sold by the dozen. Starting prices include the selected cake size or shooter dozen and any frosting marked Included. Paid frosting upgrades, fillings, toppings, and design complexity are added before Meera confirms the final quote.
       </p>
     </>
   );

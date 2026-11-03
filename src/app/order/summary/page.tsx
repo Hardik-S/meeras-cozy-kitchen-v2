@@ -115,7 +115,7 @@ export default function OrderSummaryPage() {
               <div><dt>Order ID</dt><dd className="text-[var(--foreground)]">{order.id}</dd></div>
               <div><dt>Pickup date</dt><dd className="text-[var(--foreground)]">{order.eventDate || "To confirm"}</dd></div>
               <div><dt>Pickup time</dt><dd className="text-[var(--foreground)]">{order.pickupTime ? pickupTimeLabel(order.pickupTime) : "To confirm"}</dd></div>
-              <div><dt>Cake size</dt><dd className="text-[var(--foreground)]">{order.cakeSizeId || "To confirm"}</dd></div>
+              <div><dt>Quote items</dt><dd className="text-[var(--foreground)]">See the itemized summary below</dd></div>
             </dl>
             <pre className="summary-preview mt-5 max-h-80">{order.summary}</pre>
           </article>

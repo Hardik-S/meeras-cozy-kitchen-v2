@@ -116,15 +116,15 @@ def finish(canvas: Image.Image, output_path: Path) -> None:
 def make_front(mark: Image.Image) -> Image.Image:
     canvas = Image.new("RGBA", (px(WIDTH), px(HEIGHT)), BG)
     draw = ImageDraw.Draw(canvas)
-    draw.ellipse((px(720), px(-135), px(1280), px(425)), outline=RED, width=px(6))
-    draw.ellipse((px(740), px(65), px(990), px(315)), fill=WARM + "70")
+    draw.ellipse((px(480), px(-380), px(1560), px(700)), outline=RED, width=px(6))
+    draw.ellipse((px(540), px(20), px(1060), px(540)), fill=WARM + "70")
     draw.rounded_rectangle((px(78), px(65), px(238), px(71)), radius=px(3), fill=RED)
     draw.text((px(80), px(165)), "MEERA'S", font=font(62, 950), fill=RED)
     draw.text((px(82), px(235)), "COZY KITCHEN", font=font(34, 900), fill=MUTED)
     draw.text((px(82), px(315)), "Warm celebration cakes,", font=font(23, 750), fill=MUTED)
     draw.text((px(82), px(347)), "planned with care.", font=font(23, 750), fill=MUTED)
     tracking(draw, (82, 492), "CUSTOM CAKES + CELEBRATIONS", font(15, 950), RED, 2)
-    place_mark(canvas, mark, 765, 92, 190)
+    place_mark(canvas, mark, 590, 40, 420)
     return canvas
 
 
@@ -148,13 +148,12 @@ def make_back() -> Image.Image:
     draw.ellipse((px(825), px(-205), px(1260), px(230)), fill=RED + "20")
     rounded(draw, (55, 42, 995, 558), 24, BG, MUTED, 2)
     draw.rounded_rectangle((px(55), px(42), px(69), px(558)), radius=px(7), fill=RED)
-    tracking(draw, (94, 83), "CONTACT", font(16, 950), RED, 2)
-    draw.text((px(94), px(115)), "Let's make something sweet.", font=font(37, 950), fill=INK)
-    tracking(draw, (94, 173), "CUSTOM CAKES + CELEBRATIONS", font(14, 950), MUTED, 2)
-    contact_row(draw, "instagram", 228, "Instagram", "@meerascozykitchen")
-    contact_row(draw, "globe", 304, "Website", "meerascozykitchen.ca")
-    contact_row(draw, "email", 380, "Email", "meerascozykitchen@gmail.com")
-    contact_row(draw, "pin", 456, "Location", "Brampton, Ontario")
+    draw.text((px(94), px(95)), "Let's make something sweet.", font=font(37, 950), fill=INK)
+    tracking(draw, (94, 153), "CUSTOM CAKES + CELEBRATIONS", font(14, 950), MUTED, 2)
+    contact_row(draw, "instagram", 208, "Instagram", "@meerascozykitchen")
+    contact_row(draw, "globe", 284, "Website", "meerascozykitchen.ca")
+    contact_row(draw, "email", 360, "Email", "meerascozykitchen@gmail.com")
+    contact_row(draw, "pin", 436, "Location", "Brampton, Ontario")
     return canvas
 
 

@@ -105,7 +105,7 @@ function offering(
 ): AdminOffering {
   return {
     id: item.id,
-    productId: "cake",
+    productId: category === "cake-size" ? "cake" : "all",
     category,
     label: item.label,
     low: item.low ?? 0,
@@ -200,7 +200,7 @@ export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
     .map(normalizeProduct)
     .filter((product) =>
       product.enabled
-      && product.id === "cake"
+      && (product.id === "cake" || product.id === "cake-shooters")
       && product.label.length > 0
       && hasPublicPriceRange(product)
       && hasPublicSortOrder(product)
@@ -214,7 +214,7 @@ export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
       && normalizeOfferingCategory(item.category) !== undefined
       && hasPublicPriceRange(item)
       && hasPublicSortOrder(item)
-      && (item.productId === "all" || item.productId === "cake")
+      && (item.productId === "all" || item.productId === "cake" || item.productId === "cake-shooters")
     ));
 
   return {
@@ -226,6 +226,10 @@ export function getPublicCatalogFromAdminData(data: AdminData): PublicCatalog {
     fillings: offerings.filter((item) => item.category === "filling"),
     toppings: offerings.filter((item) => item.category === "topping")
   };
+}
+
+export function offeringsForProduct<T extends { productId: ProductType | "all" }>(items: T[], productId: ProductType) {
+  return items.filter((item) => item.productId === "all" || item.productId === productId);
 }
 
 export const defaultPublicCatalog = getPublicCatalogFromAdminData(defaultAdminData);

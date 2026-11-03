@@ -364,6 +364,100 @@ input[type="checkbox"] {
   border-width: 2px;
 }
 
+.quote-section {
+  border: 1px solid var(--line);
+}
+
+.quote-section > h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.quote-add-item,
+.quote-delete-item {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--background);
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.quote-add-item {
+  justify-self: start;
+}
+
+.quote-delete-item {
+  min-height: 38px;
+  border-color: var(--line);
+  background: transparent;
+  color: var(--accent);
+}
+
+.quote-dozen-note {
+  margin: 1.25rem 0 0;
+  border-left: 3px solid var(--accent);
+  padding-left: 0.75rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.quote-total-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.65rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.quote-total-item span {
+  color: var(--accent);
+  font-weight: 800;
+  text-align: right;
+}
+
+.quote-delete-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(59 47 47 / 45%);
+  padding: 1rem;
+}
+
+.quote-delete-dialog {
+  width: min(100%, 28rem);
+  padding: 1.5rem;
+}
+
+.quote-delete-dialog h2,
+.quote-delete-dialog p {
+  margin: 0;
+}
+
+.quote-delete-dialog p {
+  margin-top: 0.75rem;
+  color: var(--muted);
+}
+
+.quote-delete-dialog > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
 .option-row,
 .menu-row {
   display: flex;

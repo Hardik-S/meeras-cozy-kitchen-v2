@@ -9,7 +9,7 @@ export default function MenuPage() {
       <p className="eyebrow">Menu</p>
       <h1 className="page-title">Simple choices, clear starting prices.</h1>
       <p className="menu-intro lede mt-6 max-w-2xl">
-        Choose a cake size, flavour, frosting, fillings, and toppings. Final pricing depends on the confirmed design and ingredient needs.
+        Choose a custom cake or cake shooters by the dozen, then select flavours, frosting, fillings, toppings, and design details. Final pricing depends on the confirmed design and ingredient needs.
       </p>
       <MenuContent initialCatalog={defaultPublicCatalog} />
     </div>
