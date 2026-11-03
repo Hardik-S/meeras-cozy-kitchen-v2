@@ -368,7 +368,8 @@ input[type="checkbox"] {
   border: 1px solid var(--line);
 }
 
-.quote-section > h2 {
+.quote-section > h2,
+.quote-section-heading {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 900;
